@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>GoJS Visual Differencer</title>
+<!-- Copyright 1998-2019 by Northwoods Software Corporation. -->
+ <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+  <script src="{{ url_for('static', filename='release/go.js')}}"></script>
+<!--  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>-->
+<!--  <script type="text/javascript" src="{{ url_for('static', filename='nodegrp1.txt')}}"></script>-->
+  <script type="text/javascript" id="code">
+
+
+
+  function get_cluster() {
+        Url = 'http://127.0.0.1:5000'
+        // $('.btn').click(function () {
+        //
+        // })
+
+        $.getJSON(Url, function (result) {
+                // alert(result);
+
+<!--                setupDiagram(result);-->
+
+                console.log(result);
+            })
+
+
+    }
+  function VisualDifferencer(diag1, diag2) {
+    if (!(diag1 instanceof go.Diagram) || !(diag2 instanceof go.Diagram)) throw new Error("VisualDifferencer needs two Diagrams");
+    this._diagram1 = diag1;
+    this._diagram2 = diag2;
+    this._originalOpacities = new go.Map();
+    this._originalToolTips = new go.Map();
+    this._isRunning = false;
+
+    var self = this;
+    this._updateOtherDiagram = function(e) {
+      var diag = e.diagram;
+      var other = (diag === self._diagram1) ? self._diagram2 : self._diagram1;
+      other.scale = diag.scale;
+      other.position = diag.position;
+    };
+
+    var $ = go.GraphObject.make;
+    this.RemovedAdornmentTemplate =
+      $(go.Adornment, "Auto",
+        $(go.Shape, { fill: null, stroke: "red", strokeWidth: 8 }),
+        $(go.Placeholder, { margin: 8 })
+      );
+    this.RemovedLinkAdornmentTemplate =
+      $(go.Adornment, "Link",
+        $(go.Shape, { isPanelMain: true, stroke: "red", strokeWidth: 8 }),
+      );
+    this.RemovedToolTip =
+      $(go.Adornment, "Auto",
+        $(go.Shape, { fill: "red", strokeWidth: 0 }),
+        $(go.TextBlock, { margin: 5 },
+          new go.Binding("text", "", this._propertiesList))
+      );
+
+    this.AddedAdornmentTemplate =
+      $(go.Adornment, "Auto",
+        $(go.Shape, { fill: null, stroke: "yellow", strokeWidth: 8 }),
+        $(go.Placeholder, { margin: 8 })
+      );
+    this.AddedLinkAdornmentTemplate =
+      $(go.Adornment, "Link",
+        $(go.Shape, { isPanelMain: true, stroke: "yellow", strokeWidth: 8 }),
+      );
+    this.AddedToolTip =
+      $(go.Adornment, "Auto",
+        $(go.Shape, { fill: "yellow", strokeWidth: 0 }),
+        $(go.TextBlock, { margin: 5 },
+          new go.Binding("text", "", this._propertiesList))
+      );
+
+    this.ChangedAdornmentTemplate =
+      $(go.Adornment, "Auto",
+        $(go.Shape, { fill: null, stroke: "cyan", strokeWidth: 8 }),
+        $(go.Placeholder, { margin: 8 })
+      );
+    this.ChangedLinkAdornmentTemplate =
+      $(go.Adornment, "Link",
+        $(go.Shape, { isPanelMain: true, stroke: "cyan", strokeWidth: 8 }),
+      );
+    this.ChangedToolTip =
+      $(go.Adornment, "Auto",
+        $(go.Shape, { fill: "cyan", strokeWidth: 0 }),
+        $(go.TextBlock, { margin: 5 },
+          new go.Binding("text", "", this._propertiesList))
+      );
+  }
+
+  /**
+  * Start showing the differences between the two diagrams/models.
+  */
+  VisualDifferencer.prototype.start = function() {
+    var diag1 = this._diagram1;
+    var diag2 = this._diagram2;
+
+    var self = this;
+
+    diag1.skipsUndoManager = true;
+    diag1.startTransaction();
+    diag2.skipsUndoManager = true;
+    diag2.startTransaction();
+
+    if (!this._isRunning) {
+      this._isRunning = true;
+      diag1.addDiagramListener("ViewportBoundsChanged", this._updateOtherDiagram);
+      diag2.addDiagramListener("ViewportBoundsChanged", this._updateOtherDiagram);
+      this._setOpacities(diag1, true);
+      this._setOpacities(diag2, true);
+      diag2.scale = diag1.scale;
+      diag2.position = diag1.position;
+    }
+
+    // set Layer.opacity
+    diag1.layers.each(function(l) { l.opacity = 0.75; });
+    diag2.layers.each(function(l) { l.opacity = 0.75; });
+
+    // set Part.opacity depending on whether there are differences
+    var a1 = diag1.model.nodeDataArray;
+    a1.forEach(function(d1) {
+      var k = diag1.model.getKeyForNodeData(d1);
+      var n1 = diag1.findNodeForData(d1);
+      // assume both models use the same keys
+      var d2 = diag2.model.findNodeDataForKey(k);
+      var n2 = diag2.findNodeForData(d2);
+      if (n2 !== null) {
+        self._diffParts(n1, n2);
+      } else {
+        self._onlyPart(n1);
+      }
+    });
+    if (diag1.model instanceof go.GraphLinksModel) {
+      a1 = diag1.model.linkDataArray;
+      if (a1.length > 0 && diag1.model.linkKeyProperty === "") throw new Error("Diagram1's model does not have linkKeyProperty set to a non-empty string");
+      a1.forEach(function(d1) {
+        var k = diag1.model.getKeyForLinkData(d1);
+        var l1 = diag1.findLinkForData(d1);
+        // assume both models use the same keys
+        var d2 = diag2.model.findLinkDataForKey(k);
+        var l2 = diag2.findLinkForData(d2);
+        if (l2 !== null) {
+          self._diffParts(l1, l2);
+        } else {
+          self._onlyPart(l1);
+        }
+      });
+    }
+
+    var a2 = diag2.model.nodeDataArray;
+    a2.forEach(function(d2) {
+      var k = diag2.model.getKeyForNodeData(d2);
+      var n2 = diag2.findNodeForData(d2);
+      // assume both models use the same keys
+      var d1 = diag1.model.findNodeDataForKey(k);
+      var n1 = diag1.findNodeForData(d1);
+      if (n1 !== null) {
+        self._diffParts(n1, n2);
+      } else {
+        self._onlyPart(n2);
+      }
+    });
+    if (diag2.model instanceof go.GraphLinksModel) {
+      a2 = diag2.model.linkDataArray;
+      if (a2.length > 0 && diag2.model.linkKeyProperty === "") throw new Error("Diagram2's model does not have linkKeyProperty set to a non-empty string");
+      a2.forEach(function(d2) {
+        var k = diag2.model.getKeyForLinkData(d2);
+        var l2 = diag2.findLinkForData(d2);
+        // assume both models use the same keys
+        var d1 = diag1.model.findLinkDataForKey(k);
+        var l1 = diag1.findLinkForData(d1);
+        if (l1 !== null) {
+          self._diffParts(l1, l2);
+        } else {
+          self._onlyPart(l2);
+        }
+      });
+    }
+
+    diag1.commitTransaction();
+    diag1.skipsUndoManager = false;
+    diag2.commitTransaction();
+    diag2.skipsUndoManager = false;
+  }
+
+  VisualDifferencer.prototype._propertiesList = function(data) {
+    var str = "";
+    for (var p in data) {
+      if (p === "__gohashid") continue;
+      if (str !== "") str += "\n";
+      str += p + ": " + data[p].toString();
+    }
+    return str;
+  }
+
+  VisualDifferencer.prototype._addAdornment = function(part, adtempl) {
+    var ad = adtempl.copy();
+    if (part instanceof go.Link && part.path !== null) {
+      ad.adornedObject = part.path;
+      ad.location = part.path.getDocumentPoint(go.Spot.TopLeft);
+    } else {
+      ad.adornedObject = part;
+      ad.location = part.position;
+    }
+    //ad.placeholder.desiredSize = part.actualBounds.size;
+    part.addAdornment("VisualDifferencer", ad);
+  }
+
+  VisualDifferencer.prototype._onlyPart = function(part) {
+    part.opacity = 1.0;
+    if (part.diagram === this._diagram1) {
+      part.toolTip = this.RemovedToolTip;
+      if (part instanceof go.Link) {
+        this._addAdornment(part, this.RemovedLinkAdornmentTemplate);
+      } else {
+        this._addAdornment(part, this.RemovedAdornmentTemplate);
+      }
+    } else {
+      part.toolTip = this.AddedToolTip;
+      if (part instanceof go.Link) {
+        this._addAdornment(part, this.AddedLinkAdornmentTemplate);
+      } else {
+        this._addAdornment(part, this.AddedAdornmentTemplate);
+      }
+    }
+  }
+
+  VisualDifferencer.prototype._diffParts = function(part1, part2) {
+    // only considering differences in model data
+    if (this._areValuesDifferent(part1.data, part2.data)) {
+      part1.opacity = 1.0;
+      part2.opacity = 1.0;
+      part1.toolTip = this.ChangedToolTip;
+      part2.toolTip = this.ChangedToolTip;
+      if (part1 instanceof go.Link) {
+        this._addAdornment(part1, this.ChangedLinkAdornmentTemplate);
+      } else {
+        this._addAdornment(part1, this.ChangedAdornmentTemplate);
+      }
+      if (part2 instanceof go.Link) {
+        this._addAdornment(part2, this.ChangedLinkAdornmentTemplate);
+      } else {
+        this._addAdornment(part2, this.ChangedAdornmentTemplate);
+      }
+    } else {  // if they're the same, de-emphasize them
+      part1.opacity = 0.15;
+      part2.opacity = 0.15;
+      part1.toolTip = part2.toolTip = null;
+      part1.removeAdornment("VisualDifferencer");
+      part2.removeAdornment("VisualDifferencer");
+    }
+  }
+
+  VisualDifferencer.prototype._areValuesDifferent = function(val1, val2) {
+    if (val1 === val2) return false;
+    if (Array.isArray(val1) && Array.isArray(val2)) return this._areArraysDifferent(val1, val2);
+    if (typeof val1 === "object" && typeof val2 === "object") return this._areObjectsDifferent(val1, val2);
+    // NaN !== NaN, but treat as same
+    if (typeof val1 === "number" && isNaN(val1) && typeof val2 === "number" && isNaN(val2)) return false;
+    return true;
+  }
+
+  VisualDifferencer.prototype._areObjectsDifferent = function(obj1, obj2) {
+    if (obj1 === obj2) return false;
+    // allow object-specific equality test
+    if (typeof obj1["equals"] === "function" && typeof obj2["equals"] === "function") {
+      return !obj1["equals"](obj2);
+    }
+    // see if there are any properties on OBJ1 that aren't on OBJ2 or have different values
+    for (var p in obj1) {
+      if (p === "__gohashid") continue;
+      if (this._areValuesDifferent(obj1[p], obj2[p])) return true;
+    }
+    // see if there are any properties on OBJ2 that aren't on OBJ1
+    for (var q in obj2) {
+      if (q === "__gohashid") continue;
+      if (obj1[q] === undefined && obj2[q] !== undefined) return true;
+    }
+    return false;
+  }
+
+  VisualDifferencer.prototype._areArraysDifferent = function(arr1, arr2) {
+    if (arr1 === arr2) return false;
+    if (arr1.length !== arr2.length) return true;
+    for (var i = 0; i < arr1.length; i++) {
+      if (this._areValuesDifferent(arr1[i], arr2[i])) return true;
+    }
+    return false;
+  }
+
+  /**
+  * Stop showing the differences between the two diagrams/models.
+  */
+  VisualDifferencer.prototype.stop = function() {
+    if (this._isRunning) {
+      this._isRunning = false;
+      var diag1 = this._diagram1;
+      var diag2 = this._diagram2;
+      this._setOpacities(diag1, false);
+      this._setOpacities(diag2, false);
+      this._originalOpacities.clear();
+      this._originalToolTips.clear();
+      diag1.removeDiagramListener("ViewportBoundsChanged", this._updateOtherDiagram);
+      diag2.removeDiagramListener("ViewportBoundsChanged", this._updateOtherDiagram);
+    }
+  }
+
+  VisualDifferencer.prototype._setOpacities = function(diag, save) {
+    var omap = this._originalOpacities;
+    var ttmap = this._originalToolTips;
+    diag.skipsUndoManager = true;
+    diag.startTransaction();
+    diag.layers.each(function(l) {
+      if (save) {
+        omap.set(l, l.opacity);
+      } else {
+        l.opacity = omap.get(l);
+      }
+      l.parts.each(function(p) {
+        if (save) {
+          omap.set(p, p.opacity);
+          ttmap.set(p, p.toolTip);
+        } else {
+          p.opacity = omap.get(p);
+          p.toolTip = ttmap.get(p);
+          p.removeAdornment("VisualDifferencer");
+        }
+      })
+    });
+    diag.commitTransaction("");
+    diag.skipsUndoManager = false;
+  }
+
+
+  function init() {
+    var $ = go.GraphObject.make;
+
+        myDiagram1 =
+      $(go.Diagram, "myDiagramDiv",
+          {
+            "undoManager.isEnabled": true,
+            "ModelChanged": function(e) {     // just for demonstration purposes,
+              if (e.isTransactionFinished) {  // show the model data in the page's TextArea
+                document.getElementById("mySavedModel1").textContent = e.model.toJson();
+              }
+            }
+          });
+
+    myDiagram1.nodeTemplate =
+      $(go.Node, "Auto",
+        new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+        $(go.Shape,
+          { fill: "white", portId: "", fromLinkable: true, toLinkable: true },
+          new go.Binding("fill", "color")),
+        $(go.TextBlock,
+          { margin: 8, editable: true },
+          new go.Binding("text").makeTwoWay())
+      );
+
+    myDiagram1.linkTemplate =
+      $(go.Link,
+        {
+          relinkableFrom: true, relinkableTo: true,
+          reshapable: true, resegmentable: true
+        },
+        $(go.Shape),
+        $(go.Shape, { toArrow: "OpenTriangle" })
+      );
+
+
+
+
+
+      var nodeArray =[];
+      var linkArray = [];
+
+
+
+      var arr = {{nodegrp1|safe}};
+<!--      var arr = ['FormCreate', 'AddModule', 'AddModel', 'LoadCRHM', 'Accept', 'UpDateModelMenu', 'UpDateHelpMenu', 'Convert', 'TAnalysis', 'FormActivate', 'FileExistsSp', 'OnHint', 'PrjOpenClick', 'DoPrjOpen', 'ObsCloseClick', '', 'WMMainUpdateDim', 'UpdateDim', 'MacroLoad', 'ClearModules', 'FindFileName', 'OpenObsFile', 'DataReadFile', 'Classmacro', 'review_HRU_OBS', 'addfilter', 'readargs', 'error', 'WMLogException', 'LogError', '~Classfilter', 'Encode24', 'Veto_Freq', 'fixup', 'WMMainUpdateStatus', 'execute', 'doFunctions', 'doFunc', '~Classmacro', 'IndexOf', 'CheckforModule', 'InitModules', 'decl', 'Variation_Skip', 'CheckUnitsString', 'AKAhook', 'Myparser', 'eval_exp', 'get_token', 'eval_exp2', 'eval_exp3', 'eval_exp4', 'eval_exp5', 'eval_exp6', 'atom', 'ParseDivUnitExpr', 'ParseMulUnitExpr', 'ParsePowUnitExpr', 'ParseUnitPhase1', 'ParseUnitPhase2', 'LookupUnit', 'ExpandUnitExpr', 'SetBasicUnit', 'MulUnitK', 'PowUnit', 'quickPow', 'MulUnit', 'DivUnit', 'CheckUnitsObs', 'declobsfunc', 'declgetvar', 'declputvar', 'Label4Click', 'Variation_Decide', 'DeclObsName', 'ClassPar', 'SetSharedParams', 'Change', '~ClassPar', 'Same', 'SqueezeParams', 'PrjExitClick']-->
+      for (var i = 0; i < arr.length; i++) {
+
+        nodeArray.push({
+
+          key: arr[i],
+          text: arr[i].toString(),
+          fill: go.Brush.red,
+          // linkKeyProperty: arr[i]
+        });
+
+      }
+
+
+
+
+<!--        var tuple =[];-->
+        var edgegrp1= {};
+        edgegrp1= {{edgegrp1|tojson|safe}};
+        console.log({{edgegrp2|tojson|safe}});
+
+
+<!--        console.log(tuple);-->
+      var arr1 = {'FormCreate' : 'FormCreate', 'FormCreate': 'AddModule', 'FormCreate': 'AddModel', 'FormCreate': 'LoadCRHM', 'FormCreate': 'Accept', 'FormCreate': 'UpDateModelMenu', 'UpDateModelMenu':'UpDateHelpMenu' , 'DataReadFile': 'Classmacro','DataReadFile': 'review_HRU_OBS', 'DataReadFile': 'addfilter', 'DataReadFile': 'Encode24', 'DataReadFile': 'Veto_Freq', 'DataReadFile': 'fixup', 'DataReadFile': 'WMMainUpdateStatus', 'DataReadFile': 'execute', 'DataReadFile': '~Classmacro', 'addfilter': 'readargs', 'addfilter': '~Classfilter', 'readargs': 'error', 'readargs': 'review_HRU_OBS', 'error': 'WMLogException', 'WMLogException': 'LogError'}
+
+<!--      console.log(iterator.toString());-->
+
+<!--      var from = Object.values(tuple);-->
+<!--      console.log(from);-->
+<!--      var to = Object.values(tuple);-->
+<!--      console.log(to);-->
+
+
+<!--    console.log(edges)-->
+<!--    const edges =edge.toString().replace(/[^a-zA-Z0-9]/g,' ')-->
+
+<!--    console.log(edges);-->
+<!--    console.log(edges.toString())-->
+
+<!--    console.log(edges.toString().replace(/[^a-zA-Z0-9]/g,','));-->
+
+
+
+<!--    console.log(Object.keys(edges));-->
+<!--    console.log(Object.values(edges));-->
+
+
+      for (i in edgegrp1) {
+
+
+
+            var words = edgegrp1[i].split(" ");
+             var from = words[0];
+             console.log(from)
+             var to =words[2]
+
+
+<!--           var from = edges[i].split(",").slice(1);-->
+<!--           var to = edges[i].split(",").slice(3);-->
+
+
+
+            linkArray.push(
+                {key : i,from: from, to: to}
+
+            );
+
+        }
+
+
+
+<!--      for (var i in tuple) {-->
+
+<!--        linkArray.push(-->
+<!--          { from: i, to: tuple[i]}-->
+<!--        );-->
+
+<!--        }-->
+
+      myDiagram1.model = new go.GraphLinksModel(nodeArray, linkArray);
+      myDiagram1.model.linkKeyProperty ="key";
+<!--      myDiagram1.model .nodeKeyProperty =arr1;-->
+
+
+
+<!--myDiagram2 =-->
+<!--      $(go.Diagram, "myDiagramDiv2",-->
+<!--              {-->
+
+<!--            initialAutoScale: go.Diagram.UniformToFill,-->
+
+<!--            layout: $(go.CircularLayout),-->
+<!--            "undoManager.isEnabled": true,-->
+// <!--            "ModelChanged": function(e) {     // just for demonstration purposes,-->
+// <!--              if (e.isTransactionFinished) {  // show the model data in the page's TextArea-->
+// <!--                document.getElementById("mySavedModel2").textContent = e.model.toJson();-->
+// <!--              }-->
+// <!--            }-->
+// <!--          });-->
+
+    myDiagram2 =
+      $(go.Diagram, "myDiagramDiv2",
+        {
+          nodeTemplateMap: myDiagram1.nodeTemplateMap,
+          groupTemplateMap: myDiagram1.groupTemplateMap,
+          linkTemplateMap: myDiagram1.linkTemplateMap,
+          "InitialLayoutCompleted": function(e) {
+            myDiagram1.position = e.diagram.position;
+            myDiagram1.scale = e.diagram.scale;
+          },
+          "undoManager.isEnabled": true,
+          "ModelChanged": function(e) {     // just for demonstration purposes,
+            if (e.isTransactionFinished) {  // show the model data in the page's TextArea
+              document.getElementById("mySavedModel2").textContent = e.model.toJson();
+            }
+          }
+        });
+
+<!--    myDiagram2.model = $(go.GraphLinksModel,-->
+<!--      {-->
+<!--        linkKeyProperty: "key",-->
+<!--        nodeDataArray: [-->
+<!--          { key: 1, text: "Alpha", color: "gray" },-->
+<!--          { key: 2, text: "Beta", color: "orange" },-->
+<!--          { key: 3, text: "Gamma", color: "lightgreen" },-->
+<!--          { key: 6, text: "Omega", color: "yellow" }-->
+<!--        ],-->
+<!--        linkDataArray: [-->
+<!--          { key: 1, from: 1, to: 2 },-->
+<!--          { key: 2, from: 1, to: 3 },-->
+<!--          { key: 3, from: 2, to: 2 },-->
+<!--          { key: 6, from: 3, to: 6 }-->
+<!--        ]-->
+<!--      });-->
+
+var nodeArray2 =[];
+      var linkArray2 = [];
+
+
+
+      var array = {{nodegrp2|safe}};
+      console.log(array.toString());
+<!--      var arr = ['FormCreate', 'AddModule', 'AddModel', 'LoadCRHM', 'Accept', 'UpDateModelMenu', 'UpDateHelpMenu', 'Convert', 'TAnalysis', 'FormActivate', 'FileExistsSp', 'OnHint', 'PrjOpenClick', 'DoPrjOpen', 'ObsCloseClick', '', 'WMMainUpdateDim', 'UpdateDim', 'MacroLoad', 'ClearModules', 'FindFileName', 'OpenObsFile', 'DataReadFile', 'Classmacro', 'review_HRU_OBS', 'addfilter', 'readargs', 'error', 'WMLogException', 'LogError', '~Classfilter', 'Encode24', 'Veto_Freq', 'fixup', 'WMMainUpdateStatus', 'execute', 'doFunctions', 'doFunc', '~Classmacro', 'IndexOf', 'CheckforModule', 'InitModules', 'decl', 'Variation_Skip', 'CheckUnitsString', 'AKAhook', 'Myparser', 'eval_exp', 'get_token', 'eval_exp2', 'eval_exp3', 'eval_exp4', 'eval_exp5', 'eval_exp6', 'atom', 'ParseDivUnitExpr', 'ParseMulUnitExpr', 'ParsePowUnitExpr', 'ParseUnitPhase1', 'ParseUnitPhase2', 'LookupUnit', 'ExpandUnitExpr', 'SetBasicUnit', 'MulUnitK', 'PowUnit', 'quickPow', 'MulUnit', 'DivUnit', 'CheckUnitsObs', 'declobsfunc', 'declgetvar', 'declputvar', 'Label4Click', 'Variation_Decide', 'DeclObsName', 'ClassPar', 'SetSharedParams', 'Change', '~ClassPar', 'Same', 'SqueezeParams', 'PrjExitClick']-->
+      for (var i in array) {
+<!--      console.log(array[i]);-->
+
+        nodeArray2.push({
+
+          key: array[i],
+          text: array[i].toString(),
+<!--          fill: go.Brush.randomColor(),-->
+
+        });
+
+      }
+
+
+
+
+<!--        var tuple =[];-->
+        var edgegrp2= {};
+        edgegrp2= {{edgegrp2|tojson|safe}};
+<!--        console.log({{edgegrp2|tojson|safe}});-->
+
+
+<!--        console.log(tuple);-->
+<!--      var arr1 = {'FormCreate' : 'FormCreate', 'FormCreate': 'AddModule', 'FormCreate': 'AddModel', 'FormCreate': 'LoadCRHM', 'FormCreate': 'Accept', 'FormCreate': 'UpDateModelMenu', 'UpDateModelMenu':'UpDateHelpMenu' , 'DataReadFile': 'Classmacro','DataReadFile': 'review_HRU_OBS', 'DataReadFile': 'addfilter', 'DataReadFile': 'Encode24', 'DataReadFile': 'Veto_Freq', 'DataReadFile': 'fixup', 'DataReadFile': 'WMMainUpdateStatus', 'DataReadFile': 'execute', 'DataReadFile': '~Classmacro', 'addfilter': 'readargs', 'addfilter': '~Classfilter', 'readargs': 'error', 'readargs': 'review_HRU_OBS', 'error': 'WMLogException', 'WMLogException': 'LogError'}-->
+
+<!--      console.log(iterator.toString());-->
+
+<!--      var from = Object.values(tuple);-->
+<!--      console.log(from);-->
+<!--      var to = Object.values(tuple);-->
+<!--      console.log(to);-->
+
+
+<!--    console.log(edges)-->
+<!--    const edges =edge.toString().replace(/[^a-zA-Z0-9]/g,' ')-->
+
+<!--    console.log(edges);-->
+<!--    console.log(edges.toString())-->
+
+<!--    console.log(edges.toString().replace(/[^a-zA-Z0-9]/g,','));-->
+
+
+
+<!--    console.log(Object.keys(edges));-->
+<!--    console.log(Object.values(edges));-->
+
+
+      for (i in edgegrp2) {
+
+<!--           var from = edges[i].split(",").slice(1);-->
+<!--           var to = edges[i].split(",").slice(3);-->
+
+             var words = edgegrp2[i].split(" ");
+             var from = words[0];
+             var to =words[2]
+
+
+            linkArray2.push(
+              {key : i, from: from, to: to}
+
+            );
+
+        }
+
+
+
+<!--      for (var i in tuple) {-->
+
+<!--        linkArray.push(-->
+<!--          { from: i, to: tuple[i]}-->
+<!--        );-->
+
+<!--        }-->
+       console.log(linkArray2)
+
+      myDiagram2.model = new go.GraphLinksModel(nodeArray2, linkArray2);
+      myDiagram2.model.linkKeyProperty = "key";
+<!--      myDiagram1.model .nodeKeyProperty =arr1;-->
+
+
+
+
+    myDiff = new VisualDifferencer(myDiagram1, myDiagram2);
+  }
+
+
+  // Exchange the two Diagrams' DIVs zIndex.  Only the front-most DIV/Diagram will receive mouse input.
+  function swapDiagramsZOrder() {
+    var div1 = myDiagram1.div;
+    var div2 = myDiagram2.div;
+    var temp = div1.style.zIndex;
+    div1.style.zIndex = div2.style.zIndex;
+    div2.style.zIndex = temp;
+  }
+
+
+  // Show one Diagram or both, depending on radio button value.
+  function toggleDiagram(diagnum) {
+    var div1 = myDiagram1.div;
+    var div2 = myDiagram2.div;
+    div1.style.display = (diagnum == 1 || diagnum == 3) ? "inline" : "none";
+    div2.style.display = (diagnum == 2 || diagnum == 3) ? "inline" : "none";
+  }
+
+  // Called when a "showDiagramRadio" button changes.
+  function showDiagrams() {
+    var radio = document.getElementsByName("showDiagramsRadio");
+    for (var i = 0; i < radio.length; i++) {
+      if (radio[i].checked) {
+        toggleDiagram(radio[i].value);
+        break;
+      }
+    }
+  }
+</script>
+</head>
+<body onload="init()">
+  This shows two Diagrams with separate Models in two separate but completely overlapping HTML DIV elements.
+  This assumes that Diagram 2 is showing a copy of the model of Diagram 1 after some changes.
+  <div style="position: relative; width: 100%; height: 500px">
+    <div id="myDiagramDiv" style="position: absolute; top: 0; left: 0; width: 100%; height:100%; z-index: 1; border: solid 1px blue"></div>
+    <div id="myDiagramDiv2" style="position: absolute; top: 0; left: 0; width: 100%; height:100%; z-index: 2; border: solid 1px green"></div>
+  </div>
+  <p>
+    Show:
+    <input name="showDiagramsRadio" type="radio" onchange="showDiagrams()" value="1" />Diagram 1
+    <input name="showDiagramsRadio" type="radio" onchange="showDiagrams()" value="2" />Diagram 2
+    <input name="showDiagramsRadio" type="radio" onchange="showDiagrams()" value="3" checked="checked" />Both Diagrams
+    <button onclick="swapDiagramsZOrder()">Swap Diagrams zIndex</button>
+  </p>
+  <p>
+    You can see differences between the two models by clicking "Show Diff".
+    Nodes or Links added in Diagram 2 are highlighted in yellow.
+    Nodes or Links removed in Diagram 2 are highlighted in red.
+    Modified Nodes or Links are highlighted in cyan. <br />
+    <button onclick="myDiff.start()">Show Diff</button>
+    <button onclick="myDiff.stop()">Stop Diff</button>
+  </p>
+  <p>
+    Current state of Model 1:
+    <textarea id="mySavedModel1" style="width:100%;height:250px"></textarea>
+  </p>
+  <p>
+    Current state of Model 2:
+    <textarea id="mySavedModel2" style="width:100%;height:250px"></textarea>
+  </p>
+</body>
+</html>
