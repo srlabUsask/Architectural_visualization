@@ -2,18 +2,24 @@
 <html>
 
 <head>
-  <meta charset="UTF-8">
-  <title>Friend Wheel</title>
-  <meta name="description"
-    content="Show the relationships between people using a friend wheel diagram, implemented using circular layout." />
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Copyright 1998-2020 by Northwoods Software Corporation. -->
-
-  <script src="{{ url_for('static', filename='release/go.js')}}"></script>
-  <script id="code">
-
-    function VisualDifferencer(diag1, diag2) {
-    if (!(diag1 instanceof go.Diagram) || !(diag2 instanceof go.Diagram)) throw new Error("VisualDifferencer needs two Diagrams");
+    <meta charset="UTF-8">
+    <title>Architectural Visualization</title>
+    <meta content="Show the relationships between people using a friend wheel diagram, implemented using circular layout."
+          name="description"/>
+<!--    <meta content="width=device-width, initial-scale=1" name="viewport">-->
+    <!-- Copyright 1998-2020 by Northwoods Software Corporation. -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <!-- <script src="{{ url_for('static', filename='release/go.js')}}"></script> -->
+    <link rel='stylesheet' href='ZoomSlider.css' />
+    <script src="ZoomSlider.js"></script>
+    <script src="https://unpkg.com/gojs/release/go.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+    <script src="https://cdn.anychart.com/releases/8.0.0/js/anychart-base.min.js"></script>
+    <script id="code">
+    function VisualMatched(diag1, diag2) {
+    // if (!(diag1 instanceof go.Diagram) || !(diag2 instanceof go.Diagram)) throw new Error("VisualDifferencer needs two Diagrams");
     this._diagram1 = diag1;
     this._diagram2 = diag2;
     this._originalOpacities = new go.Map();
@@ -24,19 +30,19 @@
     this._updateOtherDiagram = function(e) {
       var diag = e.diagram;
       var other = (diag === self._diagram1) ? self._diagram2 : self._diagram1;
-      other.scale = diag.scale;
-      other.position = diag.position;
+      // other.scale = diag.scale;
+      // other.position = diag.position;
     };
 
     var $ = go.GraphObject.make;
     this.RemovedAdornmentTemplate =
       $(go.Adornment, "Auto",
-        $(go.Shape, { fill: null, stroke: "red", strokeWidth: 8 }),
+        $(go.Shape, { fill: null, stroke: "red", strokeWidth: 5 }),
         $(go.Placeholder, { margin: 8 })
       );
     this.RemovedLinkAdornmentTemplate =
       $(go.Adornment, "Link",
-        $(go.Shape, { isPanelMain: true, stroke: "red", strokeWidth: 8 }),
+        $(go.Shape, { isPanelMain: true, stroke: "red", strokeWidth: 5 }),
       );
     this.RemovedToolTip =
       $(go.Adornment, "Auto",
@@ -63,12 +69,359 @@
 
     this.ChangedAdornmentTemplate =
       $(go.Adornment, "Auto",
-        $(go.Shape, { fill: null, stroke: "cyan", strokeWidth: 8 }),
+        $(go.Shape, { fill: null, stroke: "transparent", strokeWidth: 0 }),
         $(go.Placeholder, { margin: 8 })
       );
     this.ChangedLinkAdornmentTemplate =
       $(go.Adornment, "Link",
-        $(go.Shape, { isPanelMain: true, stroke: "cyan", strokeWidth: 8 }),
+        $(go.Shape, { isPanelMain: true, stroke: "transparent", strokeWidth: 0 }),
+      );
+    this.ChangedToolTip =
+      $(go.Adornment, "Auto",
+        $(go.Shape, { fill: "transparent", strokeWidth: 0 }),
+        $(go.TextBlock, { margin: 5 },
+          new go.Binding("text", "", this._propertiesList))
+      );
+  }
+
+  /**
+  * Start showing the differences between the two diagrams/models.
+  */
+  VisualMatched.prototype.start = function() {
+    var diag1 = this._diagram1;
+    var diag2 = this._diagram2;
+
+    var self = this;
+
+    diag1.skipsUndoManager = true;
+    // diag1.animationManager=true;
+    diag1.startTransaction();
+    diag2.skipsUndoManager = true;
+    // diag2.animationManager=true;
+    diag2.startTransaction();
+
+    if (!this._isRunning) {
+      this._isRunning = true;
+      diag1.addDiagramListener("ViewportBoundsChanged", this._updateOtherDiagram);
+      diag2.addDiagramListener("ViewportBoundsChanged", this._updateOtherDiagram);
+      this._setOpacities(diag1, true);
+      this._setOpacities(diag2, true);
+      diag2.scale = diag1.scale;
+      diag2.position = diag1.position;
+    }
+
+    // set Layer.opacity
+    diag1.layers.each(function(l) { l.opacity = 0.75; });
+    diag2.layers.each(function(l) { l.opacity = 0.75; });
+
+    // set Part.opacity depending on whether there are differences
+    var a1 = diag1.model.nodeDataArray;
+    a1.forEach(function(d1) {
+      var k = diag1.model.getKeyForNodeData(d1);
+      var n1 = diag1.findNodeForData(d1);
+      // assume both models use the same keys
+      var d2 = diag2.model.findNodeDataForKey(k);
+      var n2 = diag2.findNodeForData(d2);
+      if (n2 !== null) {
+        // self._diffParts(n1, n2);
+        self._SameParts(n1,n2);
+      } else {
+        self._onlyPart(n1);
+      }
+    });
+    if (diag1.model instanceof go.GraphLinksModel) {
+      a1 = diag1.model.linkDataArray;
+      // if (a1.length > 0 && diag1.model.linkKeyProperty === "") throw new Error("Diagram1's model does not have linkKeyProperty set to a non-empty string");
+      a1.forEach(function(d1) {
+        var k = diag1.model.getKeyForLinkData(d1);
+        var l1 = diag1.findLinkForData(d1);
+        // assume both models use the same keys
+        var d2 = diag2.model.findLinkDataForKey(k);
+        var l2 = diag2.findLinkForData(d2);
+        if (l2 !== null) {
+          self._SameParts(l1,l2);
+        } else {
+          self._onlyPart(l1);
+        }
+      });
+    }
+
+    var a2 = diag2.model.nodeDataArray;
+    a2.forEach(function(d2) {
+      var k = diag2.model.getKeyForNodeData(d2);
+      var n2 = diag2.findNodeForData(d2);
+      // assume both models use the same keys
+      var d1 = diag1.model.findNodeDataForKey(k);
+      var n1 = diag1.findNodeForData(d1);
+      if (n1 !== null) {
+        self._SameParts(n1,n2);
+      } else {
+        self._onlyPart(n2);
+      }
+    });
+    if (diag2.model instanceof go.GraphLinksModel) {
+      a2 = diag2.model.linkDataArray;
+      if (a2.length > 0 && diag2.model.linkKeyProperty === "") throw new Error("Diagram2's model does not have linkKeyProperty set to a non-empty string");
+      a2.forEach(function(d2) {
+        var k = diag2.model.getKeyForLinkData(d2);
+        var l2 = diag2.findLinkForData(d2);
+        // assume both models use the same keys
+        var d1 = diag1.model.findLinkDataForKey(k);
+        var l1 = diag1.findLinkForData(d1);
+        if (l1 !== null) {
+          self._SameParts(l1,l2);
+        } else {
+          self._onlyPart(l2);
+        }
+      });
+    }
+
+    diag1.commitTransaction();
+    diag1.skipsUndoManager = false;
+    // diag1.animationManager=false;
+    diag2.commitTransaction();
+    diag2.skipsUndoManager = false;
+  }
+
+  VisualMatched.prototype._propertiesList = function(data) {
+    var str = "";
+    for (var p in data) {
+      if (p === "__gohashid") continue;
+      if (str !== "") str += "\n";
+      str += p + ": " + data[p].toString();
+    }
+    return str;
+  }
+
+  VisualMatched.prototype._addAdornment = function(part, adtempl) {
+    var ad = adtempl.copy();
+    if (part instanceof go.Link && part.path !== null) {
+      ad.adornedObject = part.path;
+      ad.location = part.path.getDocumentPoint(go.Spot.TopLeft);
+    } else {
+      ad.adornedObject = part;
+      ad.location = part.position;
+    }
+    //ad.placeholder.desiredSize = part.actualBounds.size;
+    part.addAdornment("VisualDifferencer", ad);
+  }
+
+  VisualMatched.prototype._onlyPart = function(part) {
+    part.opacity = 0.15;
+    if (part.diagram === this._diagram1) {
+      part.toolTip = this.RemovedToolTip;
+      if (part instanceof go.Link) {
+        // this._addAdornment(part, this.RemovedLinkAdornmentTemplate);
+      } else {
+        // this._addAdornment(part, this.RemovedAdornmentTemplate);
+      }
+    } else {
+      part.toolTip = this.AddedToolTip;
+      if (part instanceof go.Link) {
+        // this._addAdornment(part, this.AddedLinkAdornmentTemplate);
+      } else {
+        // this._addAdornment(part, this.AddedAdornmentTemplate);
+      }
+    }
+  }
+
+  VisualMatched.prototype._SameParts = function(part1, part2) {
+    // only considering differences in model data
+    if (this._areValuesDifferent(part1.data, part2.data)) {
+      // part1.opacity = 0.15;
+      // part2.opacity = 0.15;
+      // part1.toolTip = this.ChangedToolTip;
+      // part2.toolTip = this.ChangedToolTip;
+       if (part1 instanceof go.Link) {
+         this._addAdornment(part1, this.ChangedLinkAdornmentTemplate);
+       } else {
+         this._addAdornment(part1, this.ChangedAdornmentTemplate);
+       }
+       if (part2 instanceof go.Link) {
+         this._addAdornment(part2, this.ChangedLinkAdornmentTemplate);
+       } else {
+         this._addAdornment(part2, this.ChangedAdornmentTemplate);
+       }
+    } else {  // if they're the same, de-emphasize them
+
+      part1.opacity = 1.0;
+      part2.opacity = 1.0;
+      // part1.toolTip = part2.toolTip = true;
+
+      part1.toolTip = this.ChangedToolTip;
+      part2.toolTip = this.ChangedToolTip;
+      // part1.removeAdornment("VisualDifferencer");
+      // part2.removeAdornment("VisualDifferencer");
+
+
+    }
+  }
+
+  // VisualMatched.prototype._diffParts = function(part1, part2) {
+  //   // only considering differences in model data
+  //   if (this._areValuesDifferent(part1.data, part2.data)) {
+  //     part1.opacity = 1.0;
+  //     part2.opacity = 1.0;
+  //     part1.toolTip = this.ChangedToolTip;
+  //     part2.toolTip = this.ChangedToolTip;
+  //      if (part1 instanceof go.Link) {
+  //        this._addAdornment(part1, this.ChangedLinkAdornmentTemplate);
+  //      } else {
+  //        this._addAdornment(part1, this.ChangedAdornmentTemplate);
+  //      }
+  //      if (part2 instanceof go.Link) {
+  //        this._addAdornment(part2, this.ChangedLinkAdornmentTemplate);
+  //      } else {
+  //        this._addAdornment(part2, this.ChangedAdornmentTemplate);
+  //      }
+  //   } else {  // if they're the same, de-emphasize them
+  //     part1.opacity = 0.15;
+  //     part2.opacity = 0.15;
+  //     part1.toolTip = part2.toolTip = null;
+  //     part1.removeAdornment("VisualDifferencer");
+  //     part2.removeAdornment("VisualDifferencer");
+  //   }
+  // }
+
+  VisualMatched.prototype._areValuesDifferent = function(val1, val2) {
+    if (val1 === val2) return false;
+    if (Array.isArray(val1) && Array.isArray(val2)) return this._areArraysDifferent(val1, val2);
+    if (typeof val1 === "object" && typeof val2 === "object") return this._areObjectsDifferent(val1, val2);
+    // NaN !== NaN, but treat as same
+    if (typeof val1 === "number" && isNaN(val1) && typeof val2 === "number" && isNaN(val2)) return false;
+    return true;
+  }
+
+  VisualMatched.prototype._areObjectsDifferent = function(obj1, obj2) {
+    if (obj1 === obj2) return false;
+    // allow object-specific equality test
+    if (typeof obj1["equals"] === "function" && typeof obj2["equals"] === "function") {
+      return !obj1["equals"](obj2);
+    }
+    // see if there are any properties on OBJ1 that aren't on OBJ2 or have different values
+    for (var p in obj1) {
+      if (p === "__gohashid") continue;
+      if (this._areValuesDifferent(obj1[p], obj2[p])) return true;
+    }
+    // see if there are any properties on OBJ2 that aren't on OBJ1
+    for (var q in obj2) {
+      if (q === "__gohashid") continue;
+      if (obj1[q] === undefined && obj2[q] !== undefined) return true;
+    }
+    return false;
+  }
+
+  VisualMatched.prototype._areArraysDifferent = function(arr1, arr2) {
+    if (arr1 === arr2) return false;
+    if (arr1.length !== arr2.length) return true;
+    for (var i = 0; i < arr1.length; i++) {
+      if (this._areValuesDifferent(arr1[i], arr2[i])) return true;
+    }
+    return false;
+  }
+
+  /**
+  * Stop showing the differences between the two diagrams/models.
+  */
+  VisualMatched.prototype.stop = function() {
+    if (this._isRunning) {
+      this._isRunning = false;
+      var diag1 = this._diagram1;
+      var diag2 = this._diagram2;
+      this._setOpacities(diag1, false);
+      this._setOpacities(diag2, false);
+      this._originalOpacities.clear();
+      this._originalToolTips.clear();
+      diag1.removeDiagramListener("ViewportBoundsChanged", this._updateOtherDiagram);
+      diag2.removeDiagramListener("ViewportBoundsChanged", this._updateOtherDiagram);
+    }
+  }
+
+  VisualMatched.prototype._setOpacities = function(diag, save) {
+    var omap = this._originalOpacities;
+    var ttmap = this._originalToolTips;
+    diag.skipsUndoManager = true;
+    // diag.animationManager=true;
+    diag.startTransaction();
+    diag.layers.each(function(l) {
+      if (save) {
+        omap.set(l, l.opacity);
+      } else {
+        l.opacity = omap.get(l);
+      }
+      l.parts.each(function(p) {
+        if (save) {
+          omap.set(p, p.opacity);
+          ttmap.set(p, p.toolTip);
+        } else {
+          p.opacity = omap.get(p);
+           p.toolTip = ttmap.get(p);
+          p.removeAdornment("VisualDifferencer");
+        }
+      })
+    });
+    diag.commitTransaction("");
+    diag.skipsUndoManager = false;
+  }
+  //end
+
+    function VisualDifferencer(diag1, diag2) {
+    if (!(diag1 instanceof go.Diagram) || !(diag2 instanceof go.Diagram)) throw new Error("VisualDifferencer needs two Diagrams");
+    this._diagram1 = diag1;
+    this._diagram2 = diag2;
+    this._originalOpacities = new go.Map();
+    this._originalToolTips = new go.Map();
+    this._isRunning = false;
+
+    var self = this;
+    this._updateOtherDiagram = function(e) {
+      var diag = e.diagram;
+      var other = (diag === self._diagram1) ? self._diagram2 : self._diagram1;
+      // other.scale = diag.scale;
+      // other.position = diag.position;
+    };
+
+    var $ = go.GraphObject.make;
+    this.RemovedAdornmentTemplate =
+      $(go.Adornment, "Auto",
+        $(go.Shape, { fill: null, stroke: "red", strokeWidth: 5 }),
+        $(go.Placeholder, { margin: 8 })
+      );
+    this.RemovedLinkAdornmentTemplate =
+      $(go.Adornment, "Link",
+        $(go.Shape, { isPanelMain: true, stroke: "red", strokeWidth: 5 }),
+      );
+    this.RemovedToolTip =
+      $(go.Adornment, "Auto",
+        $(go.Shape, { fill: "red", strokeWidth: 0 }),
+        $(go.TextBlock, { margin: 5 },
+          new go.Binding("text", "", this._propertiesList))
+      );
+
+    this.AddedAdornmentTemplate =
+      $(go.Adornment, "Auto",
+        $(go.Shape, { fill: null, stroke: "yellow", strokeWidth: 8 }),
+        $(go.Placeholder, { margin: 8 })
+      );
+    this.AddedLinkAdornmentTemplate =
+      $(go.Adornment, "Link",
+        $(go.Shape, { isPanelMain: true, stroke: "yellow", strokeWidth: 8 }),
+      );
+    this.AddedToolTip =
+      $(go.Adornment, "Auto",
+        $(go.Shape, { fill: "yellow", strokeWidth: 0 }),
+        $(go.TextBlock, { margin: 5 },
+          new go.Binding("text", "", this._propertiesList))
+      );
+
+    this.ChangedAdornmentTemplate =
+      $(go.Adornment, "Auto",
+        $(go.Shape, { fill: null, stroke: "cyan", strokeWidth: 0 }),
+        $(go.Placeholder, { margin: 8 })
+      );
+    this.ChangedLinkAdornmentTemplate =
+      $(go.Adornment, "Link",
+        $(go.Shape, { isPanelMain: true, stroke: "cyan", strokeWidth: 0 }),
       );
     this.ChangedToolTip =
       $(go.Adornment, "Auto",
@@ -88,8 +441,10 @@
     var self = this;
 
     diag1.skipsUndoManager = true;
+    // diag1.animationManager=true;
     diag1.startTransaction();
     diag2.skipsUndoManager = true;
+    // diag2.animationManager=true;
     diag2.startTransaction();
 
     if (!this._isRunning) {
@@ -116,8 +471,9 @@
       var n2 = diag2.findNodeForData(d2);
       if (n2 !== null) {
         self._diffParts(n1, n2);
+        //   self._SameParts(n1,n2);
       } else {
-        self._onlyPart(n1);
+        // self._onlyPart(n1);
       }
     });
     if (diag1.model instanceof go.GraphLinksModel) {
@@ -130,9 +486,9 @@
         var d2 = diag2.model.findLinkDataForKey(k);
         var l2 = diag2.findLinkForData(d2);
         if (l2 !== null) {
-          self._diffParts(l1, l2);
+          self._diffParts(l1,l2);
         } else {
-          self._onlyPart(l1);
+          // self._onlyPart(l1);
         }
       });
     }
@@ -145,9 +501,9 @@
       var d1 = diag1.model.findNodeDataForKey(k);
       var n1 = diag1.findNodeForData(d1);
       if (n1 !== null) {
-        self._diffParts(n1, n2);
+        self._diffParts(n1,n2);
       } else {
-        self._onlyPart(n2);
+        // self._onlyPart(n2);
       }
     });
     if (diag2.model instanceof go.GraphLinksModel) {
@@ -160,9 +516,9 @@
         var d1 = diag1.model.findLinkDataForKey(k);
         var l1 = diag1.findLinkForData(d1);
         if (l1 !== null) {
-          self._diffParts(l1, l2);
+          self._diffParts(l1,l2);
         } else {
-          self._onlyPart(l2);
+          // self._onlyPart(l2);
         }
       });
     }
@@ -198,20 +554,49 @@
 
   VisualDifferencer.prototype._onlyPart = function(part) {
     part.opacity = 1.0;
-    if (part.diagram === this._diagram1) {
-      part.toolTip = this.RemovedToolTip;
-      if (part instanceof go.Link) {
-        this._addAdornment(part, this.RemovedLinkAdornmentTemplate);
-      } else {
-        this._addAdornment(part, this.RemovedAdornmentTemplate);
-      }
-    } else {
-      part.toolTip = this.AddedToolTip;
-      if (part instanceof go.Link) {
-        this._addAdornment(part, this.AddedLinkAdornmentTemplate);
-      } else {
-        this._addAdornment(part, this.AddedAdornmentTemplate);
-      }
+    // if (part.diagram === this._diagram1) {
+      // part.toolTip = this.RemovedToolTip;
+    //   if (part instanceof go.Link) {
+    //     // this._addAdornment(part, this.RemovedLinkAdornmentTemplate);
+    //   } else {
+    //     // this._addAdornment(part, this.RemovedAdornmentTemplate);
+    //   }
+    // } else {
+    //   part.toolTip = this.AddedToolTip;
+    //   if (part instanceof go.Link) {
+    //     // this._addAdornment(part, this.AddedLinkAdornmentTemplate);
+    //   } else {
+    //     // this._addAdornment(part, this.AddedAdornmentTemplate);
+    //   }
+    // }
+  }
+
+  VisualDifferencer.prototype._SameParts = function(part1, part2) {
+    // only considering differences in model data
+    if (this._areValuesDifferent(part1.data, part2.data)) {
+      // part1.opacity = 0.15;
+      // part2.opacity = 0.15;
+      // part1.toolTip = this.ChangedToolTip;
+      // part2.toolTip = this.ChangedToolTip;
+       if (part1 instanceof go.Link) {
+         this._addAdornment(part1, this.ChangedLinkAdornmentTemplate);
+       } else {
+         this._addAdornment(part1, this.ChangedAdornmentTemplate);
+       }
+       if (part2 instanceof go.Link) {
+         this._addAdornment(part2, this.ChangedLinkAdornmentTemplate);
+       } else {
+         this._addAdornment(part2, this.ChangedAdornmentTemplate);
+       }
+    } else {  // if they're the same, de-emphasize them
+
+      part1.opacity = 1.0;
+      part2.opacity = 1.0;
+      part1.toolTip = part2.toolTip = true;
+      // part1.removeAdornment("VisualDifferencer");
+      // part2.removeAdornment("VisualDifferencer");
+
+
     }
   }
 
@@ -222,16 +607,16 @@
       part2.opacity = 1.0;
       part1.toolTip = this.ChangedToolTip;
       part2.toolTip = this.ChangedToolTip;
-      // if (part1 instanceof go.Link) {
-      //   this._addAdornment(part1, this.ChangedLinkAdornmentTemplate);
-      // } else {
-      //   this._addAdornment(part1, this.ChangedAdornmentTemplate);
-      // }
-      // if (part2 instanceof go.Link) {
-      //   this._addAdornment(part2, this.ChangedLinkAdornmentTemplate);
-      // } else {
-      //   this._addAdornment(part2, this.ChangedAdornmentTemplate);
-      // }
+       // if (part1 instanceof go.Link) {
+       //   this._addAdornment(part1, this.ChangedLinkAdornmentTemplate);
+       // } else {
+       //   this._addAdornment(part1, this.ChangedAdornmentTemplate);
+       // }
+       // if (part2 instanceof go.Link) {
+       //   this._addAdornment(part2, this.ChangedLinkAdornmentTemplate);
+       // } else {
+       //   this._addAdornment(part2, this.ChangedAdornmentTemplate);
+       // }
     } else {  // if they're the same, de-emphasize them
       part1.opacity = 0.15;
       part2.opacity = 0.15;
@@ -309,10 +694,10 @@
       l.parts.each(function(p) {
         if (save) {
           omap.set(p, p.opacity);
-          // ttmap.set(p, p.toolTip);
+          ttmap.set(p, p.toolTip);
         } else {
           p.opacity = omap.get(p);
-          // p.toolTip = ttmap.get(p);
+           p.toolTip = ttmap.get(p);
           p.removeAdornment("VisualDifferencer");
         }
       })
@@ -378,7 +763,7 @@
       if (window.goSamples) goSamples();  // init for these samples -- you don't need to call this
       var $ = go.GraphObject.make;  // for conciseness in defining templates
 
-      myDiagram2 =
+      myDiagram =
         $(go.Diagram, "myDiagramDiv", // must be the ID or reference to div
           {
             initialAutoScale: go.Diagram.Uniform,
@@ -395,11 +780,14 @@
                   sorting: go.CircularLayout.Optimized
                 }),
             "undoManager.isEnabled": true,
+              // "animationManager.isInitial": false,
+              // "animationManager.isEnabled" : true,
           "ModelChanged": function(e) {     // just for demonstration purposes,
             if (e.isTransactionFinished) {  // show the model data in the page's TextArea
               document.getElementById("mySavedModel1").textContent = e.model.toJson();
             }
-          },
+          }
+          ,
             click: function (e) {  // background click clears any remaining highlighteds
               e.diagram.startTransaction("clear");
               e.diagram.clearHighlighteds();
@@ -407,7 +795,7 @@
             }
           });
 
-        myDiagram =
+        myDiagram2 =
         $(go.Diagram, "myDiagramDiv2", // must be the ID or reference to div
           {
             initialAutoScale: go.Diagram.Uniform,
@@ -424,11 +812,13 @@
                   sorting: go.CircularLayout.Optimized
                 }),
             "undoManager.isEnabled": true,
+              // "animationManager.isInitial": false,
           "ModelChanged": function(e) {     // just for demonstration purposes,
             if (e.isTransactionFinished) {  // show the model data in the page's TextArea
               document.getElementById("mySavedModel2").textContent = e.model.toJson();
             }
-          },
+          }
+          ,
 
             click: function (e) {  // background click clears any remaining highlighteds
               e.diagram.startTransaction("clear");
@@ -457,11 +847,12 @@
               if (tb !== null) tb.stroke = "black";
             }
           },
-          new go.Binding("text", "text"),  // for sorting the nodes
-          $(go.Shape, "Ellipse",
+
+          new go.Binding("text", "key"),  // for sorting the nodes
+          $(go.Shape, "RoundedRectangle",
             {
               name: "SHAPE",
-              fill: "#057c6e",  // default value, but also data-bound
+              fill: "#fba69d",  // default value, but also data-bound
               stroke: "transparent",  // modified by highlighting
               strokeWidth: 2,
               desiredSize: new go.Size(20, 20),
@@ -473,7 +864,7 @@
               .ofObject()),
           $(go.TextBlock,
             { name: "TEXTBLOCK" },  // for search
-            new go.Binding("text", "text"))
+            new go.Binding("text", "key"))
         );
 
         myDiagram2.nodeTemplate =
@@ -495,11 +886,12 @@
               if (tb !== null) tb.stroke = "black";
             }
           },
-          new go.Binding("text", "text"),  // for sorting the nodes
-          $(go.Shape, "Ellipse",
+          new go.Binding("text", "key"),  // for sorting the nodes
+          $(go.Shape, "RoundedRectangle",
             {
               name: "SHAPE",
-              fill: "#057c6e",  // default value, but also data-bound
+              // fill: "#057c6e",  // default value, but also data-bound
+                fill: "#138686",
               stroke: "transparent",  // modified by highlighting
               strokeWidth: 2,
               desiredSize: new go.Size(20, 20),
@@ -511,7 +903,7 @@
               .ofObject()),
           $(go.TextBlock,
             { name: "TEXTBLOCK" },  // for search
-            new go.Binding("text", "text"))
+            new go.Binding("text", "key"))
         );
 
       function highlightLink(link, show) {
@@ -520,19 +912,20 @@
         link.toNode.isHighlighted = show;
       }
 
+
       // define the Link template
       myDiagram.linkTemplate =
         $(go.Link,
           {
             routing: go.Link.Normal,
             curve: go.Link.Bezier,
-            selectionAdorned: true,
-            mouseEnter: function (e, link) { highlightLink(link, true); },
+            selectionAdorned: false,
+            mouseEnter: function (e, link) { highlightLink(link, false); },
             mouseLeave: function (e, link) { highlightLink(link, false); }
           },
           $(go.Shape,
             new go.Binding("stroke", "isHighlighted",
-              function (h, shape) { return h ? highlightColor : shape.part.data.color; })
+              function (h, shape) { return h ? highlightColor : "black"; })
               .ofObject(),
             new go.Binding("strokeWidth", "isHighlighted",
               function (h) { return h ? 2 : 1; })
@@ -544,7 +937,7 @@
           // no arrowhead -- assume directionality of relationship need not be shown
         );
 
-      generateGraph();
+
 <!--      generateGraph2();-->
 
       myDiagram2.linkTemplate =
@@ -552,13 +945,13 @@
           {
             routing: go.Link.Normal,
             curve: go.Link.Bezier,
-            selectionAdorned: true,
-            mouseEnter: function (e, link) { highlightLink(link, true); },
+            selectionAdorned: false,
+            mouseEnter: function (e, link) { highlightLink(link, false); },
             mouseLeave: function (e, link) { highlightLink(link, false); }
           },
           $(go.Shape,
             new go.Binding("stroke", "isHighlighted",
-              function (h, shape) { return h ? highlightColor : shape.part.data.color; })
+              function (h, shape) { return h ? highlightColor : "black"; })
               .ofObject(),
             new go.Binding("strokeWidth", "isHighlighted",
               function (h) { return h ? 2 : 1; })
@@ -572,88 +965,147 @@
 
           // no arrowhead -- assume directionality of relationship need not be shown
         );
+      generateGraph();
+
 
 
     }
 
     function generateGraph() {
 
+        console.log("Test");
+         var sc1_id = document.getElementById("scenario1-list").selectedIndex;
+          console.log(sc1_id);
+          var sc2_id = document.getElementById("scenario2-list").selectedIndex;
+          console.log(sc2_id);
+
+        var sc1_nodes = {{sc1_nodes|tojson|safe}};
+        var sc1_edges = {{sc1_edges|tojson|safe}};
+
+        var sc2_nodes = {{sc2_nodes|tojson|safe}};
+        var sc2_edges = {{sc2_edges|tojson|safe}};
+
 
       var nodeArray = [];
       var linkArray = [];
 
+      sc1_nodes_arr = sc1_nodes[sc1_id];
+      console.log(sc1_nodes_arr);
 
 
-      var arr = {{ nodegrp1| safe }};
+
+      // var arr = {{ sc1_nodes| safe }};
+      // console.log(arr[0]);
     // <!--      var arr = ['FormCreate', 'AddModule', 'AddModel', 'LoadCRHM', 'Accept', 'UpDateModelMenu', 'UpDateHelpMenu', 'Convert', 'TAnalysis', 'FormActivate', 'FileExistsSp', 'OnHint', 'PrjOpenClick', 'DoPrjOpen', 'ObsCloseClick', '', 'WMMainUpdateDim', 'UpdateDim', 'MacroLoad', 'ClearModules', 'FindFileName', 'OpenObsFile', 'DataReadFile', 'Classmacro', 'review_HRU_OBS', 'addfilter', 'readargs', 'error', 'WMLogException', 'LogError', '~Classfilter', 'Encode24', 'Veto_Freq', 'fixup', 'WMMainUpdateStatus', 'execute', 'doFunctions', 'doFunc', '~Classmacro', 'IndexOf', 'CheckforModule', 'InitModules', 'decl', 'Variation_Skip', 'CheckUnitsString', 'AKAhook', 'Myparser', 'eval_exp', 'get_token', 'eval_exp2', 'eval_exp3', 'eval_exp4', 'eval_exp5', 'eval_exp6', 'atom', 'ParseDivUnitExpr', 'ParseMulUnitExpr', 'ParsePowUnitExpr', 'ParseUnitPhase1', 'ParseUnitPhase2', 'LookupUnit', 'ExpandUnitExpr', 'SetBasicUnit', 'MulUnitK', 'PowUnit', 'quickPow', 'MulUnit', 'DivUnit', 'CheckUnitsObs', 'declobsfunc', 'declgetvar', 'declputvar', 'Label4Click', 'Variation_Decide', 'DeclObsName', 'ClassPar', 'SetSharedParams', 'Change', '~ClassPar', 'Same', 'SqueezeParams', 'PrjExitClick']-->
-    for (var i = 0; i < arr.length; i++) {
+    for (var i in sc1_nodes_arr) {
 
       nodeArray.push({
 
-        key: arr[i],
-        text: arr[i].toString(),
+        key: sc1_nodes_arr[i]
+        // text: sc1_nodes_arr[i],
         // fill: go.Brush.red,
-        color: go.Brush.lightgreen,
+        // color: go.Brush.lightgreen,
+        //   color: go.Brush.randomColor(128, 240)
 
       });
 
-    }
 
-    var edgegrp1 = {};
-    edgegrp1 = {{ edgegrp1 | tojson | safe }};
-    console.log({{ edgegrp2| tojson | safe}});
+    }
+    console.log(nodeArray);
+
+    sc1_edges_arr = sc1_edges[sc1_id];
+    console.log(sc1_edges_arr);
+    // console.log(sc1_edges_arr[1])
+
+    // var edgegrp1 = {};
+    // edgegrp1 = {{ sc1_edges|safe }};
+
 
     // <!--      var arr1 = {'FormCreate' : 'FormCreate', 'FormCreate': 'AddModule', 'FormCreate': 'AddModel', 'FormCreate': 'LoadCRHM', 'FormCreate': 'Accept', 'FormCreate': 'UpDateModelMenu', 'UpDateModelMenu':'UpDateHelpMenu' , 'DataReadFile': 'Classmacro','DataReadFile': 'review_HRU_OBS', 'DataReadFile': 'addfilter', 'DataReadFile': 'Encode24', 'DataReadFile': 'Veto_Freq', 'DataReadFile': 'fixup', 'DataReadFile': 'WMMainUpdateStatus', 'DataReadFile': 'execute', 'DataReadFile': '~Classmacro', 'addfilter': 'readargs', 'addfilter': '~Classfilter', 'readargs': 'error', 'readargs': 'review_HRU_OBS', 'error': 'WMLogException', 'WMLogException': 'LogError'}-->
 
-    for (i in edgegrp1) {
-      var words = edgegrp1[i].split(" ");
-      var from = words[0];
-      console.log(from)
-      var to = words[2]
-      linkArray.push(
-        {key:i, from: from, to: to}
-
-      );
+    for (var i in sc1_edges_arr) {
+        // console.log(sc1_edges_arr[i])
+        // for(var elem in sc1_edges_arr[i])
+        // {
+        //     console.log(elem);
+            // var words = sc1_edges_arr[i].split(" ");
+            // var from = words[0];
+            // console.log(from)
+            // var to = words[2]
+            linkArray.push(
+                { from: sc1_edges_arr[i][0], to: sc1_edges_arr[i][1]}
+            );
 
     }
 
-    var nodeArray2 =[];
-      var linkArray2 = [];
+    console.log(linkArray);
 
-      var array = {{nodegrp2|safe}};
-      console.log(array.toString());
+    var nodeArray2 =[];
+    var linkArray2 = [];
+
+    sc2_nodes_arr = sc2_nodes[sc2_id];
+    sc2_edges_arr= sc2_edges[sc2_id];
+
+      // var array = {{sc2_nodes|safe}};
+      // console.log(array.toString());
         // <!--      var arr = ['FormCreate', 'AddModule', 'AddModel', 'LoadCRHM', 'Accept', 'UpDateModelMenu', 'UpDateHelpMenu', 'Convert', 'TAnalysis', 'FormActivate', 'FileExistsSp', 'OnHint', 'PrjOpenClick', 'DoPrjOpen', 'ObsCloseClick', '', 'WMMainUpdateDim', 'UpdateDim', 'MacroLoad', 'ClearModules', 'FindFileName', 'OpenObsFile', 'DataReadFile', 'Classmacro', 'review_HRU_OBS', 'addfilter', 'readargs', 'error', 'WMLogException', 'LogError', '~Classfilter', 'Encode24', 'Veto_Freq', 'fixup', 'WMMainUpdateStatus', 'execute', 'doFunctions', 'doFunc', '~Classmacro', 'IndexOf', 'CheckforModule', 'InitModules', 'decl', 'Variation_Skip', 'CheckUnitsString', 'AKAhook', 'Myparser', 'eval_exp', 'get_token', 'eval_exp2', 'eval_exp3', 'eval_exp4', 'eval_exp5', 'eval_exp6', 'atom', 'ParseDivUnitExpr', 'ParseMulUnitExpr', 'ParsePowUnitExpr', 'ParseUnitPhase1', 'ParseUnitPhase2', 'LookupUnit', 'ExpandUnitExpr', 'SetBasicUnit', 'MulUnitK', 'PowUnit', 'quickPow', 'MulUnit', 'DivUnit', 'CheckUnitsObs', 'declobsfunc', 'declgetvar', 'declputvar', 'Label4Click', 'Variation_Decide', 'DeclObsName', 'ClassPar', 'SetSharedParams', 'Change', '~ClassPar', 'Same', 'SqueezeParams', 'PrjExitClick']-->
-      for (var i in array) {
+      for (var i in sc2_nodes_arr) {
 
         nodeArray2.push({
 
-          key: array[i],
-          text: array[i].toString(),
-          color: go.Brush.lightblue,
+          key: sc2_nodes_arr[i]
+          // text: sc2_nodes_arr[i],
+          // color: go.Brush.lightblue,
+          //   color: go.Brush.randomColor(128, 240)
 
         });
 
       }
 
 
-        var edgegrp2= {};
-        edgegrp2= {{edgegrp2|tojson|safe}};
+        // var edgegrp2= {};
+        // edgegrp2= {{sc2_edges|safe}};
 
-      for (i in edgegrp2) {
-
-             var words = edgegrp2[i].split(" ");
-             var from = words[0];
-             var to =words[2]
-             linkArray2.push(
-              {  key:i, from: from, to: to}
-
+      for (var i in sc2_edges_arr) {
+        // console.log(sc1_edges_arr[i])
+        // for(var elem in sc1_edges_arr[i])
+        // {
+        //     console.log(elem);
+            // var words = sc1_edges_arr[i].split(" ");
+            // var from = words[0];
+            // console.log(from)
+            // var to = words[2]
+            linkArray2.push(
+                { from: sc2_edges_arr[i][0], to: sc2_edges_arr[i][1]}
             );
 
-        }
+    }
+
+       // window.custom = false;
+       myDiagram.animationManager.initialAnimationStyle = go.AnimationManager.None;
+myDiagram.addDiagramListener('InitialAnimationStarting', function(e) {
+  var animation = e.subject.defaultAnimation;
+  animation.easing = go.Animation.EaseOutExpo;
+  animation.duration = 1500;
+  // animation.add(e.diagram, 'scale', 0.01, 1);
+  animation.add(e.diagram, 'opacity', 0, 1);
+});
+
+       myDiagram2.animationManager.initialAnimationStyle = go.AnimationManager.None;
+myDiagram2.addDiagramListener('InitialAnimationStarting', function(e) {
+  var animation = e.subject.defaultAnimation;
+  animation.easing = go.Animation.EaseOutExpo;
+  animation.duration = 1500;
+  // animation.add(e.diagram, 'scale', 0.01,1);
+  animation.add(e.diagram, 'opacity', 0, 1);
+});
        myDiagram.model = new go.GraphLinksModel(nodeArray, linkArray);
        myDiagram.model.linkKeyProperty = "key";
+  //     zoomSlider = new ZoomSlider(myDiagram);
        myDiagram2.model = new go.GraphLinksModel(nodeArray2, linkArray2);
        myDiagram2.model.linkKeyProperty = "key";
+    //   zoomSlider = new ZoomSlider(myDiagram2);
+       match =new VisualMatched(myDiagram,myDiagram2);
 
        myDiff = new VisualDifferencer(myDiagram, myDiagram2);
 
@@ -683,7 +1135,6 @@
     //
     //
     //     var edgegrp2= {};
-    //     edgegrp2= {{edgegrp2|tojson|safe}};
     //
     //   for (i in edgegrp2) {
     //
@@ -707,6 +1158,9 @@
     var div1 = myDiagram.div;
     var div2 = myDiagram2.div;
     var temp = div1.style.zIndex;
+
+
+
     div1.style.zIndex = div2.style.zIndex;
     div2.style.zIndex = temp;
   }
@@ -720,56 +1174,426 @@
     div2.style.display = (diagnum == 2 || diagnum == 3) ? "inline" : "none";
   }
 
-  // Called when a "showDiagramRadio" button changes.
   function showDiagrams() {
-    var radio = document.getElementsByName("showDiagramsRadio");
-    for (var i = 0; i < radio.length; i++) {
-      if (radio[i].checked) {
-        toggleDiagram(radio[i].value);
-<!--        break;-->
-      }
-    }
+
+          generateGraph();
+
+      // var sc1_id = document.getElementById("scenario1-list").selectedIndex;
+      // var sc2_id = document.getElementById("scenario2-list").selectedIndex;
+      // var node_c = document.getElementById("node_count");
+      // var comp_index = document.getElementById("comp").selectedIndex;
+      // node_c.innerTML= total_node_list[sc1_id][sc2_id][0];
+      //
+      var sc1_id = document.getElementById("scenario1-list").selectedIndex;
+      var sc2_id = document.getElementById("scenario2-list").selectedIndex;
+      //var node_c1 = document.getElementById("node_count_1");
+      //var node_c2 = document.getElementById("node_count_2");
+      var comp_index = document.getElementById("comp").selectedIndex;
+      // node_c1.innerTML= total_node_list[sc1_id][sc1_id][sc1_id][0];
+      // node_c2.innerTML= total_node_list[sc2_id][sc2_id][sc2_id][0];
+
+      // if(sc1_id==sc2_id)
+      // {
+      //
+      //         node_c1.innerText= total_node_list[sc1_id][sc2_id][sc1_id][1];
+      //         // console.log(total_node_list[sc1_id][sc1_id][sc1_id][1])
+      //         node_c2.innerText= total_node_list[sc1_id][sc2_id][2][1];
+      // }
+
+
+          if (comp_index==1)
+          {
+              // myDiff.stop();
+              myDiff.stop();
+              match.start();
+        //      node_c1.innerText= "Scenario 1  ( Node Count of Scenario 1 : " + total_node_list[sc1_id][sc2_id][0][1] + ")";
+              // console.log(total_node_list[sc1_id][sc1_id][sc1_id][1])
+          //    node_c2.innerText= "Scenario 2  ( Node Count of Scenario 2 :  " + total_node_list[sc1_id][sc2_id][1][1] + ")";
+              // console.log(total_node_list[sc2_id][sc2_id][sc1_id][1])
+
+          }
+          else if (comp_index==2)
+          {
+              myDiff.stop();
+              myDiff.start();
+            //  node_c1.innerText= "Scenario 1  ( Node Count of Scenario 1 : " + total_node_list[sc1_id][sc2_id][0][2] + ")";
+              // console.log(total_node_list[sc1_id][sc2_id][1][2]);
+              //node_c2.innerText= "Scenario 2  ( Node Count of Scenario 2 : " +total_node_list[sc1_id][sc2_id][1][2]+ ")";
+              // console.log(total_node_list[1][1][1][2]);
+              // console.log(total_node_list[sc1_id][sc2_id][2][2]);
+
+          }
+
+          else if (comp_index==3){
+                show_chart();
+              //node_c1.innerText= "Scenario 1  ( Node Count of Scenario 1 : "+ total_node_list[sc1_id][sc2_id][0][0]+ ")";
+              // console.log(total_node_list[sc1_id][sc1_id][sc1_id][0])
+              //node_c2.innerText= "Scenario 2  ( Node Count of Scenario 2 : " +total_node_list[sc1_id][sc2_id][1][0]+ ")";
+           //
+          }
+          else{
+              myDiff.stop();
+              //node_c1.innerText= "Scenario 1  ( Node Count of Scenario 1 : " +total_node_list[sc1_id][sc2_id][0][0] +  ")";
+              // console.log(total_node_list[sc1_id][sc1_id][sc1_id][0])
+              //node_c2.innerText= "Scenario 2  ( Node Count of Scenario 2 : "+ total_node_list[sc1_id][sc2_id][1][0]+ ")";
+              // console.log(total_node_list[sc1_id][sc1_id][sc1_id][0])
+
+          }
+
+
   }
-  </script>
+
+
+
+  // Called when a "showDiagramRadio" button changes.
+//   function showDiagrams() {
+//     var radio = document.getElementsByName("showDiagramsRadio");
+//     for (var i = 0; i < radio.length; i++) {
+//       if (radio[i].checked) {
+//         toggleDiagram(radio[i].value);
+// <!--        break;-->
+//       }
+//     }
+//   }
+
+
+
+
+//     for (var i = 0; i < radio.length; i++) {
+//       if (radio[i].checked) {
+//         toggleDiagram(radio[i].value);
+// <!--        break;-->
+//       }
+  //   }
+  // }
+  //
+
+
+
+
+
+    </script>
 </head>
 
-<body onload="init()">
-  <div style=" width: 100%; height: 500px">
-     <div id="myDiagramDiv" style="position: absolute; border: solid 1px black; background: lightblue; z-index: 1;width: 100%; height: 500px" ></div>
-      <div id="myDiagramDiv2" style="position: absolute; border: solid 1px black; background: lightgray; z-index: 2; width: 100%; height: 500px" ></div>
+<body onload="init()" >
 
-  </div>
+<!--<div style=" width: 100px; height: 500px;  " >-->
 
-  <p>
-    Show:
-    <input name="showDiagramsRadio" type="radio" onchange="showDiagrams()" value="1" />Matched Scenerio
-    <input name="showDiagramsRadio" type="radio" onchange="showDiagrams()" value="2" />User Log
-    <input name="showDiagramsRadio" type="radio" onchange="showDiagrams()" value="3" checked="checked" />Both Diagrams
-    <button onclick="swapDiagramsZOrder()">Swap Diagrams zIndex</button>
-  </p>
-  <p>
-    You can see differences between the two models by clicking "Show Diff" <br />
+<!--    <div id="myDiagramDiv"-->
+<!--         style=" position: relative; border: solid 1px black; background: lightblue; padding: 250px 250px;  overflow: auto;"></div>-->
+<!--    <div id="myDiagramDiv2"-->
+<!--         style=" position: relative; margin-left:800px; border: solid 1px black; background: lightgray;padding: 250px 250px;  overflow: auto;"></div>-->
+
+
+<!--</div>-->
+<div style="width: 100%; height: 600px;overflow: visible; resize: both">
+    <div id="myDiagramDiv" style=" position: relative;border: solid 1px black; background: lightblue;  width: 700px; height: 500px; float: left;  resize: both; caption-side: bottom ; object-fit: contain;"></div>
+
+    <div  id="myDiagramDiv2" style="position: relative; border: solid 1px black; background: lightgray; margin-left: 700px; height: 500px; resize: both;caption-side: bottom ;object-fit: contain;"> </div>
+<!--        <br><div class="caption" style="float:left">&nbsp;&nbsp;&nbsp;Scenario 1</div>-->
+<!--       <div class="caption" style=" margin-left:750px">Scenario 2</div>-->
+<!--     &nbsp;&nbsp;&nbsp;<label >Scenario 1</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-->
+
+<!--    <label style=" margin-left:800px;text-align: center;">Scenario 2</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-->
+   <b><div id = "node_count_1" style="float: left";>Scenario 1</div></b>
+   <b><div id = "node_count_2" style="margin-left: 700px">Scenario 2</div></b>
+
+
+
+
+</div>
+
+
+<!--<p>-->
+<!--    You can see differences between the two models by clicking on the following buttons.-->
 <!--    Nodes or Links added in Diagram 2 are highlighted in yellow.-->
 <!--    Nodes or Links removed in Diagram 2 are highlighted in red.-->
-<!--    Modified Nodes or Links are highlighted in cyan. -->
-    <button onclick="myDiff.start()">Show Diff</button>
-    <button onclick="myDiff.stop()">Stop Diff</button>
-  </p>
+<!--    Modified Nodes or Links are highlighted in cyan.-->
+<!--    &lt;!&ndash;    <input name="showDiagramsRadio" type="radio" onchange="showDiagrams()" value="1" />Matched Scenerio&ndash;&gt;-->
+<!--    &lt;!&ndash;    <input name="showDiagramsRadio" type="radio" onchange="showDiagrams()" value="2" />User Log&ndash;&gt;-->
+<!--    &lt;!&ndash;    <input name="showDiagramsRadio" type="radio" onchange="showDiagrams()" value="3" checked="checked" />Both Diagrams&ndash;&gt;-->
+<!--    &lt;!&ndash;    <button onclick="swapDiagramsZOrder()">Swap Diagrams zIndex</button>&ndash;&gt;-->
+<!--</p>-->
+<div class="panel panel-default">
+<!--    You can see differences between the two models by clicking the following buttons <br/>-->
+    <!--    Nodes or Links added in Diagram 2 are highlighted in yellow.-->
+    <!--    Nodes or Links removed in Diagram 2 are highlighted in red.-->
+    <!--    Modified Nodes or Links are highlighted in cyan. -->
+<!--    <button onclick="myDiff.start()">Show Non-matched Elements</button>-->
+<!--    <button onclick="myDiff.start()">Matched Elements</button>-->
+<!--    <button onclick="myDiff.stop()">Stop Diff</button>-->
 
-      <p>
-    <object data="{{img}}" type="image/png">
-      <img src="{{img}}" alt="barplot">
-    </object>
-  </p>
+        &nbsp;&nbsp;&nbsp; <label >Choose Scenario 1:</label>
+        &nbsp;&nbsp;&nbsp;<select id = "scenario1-list"  class="dropdown">
 
-  <p>
-    Current state of Model 1
+
+        </select>
+        <label >Choose Scenario 2:</label>
+        &nbsp;&nbsp;&nbsp;<select id = "scenario2-list"  class="dropdown"></select>
+
+
+        <label >Choose Operation:</label>
+        &nbsp;&nbsp;&nbsp;<select id = "comp"  class="dropdown">
+
+
+<!--              <option id="1" value="diff">diff</option>-->
+<!--              <option id="2" value="matched">matched</option>-->
+
+<!--            <option id="3" value="barchart">bar chart</option>-->
+
+        </select>
+
+&nbsp;&nbsp;&nbsp;<input class="button-form" type="submit" value="Generate" onclick="showDiagrams()">
+
+   <br> &nbsp;&nbsp;&nbsp;View comparisons between Scenario 1 selection & all the Scenario 2 cases
+    <button onclick="show_full_chart()">View</button>
+</div>
+<form method="post" enctype="multipart/form-data">
+  <div style=" margin-left:20px">
+    <label for="sc_uploads">Add a scenario:</label>
+    <input type="file" id="sc_uploads" name="sc_uploads" accept=".log" >
+      Only .log file type is accepted
+      <input type ="submit" value="Add"></input>
+  </div>
+
+</form>
+
+
+<br><div>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<canvas id="bar-chart" style="overflow: auto ;margin-left:500px"  ></canvas>
+
+ <div id="full-chart" style=" margin-left:500px"></div>
+
+
+<p>
+     Scenario 1 Graph Model
     <textarea id="mySavedModel1" style="width:100%;height:250px"></textarea>
-  </p>
-  <p>
-    Current state of Model 2:
+</p>
+<p>
+    Scenario 2 Graph Model
     <textarea id="mySavedModel2" style="width:100%;height:250px"></textarea>
-  </p>
+</p>
+</div>
 </body>
 
 </html>
+<script>
+      sc1List = {{sc1_filenames|safe}};
+      sc2List = {{sc2_filenames|safe}};
+      //total_node_list = {{node_count|safe}};
+      //console.log(total_node_list);
+      var comp_list = ["Only graphs", "Matched", "Non-matched", "Compare in a Barchart"];
+
+      console.log(comp_list);
+
+       var  select1 = document.getElementById("scenario1-list");
+       var  select2 = document.getElementById("scenario2-list");
+       var select3 = document.getElementById("comp");
+
+
+
+        for (var i = 0; i < sc1List.length; i++){
+            var opt = sc1List[i];
+            var el = document.createElement("option");
+            el.id =i;
+            el.textContent = opt;
+            el.value = opt;
+            select1.appendChild(el);
+        }
+
+         for (var i = 0; i < sc2List.length; i++){
+            var opt = sc2List[i];
+            var el = document.createElement("option");
+            el.id=i;
+            el.textContent = opt;
+            el.value = opt;
+            select2.appendChild(el);
+        }
+
+         for (var i = 0; i < comp_list.length; i++){
+            var opt = comp_list[i];
+            var el = document.createElement("option");
+            el.id=i;
+            el.textContent = opt;
+            el.value = opt;
+            select3.appendChild(el);
+        }
+
+
+      var sc1_id = document.getElementById("scenario1-list").selectedIndex;
+      var sc2_id = document.getElementById("scenario2-list").selectedIndex;i
+      //var node_c1 = document.getElementById("node_count_1");
+      //var node_c2 = document.getElementById("node_count_2");
+      var comp_index = document.getElementById("comp").selectedIndex;
+  //    node_c1.innerText= "Scenario 1  ( Node Count of Scenario 1 : " +total_node_list[sc1_id][sc2_id][0][0] +  ")";
+              // console.log(total_node_list[sc1_id][sc1_id][sc1_id][0])
+//node_c2.innerText= "Scenario 2  ( Node Count of Scenario 2 : "+ total_node_list[sc1_id][sc2_id][1][0]+ ")";
+
+        function show_chart() {
+            document.getElementById("full-chart").hidden;
+            document.getElementById("bar-chart").hidden;
+            var sc1_id = document.getElementById("scenario1-list").selectedIndex;
+            var sc2_id = document.getElementById("scenario2-list").selectedIndex;
+            perc = {{perc | safe}};
+            var x = [];
+            var y = [];
+            for (var i in sc2List) {
+                x.push(sc2List[i]);
+            }
+            for (var i in perc[sc1_id]) {
+                y.push(perc[sc1_id][i]);
+            }
+            console.log(x);
+            console.log(y);
+            new Chart(document.getElementById("bar-chart"), {
+                type: "horizontalBar",
+                data: {
+                    labels: [sc2List[sc2_id]],
+                    datasets: [
+                        {
+                            label: "Similiarities",
+                            backgroundColor: ["#3e95cd", "#8e5ea2", "#3cba9f", "#e8c3b9", "#c45850"],
+                            data: [y[sc2_id]]
+                        }
+                    ]
+                },
+                options: {
+                    responsive: false,
+                        scales: {
+                          xAxes: [{
+                            ticks: {
+                              maxRotation: 200,
+                              minRotation: 80
+                            }
+                          }],
+                          yAxes: [{
+                            ticks: {
+                              beginAtZero: true
+                            }
+                          }]
+                        },
+                    legend: {display: false},
+                    title: {
+                        display: true,
+                        text: "Comparison with Scenario 1 : "+ sc1List[sc1_id]
+                    }
+                }
+            });
+        }
+
+         function show_full_chart() {
+
+            document.getElementById("bar-chart").hidden;
+            var sc1_id = document.getElementById("scenario1-list").selectedIndex;
+            var sc2_id = document.getElementById("scenario2-list").selectedIndex;
+            perc = {{perc | safe}};
+            var x = [];
+            var y = [];
+            for (var i in sc2List) {
+                x.push(sc2List[i]);
+            }
+            for (var i in perc[sc1_id]) {
+                y.push(perc[sc1_id][i]);
+            }
+            console.log(x);
+            console.log(y);
+            new Chart(document.getElementById("bar-chart"), {
+
+                type: 'horizontalBar',
+                data: {
+                    labels: x,
+                    datasets: [
+                        {
+                            label: "Similiarities in %",
+                            backgroundColor: ["#3e95cd", "#8e5ea2", "#3cba9f", "#e8c3b9", "#c45850"],
+                            data: y
+                        }
+                    ]
+                },
+                options: {
+                    responsive: false,
+                        scales: {
+                          xAxes: [{
+                            ticks: {
+                              maxRotation: 200,
+                              minRotation: 80
+                            }
+                          }],
+                          yAxes: [{
+                            ticks: {
+                              beginAtZero: true
+                            }
+                          }]
+                        },
+                    legend: {display: false},
+                    title: {
+                        display: true,
+                        text: "Comparison with Scenario 1 : "+ sc1List[sc1_id]
+                    }
+                }
+            });
+        }
+
+        //  function show_chart_part() {
+        //
+        //     var sc1_id = document.getElementById("scenario1-list").selectedIndex;
+        //     var sc2_id = document.getElementById("scenario2-list").selectedIndex;
+        //     perc = {{perc | safe}};
+        //     var x = [];
+        //     var y = [];
+        //     for (var i in sc2List) {
+        //         x.push(sc2List[i]);
+        //     }
+        //     for (var i in perc[sc1_id]) {
+        //         y.push(perc[sc1_id][i]);
+        //     }
+        //     console.log(x);
+        //     console.log(y);
+        //     new Chart(document.getElementById("bar-chart"), {
+        //         type: 'bar',
+        //         data: {
+        //             labels: [sc2List[sc2_id]],
+        //             datasets: [
+        //                 {
+        //                     label: "Similiarities",
+        //                     backgroundColor: ["#3e95cd", "#8e5ea2", "#3cba9f", "#e8c3b9", "#c45850"],
+        //                     data: [y[sc2_id]]
+        //                 }
+        //             ]
+        //         },
+        //         options: {
+        //             legend: {display: false},
+        //             title: {
+        //                 display: true,
+        //                 text: "Comparison with Scenario 1 : "+ sc1List[sc1_id]
+        //             }
+        //         }
+        //     });
+        // }
+    // anychart.onDocumentReady(function () {
+    //     perc={{perc|safe}};
+    //     var sc1_id = document.getElementById("scenario1-list").selectedIndex;
+    //     // the data
+    //     var rows = [];
+    //
+    //     for(var i in perc[sc1_id])
+    //     {
+    //         rows.push([sc1List[i],perc[sc1_id][i]]);
+    //     }
+    //
+    //     var data = {
+    //         header: ["Scenario", "Similiarities"],
+    //         rows: rows
+    //     };
+    //     var chart = anychart.column();
+    //     chart.data(data);
+    //     chart.container('full-chart');
+    //     chart.head
+    //     chart.draw();
+    //
+    // });
+
+
+
+</script>

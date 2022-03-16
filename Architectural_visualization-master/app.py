@@ -1,5 +1,9 @@
+import base64
 import os
 # from _operator import itemgetter
+from io import BytesIO
+import matplotlib.pyplot as plt
+
 from tkinter import Image
 
 import networkx as nx
@@ -25,9 +29,10 @@ app = Flask(__name__)
 
 # nodetree = open("userNodes.txt")
 
-
-PEOPLE_FOLDER = os.path.join('static', 'percentage.png')
+#
+PEOPLE_FOLDER = os.path.join('percentage.png')
 app.config['UPLOAD_FOLDER'] = PEOPLE_FOLDER
+
 
 nodegrp1=open("matchedNodes.txt", "r")
 nodegrp2=open("userNodes.txt", "r")
@@ -79,7 +84,7 @@ for line2 in edgegrp2:
     # else:
     #     edge2dict[str(res1)] = str(res2)
 
-# print(edge2dict)
+print(edge2dict)
 
 
 
@@ -88,7 +93,7 @@ for line2 in edgegrp2:
 @app.route('/')
 def index():
 
-    # jsonify(nodegrp1)
+    #jsonify(nodegrp1)
 
 
 
@@ -96,10 +101,12 @@ def index():
 
     full_filename = os.path.join(app.config['UPLOAD_FOLDER'], 'percentage.png')
 
+    print(full_filename)
 
-    return render_template('friendwheel.html', nodegrp1=node1,nodegrp2=node2,edgegrp1=edge1list,edgegrp2=edge2list, img =full_filename)
-    # return render_template('treeview.html', nodetree= node2)
-
+    return render_template('friendwheel.html', sc1_nodes=node1,sc1_edges=edge1list,sc2_nodes=node2,sc2_edges=edge2list,img=full_filename)
+    #return render_template('friendwheel-copy.html', nodegrp1=node1,nodegrp2=node2,edgegrp1=edge1list,edgegrp2=edge2list,img=full_filename)
+    #return render_template('treeview.html', nodetree= node2)
+    #return render_template('CHRM.html')
 
 
 
@@ -107,5 +114,3 @@ def index():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
