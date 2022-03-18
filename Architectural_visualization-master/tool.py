@@ -104,6 +104,7 @@ def sc2_info_for_callgraph():
 
         sc2_edges.append(e)
     return sc2_nodes, sc2_edges
+
 #calculating differences
 def perc_calc():
     perc=[]
