@@ -19,26 +19,29 @@ view = 1
 global  sc1_graphs, sc2_graphs, perc,sc1_file_names,sc2_file_names
 
 #scenario 1 files
-sc1_f1 =open('scenarios/UserLogs/clogs_codemacro_execution_v1')
-sc1_f2 = open('scenarios/UserLogs/clogs_run_simulation_v1')
-sc1_f3 = open('scenarios/UserLogs/clogs_run_simulation_v2')
-sc1_filename1 = os.path.basename('scenarios/UserLogs/clogs_codemacro_execution_v1')
-sc1_filename2 = os.path.basename('scenarios/UserLogs/clogs_run_simulation_v1')
-sc1_filename3 = os.path.basename('scenarios/UserLogs/clogs_run_simulation_v2')
+sc1_f1 = open('scenarios/Static/Task_1_Nov-19-20.log')
+sc1_f2 = open('scenarios/Static/Task_2_Nov-19-20.log')
+sc1_f3 = open('scenarios/Static/Task_3_Nov-19-20.log')
+sc1_f4 = open('scenarios/Static/Task_4_Nov-19-20.log')
+sc1_filename1 = os.path.basename('scenarios/Static/Task_1_Nov-19-20.log')
+sc1_filename2 = os.path.basename('scenarios/Static/Task_2_Nov-19-20.log')
+sc1_filename3 = os.path.basename('scenarios/Static/Task_3_Nov-19-20.log')
+sc1_filename4 = os.path.basename('scenarios/Static/Task_4_Nov-19-20.log')
 
-sc1_file_names = [sc1_filename1, sc1_filename2,sc1_filename3 ]
+sc1_file_names = [sc1_filename1,sc1_filename2,sc1_filename3,sc1_filename4]
 
 
 #scenario 2 files
-sc2_f1=open('scenarios/UserLogs/clogs_run_simulation_v2')
-sc2_f2=open('scenarios/UserLogs/clogs_static_call_graph_v1')
-sc2_f3=open('scenarios/UserLogs/clogs_groupmacro_execution_v1')
+sc2_f1 = open('scenarios/Static/Task_1_Feb-04-22.log')
+sc2_f2 = open('scenarios/Static/Task_2_Feb-04-22.log')
+sc2_f3 = open('scenarios/Static/Task_3_Feb-04-22.log')
+sc2_f4 = open('scenarios/Static/Task_4_Feb-04-22.log')
+sc2_filename1 = os.path.basename('scenarios/Static/Task_1_Feb-04-22.log')
+sc2_filename2 = os.path.basename('scenarios/Static/Task_2_Feb-04-22.log')
+sc2_filename3 = os.path.basename('scenarios/Static/Task_3_Feb-04-22.log')
+sc2_filename4 = os.path.basename('scenarios/Static/Task_4_Feb-04-22.log')
 
-sc2_filename1 = os.path.basename('scenarios/UserLogs/clogs_run_simulation_v2')
-sc2_filename2 = os.path.basename('scenarios/UserLogs/clogs_static_call_graph_v1')
-sc2_filename3 = os.path.basename('scenarios/UserLogs/clogs_groupmacro_execution_v1')
-
-sc2_file_names = [sc2_filename1, sc2_filename2,sc2_filename3 ]
+sc2_file_names = [sc2_filename1,sc2_filename2,sc2_filename3,sc2_filename4]
 
 # f2 = open('scenarios/Static/build+run.log')
 # f3 = open('scenarios/Static/help.log')
@@ -48,14 +51,16 @@ sc2_file_names = [sc2_filename1, sc2_filename2,sc2_filename3 ]
 sc1_g1 = buildgraph(sc1_f1, view)
 sc1_g2 = buildgraph(sc1_f2, view)
 sc1_g3 = buildgraph(sc1_f3, view)
+sc1_g4 = buildgraph(sc1_f4, view)
 
 #scenario 2 graphs
 sc2_g1 = buildgraph(sc2_f1, view)
 sc2_g2 = buildgraph(sc2_f2, view)
 sc2_g3 = buildgraph(sc2_f3, view)
+sc2_g4 = buildgraph(sc2_f4, view)
 
-sc1_graphs=[sc1_g1,sc1_g2,sc1_g3]
-sc2_graphs = [sc2_g1,sc2_g2,sc2_g3]
+sc1_graphs = [sc1_g1,sc1_g2,sc1_g3,sc1_g4]
+sc2_graphs = [sc2_g1,sc2_g2,sc2_g3,sc2_g4]
 
 
 
