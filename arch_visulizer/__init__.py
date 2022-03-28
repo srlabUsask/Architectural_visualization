@@ -1,7 +1,6 @@
 import os
-
-from flask import Flask, render_template
 from pickle import Unpickler
+from flask import Flask, render_template
 
 def create_app(test_config=None):
 
@@ -10,6 +9,7 @@ def create_app(test_config=None):
         SECRET_KEY='dev'
     )
 
+    # Runs before the first request to load the data set to memory
     @app.before_first_request
     def load_data_set():
 
@@ -25,11 +25,11 @@ def create_app(test_config=None):
         app.names = Unpickler(names_jar).load()
         edges_jar.close()
 
-
-
+    # Serves the main app page
     @app.route('/', methods=['GET'])
     def index():
 
+        # TODO: Replace dummy calculation with real calculation
         perc=[]
         for graph in app.names:
             perc.append(50)
