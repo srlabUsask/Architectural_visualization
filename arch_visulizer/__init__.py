@@ -1,8 +1,7 @@
 import os
 
 from flask import Flask, render_template
-
-from arch_visulizer.diff_scenarios import buildgraph
+from pickle import Unpickler
 
 def create_app(test_config=None):
 
@@ -11,63 +10,38 @@ def create_app(test_config=None):
         SECRET_KEY='dev'
     )
 
-    if test_config is None:
-        # load from the config file
-        app.config.from_pyfile('config.py')
-    else:
-        # Load from the passed in config
-        app.config.from_pyfile(test_config)
-
-
     @app.before_first_request
-    def load_data():
-        app.graph_data = []
+    def load_data_set():
 
-        # Open each file and build a graph
-        for file_name in app.config['CALL_LOGS']:
-            g = buildgraph(open(file_name), 1)
-            f = os.path.basename(file_name)
-            app.graph_data.append((f, g))
+        nodes_jar = open("instance/nodes.pkl", "rb")
+        app.nodes = Unpickler(nodes_jar).load()
+        nodes_jar.close()
 
-        nodes = []
-        edges = []
-        names = []
-        for data in app.graph_data:
-            nodes.append(list(data[1].nodes()))
-            edges.append(list(data[1].edges()))
-            names.append(data[0])
+        edges_jar = open("instance/edges.pkl", "rb")
+        app.edges = Unpickler(edges_jar).load()
+        edges_jar.close()
 
+        names_jar = open("instance/names.pkl", "rb")
+        app.names = Unpickler(names_jar).load()
+        edges_jar.close()
 
 
 
     @app.route('/', methods=['GET'])
     def index():
 
-        nodes = []
-        edges = []
-        names = []
-
-
-        for data in app.graph_data:
-            nodes.append(list(data[1].nodes()))
-            edges.append(list(data[1].edges()))
-            names.append(data[0])
-
-
-
-
         perc=[]
-        for graph in app.graph_data:
+        for graph in app.names:
             perc.append(50)
 
         return render_template(
             'friendwheel.html',
-            sc1_nodes = nodes,
-            sc1_edges = edges,
-            sc2_nodes = nodes,
-            sc2_edges = edges,
-            sc1_filenames = names,
-            sc2_filenames = names,
+            sc1_nodes = app.nodes,
+            sc1_edges = app.edges,
+            sc2_nodes = app.nodes,
+            sc2_edges = app.edges,
+            sc1_filenames = app.names,
+            sc2_filenames = app.names,
             perc = perc
         )
 
