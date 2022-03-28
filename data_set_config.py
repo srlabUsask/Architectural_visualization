@@ -1,3 +1,4 @@
+# CALL_LOGS = List of call log files to be used to create a data set.
 CALL_LOGS = [
 "instance/call_logs/Task_1_Feb-04-22.log",
 "instance/call_logs/Task_2_Feb-04-22.log",
