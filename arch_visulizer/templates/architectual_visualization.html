@@ -1,22 +1,43 @@
-<!DOCTYPE html>
-<html>
-
 <head>
+    <title>
+        Architectural Visualization Tool
+    </title>
     <meta charset="UTF-8">
-    <title>Architectural Visualization</title>
-    <meta content="Show the relationships between people using a friend wheel diagram, implemented using circular layout."
-          name="description"/>
-<!--    <meta content="width=device-width, initial-scale=1" name="viewport">-->
-    <!-- Copyright 1998-2020 by Northwoods Software Corporation. -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-  <!-- <script src="{{ url_for('static', filename='release/go.js')}}"></script> -->
-    <link rel='stylesheet' href='static/assets/css/ZoomSlider.css' />
-    <script src="static/assets/js/ZoomSlider.js"></script>
-    <script src="https://unpkg.com/gojs/release/go.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
-    <script src="https://cdn.anychart.com/releases/8.0.0/js/anychart-base.min.js"></script>
+    <meta
+        content="Show the evolution of a code base by various dynamic call graph visulizations and metrics."
+    >
+    <link
+        rel="stylesheet"
+        href="{{url_for('static', filename='css/ZoomSlider.css')}}"
+    >
+    <link
+        rel="stylesheet"
+        href="{{url_for('static', filename='css/jquery-ui.min.css')}}"
+    >
+    <link
+        rel="stylesheet"
+        href="{{url_for('static', filename='css/bootstrap.min.css')}}"
+    >
+    <script
+        src="{{url_for('static', filename='js/jquery.min.js')}}"
+    ></script>
+    <script
+        src="{{url_for('static', filename='js/bootstrap.min.js')}}"
+    ></script>
+    <script
+        src="{{url_for('static', filename='js/ZoomSlider.js')}}"
+    ></script>
+    <script
+        src="{{url_for('static', filename='js/go.js')}}"
+    ></script>
+    <script
+        src="{{url_for('static', filename='js/Chart.js')}}"
+    ></script>
+    <!-- Commented out for now possibly depricated <static
+        src="{{url_for('static', filename='js/anychart-base.min.js')}}"
+    ></static> -->
+
+
     <script id="code">
     function VisualMatched(diag1, diag2) {
     // if (!(diag1 instanceof go.Diagram) || !(diag2 instanceof go.Diagram)) throw new Error("VisualDifferencer needs two Diagrams");
@@ -1376,8 +1397,6 @@ myDiagram2.addDiagramListener('InitialAnimationStarting', function(e) {
 </p>
 </div>
 </body>
-
-</html>
 <script>
       sc1List = {{sc1_filenames|safe}};
       sc2List = {{sc2_filenames|safe}};
