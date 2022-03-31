@@ -35,7 +35,7 @@ def create_app(test_config=None):
             perc.append(50)
 
         return render_template(
-            'friendwheel.html',
+            'visualization.html',
             sc1_nodes = app.nodes,
             sc1_edges = app.edges,
             sc2_nodes = app.nodes,

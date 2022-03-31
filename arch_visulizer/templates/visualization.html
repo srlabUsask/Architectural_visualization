@@ -1,0 +1,367 @@
+<head>
+    <title>
+        Architectural Visualization Tool
+    </title>
+    <meta charset="UTF-8">
+    <meta
+        content="Show the evolution of a code base by various dynamic call graph visulizations and metrics."
+    >
+    <link
+        rel="stylesheet"
+        href="{{url_for('static', filename='css/ZoomSlider.css')}}"
+    >
+    <link
+        rel="stylesheet"
+        href="{{url_for('static', filename='css/jquery-ui.min.css')}}"
+    >
+    <link
+        rel="stylesheet"
+        href="{{url_for('static', filename='css/bootstrap.min.css')}}"
+    >
+    <script
+        src="{{url_for('static', filename='js/jquery.min.js')}}"
+    ></script>
+    <script
+        src="{{url_for('static', filename='js/bootstrap.min.js')}}"
+    ></script>
+    <script
+        src="{{url_for('static', filename='js/ZoomSlider.js')}}"
+    ></script>
+    <script
+        src="{{url_for('static', filename='js/go.js')}}"
+    ></script>
+    <script
+        src="{{url_for('static', filename='js/Chart.js')}}"
+    ></script>
+    <!-- Commented out for now possibly depricated <static
+        src="{{url_for('static', filename='js/anychart-base.min.js')}}"
+    ></static> -->
+    <script
+        src="{{url_for('static', filename='js/arch_visulizer.js')}}"
+    ></script>
+    <script type="text/javascript">
+        var nodes = {{sc1_nodes|tojson|safe}};
+        var edges = {{sc1_edges|tojson|safe}};
+    </script>
+</head>
+
+<body onload="init(nodes, edges)">
+
+<!--<div style=" width: 100px; height: 500px;  " >-->
+
+<!--    <div id="myDiagramDiv"-->
+<!--         style=" position: relative; border: solid 1px black; background: lightblue; padding: 250px 250px;  overflow: auto;"></div>-->
+<!--    <div id="myDiagramDiv2"-->
+<!--         style=" position: relative; margin-left:800px; border: solid 1px black; background: lightgray;padding: 250px 250px;  overflow: auto;"></div>-->
+
+
+<!--</div>-->
+<div style="width: 100%; height: 600px;overflow: visible; resize: both">
+    <div id="myDiagramDiv" style=" position: relative;border: solid 1px black; background: lightblue;  width: 700px; height: 500px; float: left;  resize: both; caption-side: bottom ; object-fit: contain;"></div>
+
+    <div  id="myDiagramDiv2" style="position: relative; border: solid 1px black; background: lightgray; margin-left: 700px; height: 500px; resize: both;caption-side: bottom ;object-fit: contain;"> </div>
+<!--        <br><div class="caption" style="float:left">&nbsp;&nbsp;&nbsp;Scenario 1</div>-->
+<!--       <div class="caption" style=" margin-left:750px">Scenario 2</div>-->
+<!--     &nbsp;&nbsp;&nbsp;<label >Scenario 1</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-->
+
+<!--    <label style=" margin-left:800px;text-align: center;">Scenario 2</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-->
+   <b><div id = "node_count_1" style="float: left";>Scenario 1</div></b>
+   <b><div id = "node_count_2" style="margin-left: 700px">Scenario 2</div></b>
+
+
+
+
+</div>
+
+
+<!--<p>-->
+<!--    You can see differences between the two models by clicking on the following buttons.-->
+<!--    Nodes or Links added in Diagram 2 are highlighted in yellow.-->
+<!--    Nodes or Links removed in Diagram 2 are highlighted in red.-->
+<!--    Modified Nodes or Links are highlighted in cyan.-->
+<!--    &lt;!&ndash;    <input name="showDiagramsRadio" type="radio" onchange="showDiagrams()" value="1" />Matched Scenerio&ndash;&gt;-->
+<!--    &lt;!&ndash;    <input name="showDiagramsRadio" type="radio" onchange="showDiagrams()" value="2" />User Log&ndash;&gt;-->
+<!--    &lt;!&ndash;    <input name="showDiagramsRadio" type="radio" onchange="showDiagrams()" value="3" checked="checked" />Both Diagrams&ndash;&gt;-->
+<!--    &lt;!&ndash;    <button onclick="swapDiagramsZOrder()">Swap Diagrams zIndex</button>&ndash;&gt;-->
+<!--</p>-->
+<div class="panel panel-default">
+<!--    You can see differences between the two models by clicking the following buttons <br/>-->
+    <!--    Nodes or Links added in Diagram 2 are highlighted in yellow.-->
+    <!--    Nodes or Links removed in Diagram 2 are highlighted in red.-->
+    <!--    Modified Nodes or Links are highlighted in cyan. -->
+<!--    <button onclick="myDiff.start()">Show Non-matched Elements</button>-->
+<!--    <button onclick="myDiff.start()">Matched Elements</button>-->
+<!--    <button onclick="myDiff.stop()">Stop Diff</button>-->
+
+        &nbsp;&nbsp;&nbsp; <label >Choose Scenario 1:</label>
+        &nbsp;&nbsp;&nbsp;<select id = "scenario1-list"  class="dropdown">
+
+
+        </select>
+        <label >Choose Scenario 2:</label>
+        &nbsp;&nbsp;&nbsp;<select id = "scenario2-list"  class="dropdown"></select>
+
+
+        <label >Choose Operation:</label>
+        &nbsp;&nbsp;&nbsp;<select id = "comp"  class="dropdown">
+
+
+<!--              <option id="1" value="diff">diff</option>-->
+<!--              <option id="2" value="matched">matched</option>-->
+
+<!--            <option id="3" value="barchart">bar chart</option>-->
+
+        </select>
+
+&nbsp;&nbsp;&nbsp;<input class="button-form" type="submit" value="Generate" onclick="showDiagrams()">
+
+   <br> &nbsp;&nbsp;&nbsp;View comparisons between Scenario 1 selection & all the Scenario 2 cases
+    <button onclick="show_full_chart()">View</button>
+</div>
+<form method="post" enctype="multipart/form-data">
+  <div style=" margin-left:20px">
+    <label for="sc_uploads">Add a scenario:</label>
+    <input type="file" id="sc_uploads" name="sc_uploads" accept=".log" >
+      Only .log file type is accepted
+      <input type ="submit" value="Add"></input>
+  </div>
+
+</form>
+
+
+<br><div>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<canvas id="bar-chart" style="overflow: auto ;margin-left:500px"  ></canvas>
+
+ <div id="full-chart" style=" margin-left:500px"></div>
+
+
+<p>
+     Scenario 1 Graph Model
+    <textarea id="mySavedModel1" style="width:100%;height:250px"></textarea>
+</p>
+<p>
+    Scenario 2 Graph Model
+    <textarea id="mySavedModel2" style="width:100%;height:250px"></textarea>
+</p>
+</div>
+</body>
+<script>
+      sc1List = {{sc1_filenames|safe}};
+      sc2List = {{sc2_filenames|safe}};
+      //total_node_list = {{node_count|safe}};
+      //console.log(total_node_list);
+      var comp_list = ["Only graphs", "Matched", "Non-matched", "Compare in a Barchart"];
+
+      console.log(comp_list);
+
+       var  select1 = document.getElementById("scenario1-list");
+       var  select2 = document.getElementById("scenario2-list");
+       var select3 = document.getElementById("comp");
+
+
+
+        for (var i = 0; i < sc1List.length; i++){
+            var opt = sc1List[i];
+            var el = document.createElement("option");
+            el.id =i;
+            el.textContent = opt;
+            el.value = opt;
+            select1.appendChild(el);
+        }
+
+         for (var i = 0; i < sc2List.length; i++){
+            var opt = sc2List[i];
+            var el = document.createElement("option");
+            el.id=i;
+            el.textContent = opt;
+            el.value = opt;
+            select2.appendChild(el);
+        }
+
+         for (var i = 0; i < comp_list.length; i++){
+            var opt = comp_list[i];
+            var el = document.createElement("option");
+            el.id=i;
+            el.textContent = opt;
+            el.value = opt;
+            select3.appendChild(el);
+        }
+
+
+      var sc1_id = document.getElementById("scenario1-list").selectedIndex;
+      var sc2_id = document.getElementById("scenario2-list").selectedIndex;i
+      //var node_c1 = document.getElementById("node_count_1");
+      //var node_c2 = document.getElementById("node_count_2");
+      var comp_index = document.getElementById("comp").selectedIndex;
+  //    node_c1.innerText= "Scenario 1  ( Node Count of Scenario 1 : " +total_node_list[sc1_id][sc2_id][0][0] +  ")";
+              // console.log(total_node_list[sc1_id][sc1_id][sc1_id][0])
+//node_c2.innerText= "Scenario 2  ( Node Count of Scenario 2 : "+ total_node_list[sc1_id][sc2_id][1][0]+ ")";
+
+        function show_chart() {
+            document.getElementById("full-chart").hidden;
+            document.getElementById("bar-chart").hidden;
+            var sc1_id = document.getElementById("scenario1-list").selectedIndex;
+            var sc2_id = document.getElementById("scenario2-list").selectedIndex;
+            perc = {{perc | safe}};
+            var x = [];
+            var y = [];
+            for (var i in sc2List) {
+                x.push(sc2List[i]);
+            }
+            for (var i in perc[sc1_id]) {
+                y.push(perc[sc1_id][i]);
+            }
+            console.log(x);
+            console.log(y);
+            new Chart(document.getElementById("bar-chart"), {
+                type: "horizontalBar",
+                data: {
+                    labels: [sc2List[sc2_id]],
+                    datasets: [
+                        {
+                            label: "Similiarities",
+                            backgroundColor: ["#3e95cd", "#8e5ea2", "#3cba9f", "#e8c3b9", "#c45850"],
+                            data: [y[sc2_id]]
+                        }
+                    ]
+                },
+                options: {
+                    responsive: false,
+                        scales: {
+                          xAxes: [{
+                            ticks: {
+                              maxRotation: 200,
+                              minRotation: 80
+                            }
+                          }],
+                          yAxes: [{
+                            ticks: {
+                              beginAtZero: true
+                            }
+                          }]
+                        },
+                    legend: {display: false},
+                    title: {
+                        display: true,
+                        text: "Comparison with Scenario 1 : "+ sc1List[sc1_id]
+                    }
+                }
+            });
+        }
+
+         function show_full_chart() {
+
+            document.getElementById("bar-chart").hidden;
+            var sc1_id = document.getElementById("scenario1-list").selectedIndex;
+            var sc2_id = document.getElementById("scenario2-list").selectedIndex;
+            perc = {{perc | safe}};
+            var x = [];
+            var y = [];
+            for (var i in sc2List) {
+                x.push(sc2List[i]);
+            }
+            for (var i in perc[sc1_id]) {
+                y.push(perc[sc1_id][i]);
+            }
+            console.log(x);
+            console.log(y);
+            new Chart(document.getElementById("bar-chart"), {
+
+                type: 'horizontalBar',
+                data: {
+                    labels: x,
+                    datasets: [
+                        {
+                            label: "Similiarities in %",
+                            backgroundColor: ["#3e95cd", "#8e5ea2", "#3cba9f", "#e8c3b9", "#c45850"],
+                            data: y
+                        }
+                    ]
+                },
+                options: {
+                    responsive: false,
+                        scales: {
+                          xAxes: [{
+                            ticks: {
+                              maxRotation: 200,
+                              minRotation: 80
+                            }
+                          }],
+                          yAxes: [{
+                            ticks: {
+                              beginAtZero: true
+                            }
+                          }]
+                        },
+                    legend: {display: false},
+                    title: {
+                        display: true,
+                        text: "Comparison with Scenario 1 : "+ sc1List[sc1_id]
+                    }
+                }
+            });
+        }
+
+        //  function show_chart_part() {
+        //
+        //     var sc1_id = document.getElementById("scenario1-list").selectedIndex;
+        //     var sc2_id = document.getElementById("scenario2-list").selectedIndex;
+        //     perc = {{perc | safe}};
+        //     var x = [];
+        //     var y = [];
+        //     for (var i in sc2List) {
+        //         x.push(sc2List[i]);
+        //     }
+        //     for (var i in perc[sc1_id]) {
+        //         y.push(perc[sc1_id][i]);
+        //     }
+        //     console.log(x);
+        //     console.log(y);
+        //     new Chart(document.getElementById("bar-chart"), {
+        //         type: 'bar',
+        //         data: {
+        //             labels: [sc2List[sc2_id]],
+        //             datasets: [
+        //                 {
+        //                     label: "Similiarities",
+        //                     backgroundColor: ["#3e95cd", "#8e5ea2", "#3cba9f", "#e8c3b9", "#c45850"],
+        //                     data: [y[sc2_id]]
+        //                 }
+        //             ]
+        //         },
+        //         options: {
+        //             legend: {display: false},
+        //             title: {
+        //                 display: true,
+        //                 text: "Comparison with Scenario 1 : "+ sc1List[sc1_id]
+        //             }
+        //         }
+        //     });
+        // }
+    // anychart.onDocumentReady(function () {
+    //     perc={{perc|safe}};
+    //     var sc1_id = document.getElementById("scenario1-list").selectedIndex;
+    //     // the data
+    //     var rows = [];
+    //
+    //     for(var i in perc[sc1_id])
+    //     {
+    //         rows.push([sc1List[i],perc[sc1_id][i]]);
+    //     }
+    //
+    //     var data = {
+    //         header: ["Scenario", "Similiarities"],
+    //         rows: rows
+    //     };
+    //     var chart = anychart.column();
+    //     chart.data(data);
+    //     chart.container('full-chart');
+    //     chart.head
+    //     chart.draw();
+    //
+    // });
+
+
+
+</script>
