@@ -1,3 +1,142 @@
+function show_chart(percentage_array)
+{
+    document.getElementById("full-chart").hidden;
+    document.getElementById("bar-chart").hidden;
+    var sc1_id = document.getElementById("scenario1-list").selectedIndex;
+    var sc2_id = document.getElementById("scenario2-list").selectedIndex;
+    perc = percentage_array;
+    var x = [];
+    var y = [];
+    for (var i in sc2List)
+    {
+        x.push(sc2List[i]);
+    }
+    for (var i in perc[sc1_id])
+    {
+        y.push(perc[sc1_id][i]);
+    }
+    console.log(x);
+    console.log(y);
+
+    new Chart
+    (
+        document.getElementById("bar-chart"),
+        {
+            type: "horizontalBar",
+            data:
+            {
+                labels: [sc2List[sc2_id]],
+                datasets:
+                [
+                    {
+                        label: "Similiarities",
+                        backgroundColor: ["#3e95cd", "#8e5ea2", "#3cba9f", "#e8c3b9", "#c45850"],
+                        data: [y[sc2_id]]
+                    }
+                ]
+            },
+            options:
+            {
+                responsive: false,
+                scales:
+                {
+                    xAxes:
+                    [{
+                        ticks:
+                        {
+                            maxRotation: 200,
+                            minRotation: 80
+                        }
+                    }],
+                    yAxes:
+                    [{
+                        ticks:
+                        {
+                            beginAtZero: true
+                        }
+                    }]
+                },
+                legend:
+                {
+                    display: false
+                },
+                title:
+                {
+                    display: true,
+                    text: "Comparison with Scenario 1 : "+ sc1List[sc1_id]
+                }
+            }
+        }
+    );
+}
+
+function show_full_chart(percentage_array)
+{
+    document.getElementById("bar-chart").hidden;
+    var sc1_id = document.getElementById("scenario1-list").selectedIndex;
+    var sc2_id = document.getElementById("scenario2-list").selectedIndex;
+    perc = percentage_array;
+    var x = [];
+    var y = [];
+    for (var i in sc2List)
+    {
+        x.push(sc2List[i]);
+    }
+    for (var i in perc[sc1_id])
+    {
+        y.push(perc[sc1_id][i]);
+    }
+    console.log(x);
+    console.log(y);
+    new Chart
+    (
+        document.getElementById("bar-chart"),
+        {
+            type: 'horizontalBar',
+            data:
+            {
+                labels: x,
+                datasets:
+                [
+                    {
+                        label: "Similiarities in %",
+                        backgroundColor: ["#3e95cd", "#8e5ea2", "#3cba9f", "#e8c3b9", "#c45850"],
+                        data: y
+                    }
+                ]
+            },
+            options:
+            {
+                responsive: false,
+                scales:
+                {
+                    xAxes:
+                    [{
+                        ticks:
+                        {
+                            maxRotation: 200,
+                            minRotation: 80
+                        }
+                    }],
+                    yAxes:
+                    [{
+                        ticks:
+                        {
+                            beginAtZero: true
+                        }
+                    }]
+                },
+                legend: {display: false},
+                title:
+                {
+                    display: true,
+                    text: "Comparison with Scenario 1 : "+ sc1List[sc1_id]
+                }
+            }
+        }
+    );
+}
+
 function VisualMatched(diag1, diag2)
 {
     // if (!(diag1 instanceof go.Diagram) || !(diag2 instanceof go.Diagram)) throw new Error("VisualDifferencer needs two Diagrams");
@@ -1511,10 +1650,10 @@ function toggleDiagram(diagnum)
     div2.style.display = (diagnum == 2 || diagnum == 3) ? "inline" : "none";
 }
 
-function showDiagrams()
+function showDiagrams(percentage_array, nodes, edges)
 {
 
-    generateGraph();
+    generateGraph(nodes, edges);
     // var sc1_id = document.getElementById("scenario1-list").selectedIndex;
     // var sc2_id = document.getElementById("scenario2-list").selectedIndex;
     // var node_c = document.getElementById("node_count");
@@ -1559,7 +1698,7 @@ function showDiagrams()
     }
     else if (comp_index==3)
     {
-        show_chart();
+        show_chart(percentage_array);
         //node_c1.innerText= "Scenario 1  ( Node Count of Scenario 1 : "+ total_node_list[sc1_id][sc2_id][0][0]+ ")";
         // console.log(total_node_list[sc1_id][sc1_id][sc1_id][0])
         //node_c2.innerText= "Scenario 2  ( Node Count of Scenario 2 : " +total_node_list[sc1_id][sc2_id][1][0]+ ")";
