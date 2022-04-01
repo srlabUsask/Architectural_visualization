@@ -83,17 +83,40 @@
             Choose Scenario 1:
         </label>
         &nbsp;&nbsp;&nbsp;
-        <select id="scenario1-list" class="dropdown"></select>
+        <select id="scenario1-list" class="dropdown">
+            {% for file_name in sc1_filenames %}
+                <option
+                    id="{{sc1_filenames.index(file_name)}}"
+                    value="{{file_name}}"
+                >
+                    {{file_name}}
+                </option>
+            {% endfor %}
+        </select>
         <label>
             Choose Scenario 2:
         </label>
         &nbsp;&nbsp;&nbsp;
-        <select id="scenario2-list" class="dropdown"></select>
+        <select id="scenario2-list" class="dropdown">
+            {% for file_name in sc2_filenames %}
+                <option
+                    id="{{sc2_filenames.index(file_name)}}"
+                    value="{{file_name}}"
+                >
+                    {{file_name}}
+                </option>
+            {% endfor %}
+        </select>
         <label>
             Choose Operation:
         </label>
         &nbsp;&nbsp;&nbsp;
-        <select id="comp" class="dropdown"></select>
+        <select id="comp" class="dropdown">
+            <option id="1" value="Only graphs">Only graphs</option>
+            <option id="2" value="Matched">Matched</option>
+            <option id="3" value="Non-matched">Non-matched</option>
+            <option id="4" value="Compare in a Barchart">Compare in a Barchart</option>
+        </select>
         &nbsp;&nbsp;&nbsp;
         <input
             class="button-form"
@@ -137,47 +160,6 @@
     </div>
 </body>
 <script>
-    sc1List = {{sc1_filenames|safe}};
-    sc2List = {{sc2_filenames|safe}};
-    //total_node_list = {{node_count|safe}};
-    //console.log(total_node_list);
-    var comp_list = ["Only graphs", "Matched", "Non-matched", "Compare in a Barchart"];
-
-    console.log(comp_list);
-
-    var select1 = document.getElementById("scenario1-list");
-    var select2 = document.getElementById("scenario2-list");
-    var select3 = document.getElementById("comp");
-
-    for (var i = 0; i < sc1List.length; i++)
-    {
-        var opt = sc1List[i];
-        var el = document.createElement("option");
-        el.id =i;
-        el.textContent = opt;
-        el.value = opt;
-        select1.appendChild(el);
-    }
-
-    for (var i = 0; i < sc2List.length; i++)
-    {
-        var opt = sc2List[i];
-        var el = document.createElement("option");
-        el.id=i;
-        el.textContent = opt;
-        el.value = opt;
-        select2.appendChild(el);
-    }
-
-    for (var i = 0; i < comp_list.length; i++)
-    {
-        var opt = comp_list[i];
-        var el = document.createElement("option");
-        el.id=i;
-        el.textContent = opt;
-        el.value = opt;
-        select3.appendChild(el);
-    }
 
     var sc1_id = document.getElementById("scenario1-list").selectedIndex;
     var sc2_id = document.getElementById("scenario2-list").selectedIndex;
