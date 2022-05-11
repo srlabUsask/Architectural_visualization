@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script type="text/javascript" src="{{ url_for('static',filename = 'js/go-debug.js')}}"></script>
+
+
+  <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"> -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <!-- <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script> -->
+
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+    integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"
+    integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous">
+  </script>
+
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename = 'style.css')}}">
+  <script src="{{ url_for('static',filename = 'js/tree_directory_view.js')}}"></script>
+  <script src="{{ url_for('static',filename = 'js/manipulate_tree.js')}}"></script>
+
+
+  <title>HCPC: Human Centric Program Comprehension Through Higher Level Abstraction</title>
+</head>
+
+<body onload="init()">
+
+  <ul class="nav justify-content-center">
+    <li class="nav-item">
+      <a class="nav-link active" href="#">Home</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="https://ise.usask.ca/avijit/research/">How it works</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="https://ise.usask.ca">About us</a>
+    </li>
+
+  </ul>
+
+
+    <div class="container-fluid">
+
+      <div class="row">
+        <div class="col">
+          <h5 class="text-focus-in" style="text-align: center;">HCPC: Human Centric Program Comprehension By Grouping Static Execution Scenarios
+          </h5>
+
+        </div>
+
+      </div>
+
+      <div class="row" >
+
+        <div class="col-3">
+
+          <div class="row">
+            <div class="col">
+              <b> Subject System 1 </b> <br>
+                <select name="subject_system" id="subject_system_id1" class="form-control">
+                  {% for ss in subject_systems %}
+                  <option value="{{ss}}">{{ss}}</option>
+                  {% endfor %}
+                </select>
+            </div>
+
+          </div>
+
+          <div class="card">
+
+            <div class="card-body">
+              <b class="card-title" id="node_key1">Node Key</b>
+              <br>
+              <b class="node_details_label"> Number of Files </b>
+              <div id="number_of_files1"> </div>
+              <b class="node_details_label"> Number of Execution paths </b>
+              <div id="number_of_execution_paths1"> </div>
+              <b class="node_details_label"> Files</b>
+              <div id="files1" class="vertical-scrollbar"> </div>
+              <b class="node_details_label"> Node summary</b>
+              <div id="node_summary1" class="vertical-scrollbar"> </div>
+              <b class="node_details_label"> Execution patterns </b>
+              <div class="vertical-scrollbar" id="node_patterns1"> </div>
+            </div>
+
+            <div class="card-body">
+              <b class="card-title">Execution Paths 1</b>
+              <p class="card-text vertical-scrollbar" id="searched_execution_paths1"></p>
+            </div>
+
+            <div class="row">
+
+              <div class="col">
+                <b> Technique to label nodes</b> <br>
+
+                <select class="form-control" name="technique_choice" id="technique_choice_id">
+                  {% for tc in technique_choices %}
+                  <option value="{{tc}}">{{tc}}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="col-6">
+
+          <div class="row">
+            <div class="col" id="fullDiagram1" style="height:525px;width:80%;border:1px solid black;margin:2px"></div>
+          </div>
+
+          <div class="row">
+            <div class="col" id="fullDiagram2" style="height:525px;width:80%;border:1px solid black;margin:2px"></div>
+          </div>
+
+          <div class="row justify-content-center">
+            <div class="col">
+              <button onclick="get_cluster()" type="submit" class="btn btn-secondary"> Load Cluster Tree </button>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div class="col-3">
+
+          <div class="row">
+            <div class="col">
+              <b> Subject System 2 </b> <br>
+              <select name="subject_system" id="subject_system_id2" class="form-control">
+                {% for ss in subject_systems %}
+                <option value="{{ss}}">{{ss}}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+          </div>
+
+            <div class="card">
+
+              <div class="card-body">
+                <b class="card-title" id="node_key2">Node Key</b>
+                <br>
+                <b class="node_details_label"> Number of Files </b>
+                <div id="number_of_files2"> </div>
+                <b class="node_details_label"> Number of Execution paths </b>
+                <div id="number_of_execution_paths2"> </div>
+                <b class="node_details_label"> Files</b>
+                <div id="files2" class="vertical-scrollbar"> </div>
+                <b class="node_details_label"> Node summary</b>
+                <div id="node_summary2" class="vertical-scrollbar"> </div>
+                <b class="node_details_label"> Execution patterns </b>
+                <div class="vertical-scrollbar" id="node_patterns2"> </div>
+              </div>
+
+              <div class="card-body">
+                <b class="card-title">Execution Paths 2</b>
+                <p class="card-text vertical-scrollbar" id="searched_execution_paths2"></p>
+              </div>
+            </div>
+
+          <div class="row">
+            <div class="col">
+              <b> Highlight nodes</b> <br>
+              <select id='function_file' name='select_elem' class="form-control"> </select>
+              <button type="submit" class="btn btn-secondary" id="search_button"> Search </button>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+    </div>
+
+
+  <footer class="page-footer font-small blue">
+
+
+    <div class="footer-copyright text-center py-3">© 2021 Copyright:
+      <a href="https://ise.usask.ca/avijit/"> Avijit Bhattacharjee (iSE Lab) </a>
+    </div>
+
+
+  </footer>
+
+
+</body>
+
+
+</html>
