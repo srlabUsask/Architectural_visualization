@@ -16,6 +16,7 @@ go.Shape.defineFigureGenerator("CollapsedLine", function(shape, w, h) {
               .add(new go.PathSegment(go.PathSegment.Line, 0.25*w, h)));
 });
 
+// Initialises the directory view of the cluster graph
 function init_directory(){
     var $ = go.GraphObject.make;  // for conciseness in defining templates
     const diagrams = [];
@@ -111,6 +112,7 @@ function init_directory(){
     myDiagram2 = diagrams[1];
 }
 
+// Initialises the tree view of the cluster graph
 function init_tree() {
     var $ = go.GraphObject.make;  // for conciseness in defining templates
     const diagrams = [];
@@ -125,7 +127,7 @@ function init_tree() {
                     layout:
                         $(go.TreeLayout,
                             {
-                                angle: 90, // was 0 before
+                                angle: 90,
                                 layerSpacing: 35
                             })
                 });
@@ -146,7 +148,7 @@ function init_tree() {
                 ) // end Horizontal Panel
             );  // end Node
 
-        // without lines
+        // Links nodes using an arrow
         diagrams[i - 1].linkTemplate =
             $(go.Link,
                 {
@@ -158,14 +160,14 @@ function init_tree() {
                         strokeWidth: 3,
                         stroke: "#555"
                     }
-                ),
+                ), //end line Shape
                 $(go.Shape,
                     {
                         toArrow: "Standard",
                         stroke: null
                     }
-                )
-            );
+                ) // end arrow Shape
+            ); // end Link
 
 
         diagrams[i - 1].addDiagramListener("ObjectContextClicked",
