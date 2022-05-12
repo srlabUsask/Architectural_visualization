@@ -24,14 +24,14 @@
   <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
   <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename = 'style.css')}}">
-  <script src="{{ url_for('static',filename = 'js/tree_directory_view.js')}}"></script>
+  <script src="{{ url_for('static',filename = 'js/tree_view.js')}}"></script>
   <script src="{{ url_for('static',filename = 'js/manipulate_tree.js')}}"></script>
 
 
   <title>HCPC: Human Centric Program Comprehension Through Higher Level Abstraction</title>
 </head>
 
-<body onload="init()">
+<body onload="init_directory()">
 
   <ul class="nav justify-content-center">
     <li class="nav-item">
@@ -127,6 +127,13 @@
               <button onclick="get_cluster()" type="submit" class="btn btn-secondary"> Load Cluster Tree </button>
             </div>
 
+            <div class="col">
+              <b> Model for Graph</b> <br>
+              <select class="form-control" name="graph_model" id="graph_model_id">
+                <option value="directory">Directory</option>
+                <option value="tree">Tree</option>
+              </select>
+            </div>
           </div>
 
         </div>

@@ -210,6 +210,19 @@ jQuery(document).ready(function() {
     });
 });
 
+jQuery(document).ready(function () {
+    jQuery('#graph_model_id').change(function() {
+        myDiagram1.div = null;
+        myDiagram2.div = null;
+        if (document.getElementById('graph_model_id').value === "tree"){
+            init_tree();
+        }
+        else {
+            init_directory();
+        }
+    });
+});
+
 function setupSearchForFunction(function_id_to_name_file){
 
     var data = []
