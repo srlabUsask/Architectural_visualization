@@ -33,18 +33,20 @@ class DocumentNodes:
         self.execution_paths = []
         self.function_id_to_name = {}
         self.function_id_to_file_name = {}
+        self.function_to_docstring = {}
         self.id_to_sentence = {}
         self.function_name_to_docstring = {}
         self.initalize_sheet()
 
     def initalize_graph_related_data_structures(self, execution_paths, function_id_to_name, function_id_to_file_name,
-                                                id_to_sentence, function_name_to_docstring
+                                                id_to_sentence, function_name_to_docstring, function_to_docstring
                                                 ):
         self.execution_paths = execution_paths
         self.function_id_to_name = function_id_to_name
         self.function_id_to_file_name = function_id_to_file_name
         self.id_to_sentence = id_to_sentence
         self.function_name_to_docstring = function_name_to_docstring
+        self.function_to_docstring = function_to_docstring
 
         return
 
@@ -72,7 +74,7 @@ class DocumentNodes:
             execution_paths_of_a_cluster, 'method')
         lsi_word = self.topic_model_lsi(execution_paths_of_a_cluster, 'word')
         text_summary = self.summarize_clusters_using_docstring(
-            execution_paths_of_a_cluster, self.function_name_to_docstring)
+            execution_paths_of_a_cluster, self.function_to_docstring)
         files_count, files = self.count_files_in_node(
             execution_paths_of_a_cluster)
         execution_paths_count = len(execution_paths_of_a_cluster)
@@ -338,19 +340,22 @@ class DocumentNodes:
         else:
             return lemma
 
-    def summarize_clusters_using_docstring(self, execution_paths_of_a_cluster, function_name_to_docstring):
+    def summarize_clusters_using_docstring(self, execution_paths_of_a_cluster, function_to_docstring):
         """  automatic text summarization for docstring of function names """
 
         text_for_summary = ''
         # count = 0
         for c in execution_paths_of_a_cluster:
             for f in self.execution_paths[c]:
-
-                if self.function_id_to_name[f] in function_name_to_docstring:
-
-                    if function_name_to_docstring[self.function_id_to_name[f]] is not None:
-                        text_for_summary += function_name_to_docstring[self.function_id_to_name[f]] + ' '
-                        # count += 1
+                if function_to_docstring[f] is not None:
+                    # if function_to_docstring[f] == "":
+                    #     print(function_to_docstring[f], self.function_id_to_name[f], self.function_id_to_file_name[f])
+                    #     print("____________________________________")
+                    text_for_summary += function_to_docstring[f] + ' '
+                    # count += 1
+                # else:
+                #     print("None", self.function_id_to_name[f], self.function_id_to_file_name[f])
+                #     print("____________________________________")
 
         try:
             # cluster_summary = summarize(

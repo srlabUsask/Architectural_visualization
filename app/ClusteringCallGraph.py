@@ -3,6 +3,7 @@ import math
 import multiprocessing
 import queue
 import re
+import string
 from collections import defaultdict
 from timeit import default_timer as timer
 
@@ -16,15 +17,26 @@ from scipy.spatial import distance as ssd
 from scipy.spatial.distance import pdist
 from sklearn.cluster import AgglomerativeClustering
 
+from gensim.models import Word2Vec, Doc2Vec
+import multiprocessing
+from gensim.models.doc2vec import TaggedDocument
+from numpy import dot
+from numpy.linalg import norm
+from numpy import subtract
+from numpy import absolute
+from numpy import mean
+from numpy import any
+
 import config
 import util
+import ast
 from ClusteringExecutionPaths import ClusteringExecutionPath
 from DocumentNodes import DocumentNodes
 
 ROOT = config.ROOT
 SUBJECT_SYSTEM_NAME = config.SUBJECT_SYSTEM_NAME
 OUTPUT_DIRECTORY = ROOT + '/output/'
-DATASET = ROOT + '/dataset/' + SUBJECT_SYSTEM_NAME + '.txt'
+DATASET = ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".txt"
 # put location of repository for getting comments
 SUBJECT_SYSTEM_FOR_COMMENT = config.SUBJECT_SYSTEM_FOR_COMMENT
 
@@ -48,6 +60,10 @@ class ClusteringCallGraph:
     graph = nx.DiGraph()
     function_id_to_name = {}
     function_id_to_file_name = {}
+    function_id_to_line_num = {}
+    function_to_docstring = {}
+    w2v_model = None
+    d2v_model = None
 
     analyzeAST = AnalyzeAST()
 
@@ -62,22 +78,22 @@ class ClusteringCallGraph:
     def log_analysis(self):
         """ analyzing programs to build cluster tree of execution paths. """
 
-        # self.tgf_to_networkX() -- was used for the tgf files rather than log files
+        # self.tgf_to_networkX() #-- was used for the tgf files rather than log files
         # print(os.path.abspath(__file__))
-        self.graph = self.buildgraph(
-            open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"),
-            1)  # We go one directory up to find the instance directory
+        # We go one directory up to find the instance directory
+        self.graph = self.pythonbuildgraph(
+            open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
 
         self.graph.remove_edges_from(nx.selfloop_edges(self.graph))
         # Visual of the call graph
-        # nx.draw(self.graph, nx.spring_layout(self.graph), with_labels=True, node_size=0)
-        # plt.show()
+        nx.draw(self.graph, nx.spring_layout(self.graph), with_labels=True, node_size=0)
+        plt.show()
 
         self.extracting_source_and_exit_node()
 
         # See what are the entry nodes
-        # for i in self.entry_point:
-        #     print(self.function_id_to_name[i] + "-" + i)
+        for i in self.entry_point:
+            print(self.function_id_to_name[i] + "-" + i)
 
         start = timer()
         self.extracting_execution_paths()
@@ -86,15 +102,100 @@ class ClusteringCallGraph:
         print('No. of execution paths', len(self.execution_paths))
 
         if len(self.execution_paths) > 5000:
+            print("Over 5000 Execution Paths")
             self.execution_paths = util.random_sample_execution_paths(
                 self.execution_paths)
 
+        sentences = []
+        d2v_sentences = []
+        index = 0
+        for path in self.execution_paths:
+            # print(path)
+            sentence = []
+            for func in path:
+                sentence.append(self.function_id_to_name[func])
+                # sentence.append("calls")
+            # sentence.pop()
+            # print(sentence, index)
+            sentences.append(sentence)
+            d2v_sentences.append(TaggedDocument(words=sentence, tags=[index]))
+            index += 1
+
+        cores = multiprocessing.cpu_count()
+        # self.w2v_model = Word2Vec(min_count=1,
+        #                      window=5,
+        #                      size=300,
+        #                      sample=6e-5,
+        #                      alpha=0.03,
+        #                      min_alpha=0.0007,
+        #                      negative=20,
+        #                      workers=cores-1)
+        self.d2v_model = Doc2Vec(min_count=1,
+                                 window=5,
+                                 vector_size=50,
+                                 sample=6e-5,
+                                 alpha=0.03,
+                                 min_alpha=0.0007,
+                                 negative=20,
+                                 workers=cores - 1)
+        t = timer()
+
+        # self.w2v_model.build_vocab(sentences, progress_per=50)
+        self.d2v_model.build_vocab(d2v_sentences, progress_per=50)
+
+        print('Time to build vocab: {} mins'.format(timer() - t))
+
+        t = timer()
+
+        # self.w2v_model.train(sentences, total_examples=self.w2v_model.corpus_count, epochs=10, report_delay=1)
+        self.d2v_model.train(d2v_sentences, total_examples=self.d2v_model.corpus_count, epochs=10000, report_delay=1)
+
+        print('Time to train the model: {} mins'.format(timer() - t))
+
+        # self.w2v_model.init_sims(replace=True)
+        self.d2v_model.init_sims(replace=True)
+
+        # print(self.w2v_model.wv.most_similar(positive=["init"]))
+        index = 0
+        # print(d2v_sentences[index].words)
+        print(self.d2v_model.docvecs.most_similar([self.d2v_model[index]]))
+        # print(d2v_sentences[self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[1][0]].words)
+        # a = self.d2v_model[index]
+        # b = self.d2v_model[self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[2][0]]
+        # print(dot(a, b)/(norm(a)*norm(b)))
+        print(self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[2][1])
+        print(self.d2v_model.docvecs.similarity(index,
+                                                self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[2][0]))
+        # print(cosine_similarity(self.d2v_model.infer_vector(sentences[index]), self.d2v_model.infer_vector(d2v_sentences[self.d2v_model.docvecs.most_similar([self.d2v_model.infer_vector(sentences[index])])[0][0]].words)))
+
         # self.remove_redundant_ep()
 
+        # print(self.execution_paths)
         start = timer()
-        mat = self.distance_matrix(self.execution_paths)
+        # mat = self.distance_matrix(self.execution_paths)
+        mat = self.distance_matrix2()
+        # print(mat)
+        mat_c = self.distance_matrix(self.execution_paths)
+        mat_j = self.distance_matrix3(self.execution_paths)
+        plt.matshow(mat)
+        plt.colorbar()
+        plt.show()
+        diff_mat = subtract(mat, mat_j)
+        diff_mat = absolute(diff_mat)
+        print(any(diff_mat < 0))
+        plt.matshow(diff_mat)
+        plt.colorbar()
+        plt.show()
+        # plt.matshow(mat_c)
+        # plt.colorbar()
+        # plt.show()
+        # plt.matshow(mat_j)
+        # plt.colorbar()
+        # plt.show()
         end = timer()
         print('Time required for distance_matrix: ', end - start)
+
+        print("Difference Value: ", mean(diff_mat))
 
         self.graph.clear()
 
@@ -102,7 +203,7 @@ class ClusteringCallGraph:
         document_nodes.initalize_graph_related_data_structures(
             self.execution_paths, self.function_id_to_name,
             self.function_id_to_file_name, self.id_to_sentence,
-            self.function_name_to_docstring)
+            self.function_name_to_docstring, self.function_to_docstring)
 
         start = timer()
         ret = self.flat_cluster_and_label_nodes(mat)
@@ -183,6 +284,98 @@ class ClusteringCallGraph:
         print('unique scenario extracted for', f.name)
 
         return g
+
+    def pythonbuildgraph(self, f):
+        self.subject_system = SUBJECT_SYSTEM_NAME + '.log'
+        g = nx.DiGraph()
+        func_tracker = {}
+        stack = []
+        index = 0
+        for line in f:
+            funname = line[:line.find('@@@')]
+
+            filename = line[line.find('@@@') + 3: line.find('::')].split("\\")[-1]
+            # print(funname, filename, line[:-2])
+            if line[:-2] not in func_tracker:
+                self.function_id_to_name[str(index)] = funname
+                self.function_id_to_file_name[str(index)] = filename
+                self.function_id_to_line_num[str(index)] = line[line.find('::') + 2:-2]
+
+                file = open(line[line.find('@@@') + 3: line.find('::')], encoding='utf-8')
+                tree = ast.parse(file.read(), filename=line[line.find('@@@') + 3: line.find('::')], mode='exec')
+                file.seek(0)
+                lines = file.readlines()
+
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.ClassDef):
+                        for cn in ast.iter_child_nodes(node):
+                            if isinstance(cn, ast.FunctionDef) and funname == cn.name:
+                                i = 0
+                                while "def " not in lines[int(self.function_id_to_line_num[str(index)]) + i - 1]:
+                                    i += 1
+                                if int(self.function_id_to_line_num[str(index)]) + i == cn.lineno:
+                                    self.function_to_docstring[str(index)] = self.process_docstring(
+                                        ast.get_docstring(cn))
+                                    break
+
+                    if isinstance(node, ast.FunctionDef) and funname == node.name:
+                        i = 0
+                        while "def " not in lines[int(self.function_id_to_line_num[str(index)]) + i - 1]:
+                            i += 1
+
+                        if int(self.function_id_to_line_num[str(index)]) + i == node.lineno:
+                            self.function_to_docstring[str(index)] = self.process_docstring(
+                                ast.get_docstring(node))
+                            break
+                if str(index) not in self.function_to_docstring:
+                    self.function_to_docstring[str(index)] = None
+                func_tracker[line[:-2]] = str(index)
+                index += 1
+
+            # opening other than root
+            if line[-2] == "c":
+                stack.append(func_tracker[line[:-2]])
+
+                parent = stack[len(stack) - 2]
+                child = stack[len(stack) - 1]
+
+                # print stack[len(stack)-2]
+                # print len(stack)-2
+                # print stack[-1]
+
+                g.add_edges_from([(parent, child)])
+            else:
+                try:
+                    stack.pop()
+                except Exception as e:
+                    pass
+        print('unique scenario extracted for', f.name)
+
+        # print(set(self.function_id_to_name.keys()).difference(set(self.function_to_docstring)))
+        # for i in set(self.function_id_to_name.keys()).difference(set(self.function_to_docstring)):
+        #     print(self.function_id_to_name[i], self.function_id_to_file_name[i], self.function_id_to_line_num[i])
+
+        return g
+
+    def process_docstring(self, doc):
+        if doc is None:
+            return ''
+        complete_line = ''
+        for line in doc.split('\n'):
+            if line == "" and complete_line != "":
+                if complete_line[-2] in string.punctuation:
+                    #print(complete_line)
+                    return complete_line[:-1]
+                else:
+                    #print(complete_line[:-1] + ".")
+                    return complete_line[:-1] + "."
+
+            line = line.strip()
+            if (line == "" and complete_line == "") or (not any([c.isalnum() for c in line])):
+                continue
+
+            complete_line += line + " "
+        return complete_line
 
     def tgf_to_networkX(self):
         """ converting tgf file to a networkX graph"""
@@ -287,113 +480,92 @@ class ClusteringCallGraph:
         print('distance_matrix')
         length = len(paths)
         Matrix = [[0 for x in range(length)] for y in range(length)]
+        similar = 0
+        dissimilar = 0
+
         for i in range(len(paths)):
             for j in range(len(paths)):
-                # Matrix[i][j] = util.jaccard_similarity(paths[i], paths[j])
+                if i == 0 and j == 23:
+                    print("test")
                 Matrix[i][j] = util.compare_execution_paths(paths[i], paths[j])
-
         return Matrix
 
-    def clustering_using_scipy(self, mt):
-        """ clustering execution paths using scipy """
+    def distance_matrix3(self, paths):
+        """ creating distance matrix using jaccard similarity value """
+        print('distance_matrix')
+        length = len(paths)
+        Matrix = [[0 for x in range(length)] for y in range(length)]
+        similar = 0
+        dissimilar = 0
 
-        start = timer()
-        Z = linkage(ssd.squareform(mt), 'ward')
-        fig = plt.figure(figsize=(25, 10))
-        dn = dendrogram(Z, truncate_mode='lastp', p=200)
-        rootnode, nodelist = to_tree(Z, rd=True)
-        nodes_with_parent = self.bfs_with_parent(
-            nodelist, rootnode.id, math.ceil(math.log(len(nodelist) + 1, 2)))
-        nodes_with_leaf_nodes = util.find_leaf_nodes_for_nodes(
-            rootnode, nodelist)
-        end = timer()
-        print('Time required for clustering: ', end - start)
+        for i in range(len(paths)):
+            for j in range(len(paths)):
+                Matrix[i][j] = util.jaccard_similarity(paths[i], paths[j])
+        return Matrix
 
-        count = 0
+    def distance_matrix2(self):
+        print('distance_matrix')
+        length = len(self.d2v_model.docvecs)
+        Matrix = [[0 for x in range(length)] for y in range(length)]
 
-        start = timer()
-        for child, parent in nodes_with_parent.items():
-            if nodelist[child].count == 1:
-                self.tree.append({'key': child, 'parent': parent,
-                                  'tfidf_word': 'EP: ' + str(child)
-                                                + ', Name: ' +
-                                                self.pretty_print_leaf_node(
-                                                    self.execution_paths[
-                                                        child]),
-                                  'tfidf_method': '', 'lda_word': '',
-                                  'lda_method': '', 'lsi_word': '',
-                                  'lsi_method': '', 'spm_method': '',
-                                  'text_summary': 'hello summary', 'files': [],
-                                  'files_count': 0,
-                                  'execution_path_count': 0,
-                                  'function_id_to_name_file': []})
-                continue
-            execution_paths_of_a_cluster = nodes_with_leaf_nodes[child]
+        for i in range(length):
+            for j in range(length):
+                Matrix[i][j] = 1 - abs(self.d2v_model.docvecs.similarity(i, j))
+                if Matrix[i][j] < 0.00001:
+                    Matrix[i][j] = 0
+                elif Matrix[i][j] > 1:
+                    Matrix[i][j] = 1
+        return Matrix
 
-            count += 1
-            print('Cluster no: ', count)
-
-            self.tree.append(document_nodes.labeling_cluster(
-                execution_paths_of_a_cluster, child, parent))
-
-        end = timer()
-        print('Time required for labeling using 6 techniques', end - start)
-
-        print(self.tree, file=open(OUTPUT_DIRECTORY +
-                                   'TREE_DICT_' + self.subject_system, 'w'))
-
-        return self.tree
-
-    def extract_function_name(self, str):
-        """ extracting function names from TGF file """
-        end = str.find('\\')
-
-        return str[:end]
-
-    def similarity(self, list1, list2):
-        print('list1 :', list1)
-        print('list2 :', list2)
-        print('braycurtis ', ssd.braycurtis(list1, list2))
-        return ssd.braycurtis(list1, list2)
-
-    def bfs_with_parent(self, nodelist, id, depth):
-        """
-        BFS to get parent nodes from cluster tree with their child nodes. Key of the returned dict is parent node and values are their child nodes.
-        """
-        # node = nodelist[id]
-        nodes = []
-        count = 0
-        visited = [0] * len(nodelist)
-        q = queue.Queue()
-        q.put(id)
-        tree = dict()
-        tree[id] = -1
-        visited[id] = 1
-        while True:
-            if q.empty():
-                break
-            q.qsize()
-            p = q.get()
-            q.qsize()
-            count = count + 1
-
-            if nodelist[p].count == 1:
-                nodes.append(p)
-                visited[p] = 1
-                continue
-
-            if visited[nodelist[p].left.id] == 0:
-                tree[nodelist[p].left.id] = nodelist[p].id
-                q.put(nodelist[p].left.id)
-            if visited[nodelist[p].right.id] == 0:
-                tree[nodelist[p].right.id] = nodelist[p].id
-                q.put(nodelist[p].right.id)
-
-            nodes.append(p)
-
-            visited[p] = 1
-
-        return tree
+    # def clustering_using_scipy(self, mt):
+    #     """ clustering execution paths using scipy """
+    #
+    #     start = timer()
+    #     Z = linkage(ssd.squareform(mt), 'ward')
+    #     fig = plt.figure(figsize=(25, 10))
+    #     dn = dendrogram(Z, truncate_mode='lastp', p=200)
+    #     rootnode, nodelist = to_tree(Z, rd=True)
+    #     nodes_with_parent = self.bfs_with_parent(
+    #         nodelist, rootnode.id, math.ceil(math.log(len(nodelist) + 1, 2)))
+    #     nodes_with_leaf_nodes = util.find_leaf_nodes_for_nodes(
+    #         rootnode, nodelist)
+    #     end = timer()
+    #     print('Time required for clustering: ', end - start)
+    #
+    #     count = 0
+    #
+    #     start = timer()
+    #     for child, parent in nodes_with_parent.items():
+    #         if nodelist[child].count == 1:
+    #             self.tree.append({'key': child, 'parent': parent,
+    #                               'tfidf_word': 'EP: ' + str(child)
+    #                                             + ', Name: ' +
+    #                                             self.pretty_print_leaf_node(
+    #                                                 self.execution_paths[
+    #                                                     child]),
+    #                               'tfidf_method': '', 'lda_word': '',
+    #                               'lda_method': '', 'lsi_word': '',
+    #                               'lsi_method': '', 'spm_method': '',
+    #                               'text_summary': 'hello summary', 'files': [],
+    #                               'files_count': 0,
+    #                               'execution_path_count': 0,
+    #                               'function_id_to_name_file': []})
+    #             continue
+    #         execution_paths_of_a_cluster = nodes_with_leaf_nodes[child]
+    #
+    #         count += 1
+    #         print('Cluster no: ', count)
+    #
+    #         self.tree.append(document_nodes.labeling_cluster(
+    #             execution_paths_of_a_cluster, child, parent))
+    #
+    #     end = timer()
+    #     print('Time required for labeling using 6 techniques', end - start)
+    #
+    #     print(self.tree, file=open(OUTPUT_DIRECTORY +
+    #                                'TREE_DICT_' + self.subject_system, 'w'))
+    #
+    #     return self.tree
 
     def id_to_sentence(self, execution_paths):
         """
@@ -425,5 +597,4 @@ c = ClusteringCallGraph()
 
 c.log_analysis()
 
-# ToDo -
 document_nodes.workbook.close()

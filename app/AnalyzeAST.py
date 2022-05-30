@@ -11,7 +11,7 @@ class AnalyzeAST:
     def file_to_function_docstring_pair(self, filename):
         """ This function returns function name with their docstring """
 
-        with open(filename) as f:
+        with open(filename, encoding='utf-8') as f:
             tree = ast.parse(f.read(), filename=filename, mode='exec')
 
             for node in ast.walk(tree):
