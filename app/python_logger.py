@@ -3,7 +3,7 @@ from datetime import date
 from rich.rich.console import Console
 from rich.rich import print
 
-file = open("test2_" + date.today().strftime("%m-%d-%Y") + ".log", "w")
+file = open("../instance/callLogs/test2_" + date.today().strftime("%m-%d-%Y") + ".log", "w")
 
 
 class Test:
