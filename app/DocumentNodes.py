@@ -1,4 +1,5 @@
 from xlsxwriter import worksheet
+from collections import Counter
 from prefixspan import PrefixSpan
 import xlsxwriter
 from spacy.lang.en import English
@@ -14,6 +15,7 @@ from gensim.summarization.textcleaner import get_sentences
 from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 import math
+import re
 
 import util
 
@@ -36,6 +38,7 @@ class DocumentNodes:
         self.function_to_docstring = {}
         self.id_to_sentence = {}
         self.function_name_to_docstring = {}
+        self.execution_path_words = {}
         self.initalize_sheet()
 
     def initalize_graph_related_data_structures(self, execution_paths, function_id_to_name, function_id_to_file_name,
@@ -47,8 +50,27 @@ class DocumentNodes:
         self.id_to_sentence = id_to_sentence
         self.function_name_to_docstring = function_name_to_docstring
         self.function_to_docstring = function_to_docstring
-
+        self.execution_path_words = self.extract_words_in_execution_paths(execution_paths, function_to_docstring,
+                                                                          function_id_to_name)
         return
+
+    def extract_words_in_execution_paths(self, execution_paths, function_to_docstring, function_id_to_name):
+        ret = {}
+        for path in execution_paths:
+            ret[str(path)] = []
+            for func in path:
+                words = []
+                no_punctuation = re.sub(r'[^\w\s]', ' ', function_to_docstring[func])
+                # print(function_to_docstring[func], "||", no_punctuation)
+                if no_punctuation == "":
+                    words.append(function_id_to_name[func])
+                else:
+                    words.extend([word.lower() for word in no_punctuation.split(" ") if word != "" and word not in self.en_stop])
+                # print(words)
+                # print("____________")
+                ret[str(path)].extend(words)
+            ret[str(path)] = set(ret[str(path)])
+        return ret
 
     def initalize_sheet(self):
         column = 0
@@ -58,7 +80,7 @@ class DocumentNodes:
         for column in range(len(sheet_labels)):
             self.worksheet.write(0, column, sheet_labels[column])
 
-    def labeling_cluster(self, execution_paths_of_a_cluster, k, v):
+    def labeling_cluster(self, execution_paths_of_a_cluster, execution_paths_of_siblings, k, v):
         """ Labelling a cluster using six variants """
 
         spm_method = self.mining_sequential_patterns(
@@ -73,6 +95,7 @@ class DocumentNodes:
         lsi_method = self.topic_model_lsi(
             execution_paths_of_a_cluster, 'method')
         lsi_word = self.topic_model_lsi(execution_paths_of_a_cluster, 'word')
+        key_words = self.key_words(execution_paths_of_a_cluster, execution_paths_of_siblings)  # Todo
         text_summary = self.summarize_clusters_using_docstring(
             execution_paths_of_a_cluster, self.function_to_docstring)
         files_count, files = self.count_files_in_node(
@@ -90,16 +113,18 @@ class DocumentNodes:
         self.worksheet.write(self.row, 5, lda_method)
         self.worksheet.write(self.row, 6, lsi_word)
         self.worksheet.write(self.row, 7, lsi_method)
-        self.worksheet.write(self.row, 8, text_summary)
-        self.worksheet.write(self.row, 9, spm_method)
+        self.worksheet.write(self.row, 8, key_words)
+        self.worksheet.write(self.row, 9, text_summary)
+        self.worksheet.write(self.row, 10, spm_method)
         self.row += 1
 
         execution_paths = {ep: 1 for ep in execution_paths_of_a_cluster}
 
         return {'key': k, 'parent': v, 'tfidf_word': tfidf_word, 'tfidf_method': tfidf_method, 'lda_word': lda_word,
-                'lda_method': lda_method, 'lsi_word': lsi_word, 'lsi_method': lsi_method, 'spm_method': spm_method,
-                'text_summary': text_summary, 'files_count': files_count, 'files': files, 'execution_path_count': execution_paths_count,
-                'function_id_to_name_file': function_id_to_name_file, 'execution_paths': execution_paths}
+                'lda_method': lda_method, 'lsi_word': lsi_word, 'lsi_method': lsi_method, 'key_words': key_words,
+                'spm_method': spm_method, 'text_summary': text_summary, 'files_count': files_count, 'files': files,
+                'execution_path_count': execution_paths_count, 'function_id_to_name_file': function_id_to_name_file,
+                'execution_paths': execution_paths}
 
     def tf_idf_score_for_scipy_cluster(self, clusters, method_or_word):
         """
@@ -339,6 +364,37 @@ class DocumentNodes:
             return word
         else:
             return lemma
+
+    def key_words(self, execution_paths_of_a_cluster, execution_paths_of_siblings):
+        cluster_word_freq = {}
+        sibling_word_freq = {}
+        for path in execution_paths_of_a_cluster:
+            for word in self.execution_path_words[str(self.execution_paths[path])]:
+                if word not in cluster_word_freq:
+                    cluster_word_freq[word] = 1
+                else:
+                    cluster_word_freq[word] += 1
+                if len(execution_paths_of_siblings) == 0:
+                    continue
+                for sibling_path in execution_paths_of_siblings:
+                    if word in self.execution_path_words[str(self.execution_paths[sibling_path])]:
+                        if word not in sibling_word_freq:
+                            sibling_word_freq[word] = 1
+                        else:
+                            sibling_word_freq[word] += 1
+                    else:
+                        sibling_word_freq[word] = 0
+        for word in cluster_word_freq:
+            # print(cluster_word_freq.keys())
+            # print(sibling_word_freq.keys())
+            cluster_word_freq[word] = cluster_word_freq[word] / len(execution_paths_of_a_cluster)
+            if len(execution_paths_of_siblings) == 0:
+                continue
+            sibling_word_freq[word] = sibling_word_freq[word] / len(execution_paths_of_siblings)
+            cluster_word_freq[word] = cluster_word_freq[word] * (1 - sibling_word_freq[word])
+        most_freq_words = [word_and_freq[0] for word_and_freq in sorted(cluster_word_freq.items(), key=lambda item: item[1], reverse=True)]
+
+        return self.merge_words_as_sentence(most_freq_words[:5])  # Todo case when not 5 words
 
     def summarize_clusters_using_docstring(self, execution_paths_of_a_cluster, function_to_docstring):
         """  automatic text summarization for docstring of function names """

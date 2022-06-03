@@ -7,13 +7,10 @@ from flask_cors import CORS
 import glob
 import config
 
-
-
 # from ClusteringCallGraph import *
 
 from datetime import datetime
 import json
-
 
 app = Flask(__name__, static_url_path='/static')
 CORS(app)
@@ -25,15 +22,14 @@ NUMBER_OF_SUBJECT_SYSTEMS = len(SUBJECT_SYSTEMS)
 print(NUMBER_OF_SUBJECT_SYSTEMS)
 
 
-
-@app.route('/',methods=['GET'])
+@app.route('/', methods=['GET'])
 def root():
     # return 'Hello world'
-    TECHNIQUE_CHOICES = ['tfidf_word', 'tfidf_method', 'lda_method', 'lda_word', 'lsi_method', 'lsi_word']
-    return render_template('home.html', subject_systems = SUBJECT_SYSTEMS, technique_choices = TECHNIQUE_CHOICES)
+    TECHNIQUE_CHOICES = ['tfidf_word', 'tfidf_method', 'lda_method', 'lda_word', 'lsi_method', 'lsi_word', 'key_words']
+    return render_template('home.html', subject_systems=SUBJECT_SYSTEMS, technique_choices=TECHNIQUE_CHOICES)
 
 
-@app.route('/get_cluster/', methods = ['GET'])
+@app.route('/get_cluster/', methods=['GET'])
 def get_cluster():
     subject_system = request.args.get('subject_system')
     with open(ROOT + subject_system, 'r') as f:
@@ -44,7 +40,10 @@ def get_cluster():
     return jsonify(cluster)
 
 
+@app.route('/leaf_similarity/', methods=['GET'])
+def leaf_similarity():
+    a = 0
+
+
 if __name__ == '__main__':
     app.run()
-
-

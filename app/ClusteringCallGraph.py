@@ -67,7 +67,6 @@ class ClusteringCallGraph:
 
     analyzeAST = AnalyzeAST()
 
-    # Todo: function_name_to_docstring isn't used properly as config file hasn't been changed
     function_name_to_docstring = analyzeAST.get_all_method_docstring_pair_of_a_project(
         SUBJECT_SYSTEM_FOR_COMMENT)
 
@@ -81,19 +80,19 @@ class ClusteringCallGraph:
         # self.tgf_to_networkX() #-- was used for the tgf files rather than log files
         # print(os.path.abspath(__file__))
         # We go one directory up to find the instance directory
-        self.graph = self.pythonbuildgraph(
-            open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
+        self.graph = self.buildgraph(
+            open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log")) #  pythonbuildgraph
 
         self.graph.remove_edges_from(nx.selfloop_edges(self.graph))
         # Visual of the call graph
-        nx.draw(self.graph, nx.spring_layout(self.graph), with_labels=True, node_size=0)
-        plt.show()
+        # nx.draw(self.graph, nx.spring_layout(self.graph), with_labels=True, node_size=0)
+        # plt.show()
 
         self.extracting_source_and_exit_node()
 
         # See what are the entry nodes
-        for i in self.entry_point:
-            print(self.function_id_to_name[i] + "-" + i)
+        # for i in self.entry_point:
+        #     print(self.function_id_to_name[i] + "-" + i)
 
         start = timer()
         self.extracting_execution_paths()
@@ -113,9 +112,10 @@ class ClusteringCallGraph:
             # print(path)
             sentence = []
             for func in path:
-                sentence.append(self.function_id_to_name[func])
-                # sentence.append("calls")
-            # sentence.pop()
+                no_punctuation = re.sub(r'[^\w\s]', '', self.function_to_docstring[func])
+                sentence.extend(no_punctuation.split(" ")) # sentence.append(self.function_id_to_name[func])
+                sentence.append("calls")
+            sentence.pop()
             # print(sentence, index)
             sentences.append(sentence)
             d2v_sentences.append(TaggedDocument(words=sentence, tags=[index]))
@@ -148,7 +148,7 @@ class ClusteringCallGraph:
         t = timer()
 
         # self.w2v_model.train(sentences, total_examples=self.w2v_model.corpus_count, epochs=10, report_delay=1)
-        self.d2v_model.train(d2v_sentences, total_examples=self.d2v_model.corpus_count, epochs=10000, report_delay=1)
+        self.d2v_model.train(d2v_sentences, total_examples=self.d2v_model.corpus_count, epochs=100, report_delay=1)  # Usually 10000
 
         print('Time to train the model: {} mins'.format(timer() - t))
 
@@ -173,7 +173,7 @@ class ClusteringCallGraph:
         # print(self.execution_paths)
         start = timer()
         # mat = self.distance_matrix(self.execution_paths)
-        mat = self.distance_matrix2()
+        mat = self.distance_matrix3(self.execution_paths) # Change it to distance_matrix2() for doc2vec
         # print(mat)
         mat_c = self.distance_matrix(self.execution_paths)
         mat_j = self.distance_matrix3(self.execution_paths)
@@ -199,7 +199,6 @@ class ClusteringCallGraph:
 
         self.graph.clear()
 
-        # ToDo (also note usage of function_name_to_docstring which hasn't been changed in config.py)
         document_nodes.initalize_graph_related_data_structures(
             self.execution_paths, self.function_id_to_name,
             self.function_id_to_file_name, self.id_to_sentence,
@@ -212,7 +211,7 @@ class ClusteringCallGraph:
         return ret
         # return self.clustering_using_scipy(mat)
 
-    def buildgraph(self, f, view):
+    def buildgraph(self, f):
         self.subject_system = SUBJECT_SYSTEM_NAME + '.log'
         g = nx.DiGraph()
         func_tracker = {}
@@ -244,6 +243,7 @@ class ClusteringCallGraph:
                 self.function_id_to_name[str(index)] = funname
                 self.function_id_to_file_name[str(index)] = filename
                 func_tracker[line[1:-2]] = str(index)
+                self.function_to_docstring[str(index)] = ''
                 index += 1
 
             # root opening
@@ -257,11 +257,7 @@ class ClusteringCallGraph:
 
             # opening other than root
             elif '</' not in line:
-                if view == 1:
-                    # stack.append(funname[2:len(funname)])
-                    stack.append(func_tracker[line[1:-2]])
-                else:
-                    stack.append(func_tracker[line[1:-2]])
+                stack.append(func_tracker[line[1:-2]])
 
                 parent = stack[len(stack) - 2]
                 child = stack[len(stack) - 1]
@@ -328,7 +324,7 @@ class ClusteringCallGraph:
                                 ast.get_docstring(node))
                             break
                 if str(index) not in self.function_to_docstring:
-                    self.function_to_docstring[str(index)] = None
+                    self.function_to_docstring[str(index)] = ""  # was None before (tend to be classes)
                 func_tracker[line[:-2]] = str(index)
                 index += 1
 
@@ -485,8 +481,6 @@ class ClusteringCallGraph:
 
         for i in range(len(paths)):
             for j in range(len(paths)):
-                if i == 0 and j == 23:
-                    print("test")
                 Matrix[i][j] = util.compare_execution_paths(paths[i], paths[j])
         return Matrix
 

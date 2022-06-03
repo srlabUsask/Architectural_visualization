@@ -17,6 +17,10 @@ function get_cluster() {
 
 }
 
+function leaf_similarity(node) {
+    Url = '/similar_leaf';
+}
+
 function setupDiagram(result, myDiagram) {
     var nodeDataArray = [];
     for (x in result) {
@@ -30,6 +34,7 @@ function setupDiagram(result, myDiagram) {
             lda_method: result[x].lda_method,
             lsi_word: result[x].lsi_word,
             lsi_method: result[x].lsi_method,
+            key_words: result[x].key_words,
             color: "black",
             spm_method: result[x].spm_method,
             text_summary: result[x].text_summary,
@@ -67,6 +72,9 @@ function update_node_text(node, technique, myDiagram) {
             m.set(node.data, "node_text", node.data.lsi_word);
         } else if (technique == 'lsi_method') {
             m.set(node.data, "node_text", node.data.lsi_method);
+        }
+        else if (technique == 'key_words') {
+            m.set(node.data, "node_text", node.data.key_words);
         }
 
     }, "update node text");
