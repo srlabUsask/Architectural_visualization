@@ -5,30 +5,6 @@ from rich.rich import print
 
 file = open("../instance/callLogs/test2_" + date.today().strftime("%m-%d-%Y") + ".log", "w")
 
-
-class Test:
-    @staticmethod
-    def func2(b) -> None:
-        print(b)
-
-
-def func(a):
-    """
-    Test ??????
-        test
-    b
-    :param a:
-    :return:
-    """
-    c = func2(a)
-    print(c)
-    Test.func2("yo")
-
-
-def func2(b):
-    return 2 * b
-
-
 def trace(frame, event, arg):
     # Current trace function based on logging the activities run using the rich library
     code = frame.f_code
@@ -40,7 +16,7 @@ def trace(frame, event, arg):
 if __name__ == "__main__":
     sys.settrace(trace)
     # Activities we will do to log function calls
-    console = Console() # I think this uses venv package instead of our downloaded repo so change that
+    console = Console()
     console.print("Hello", "World!", style="bold red")
     console.print("Where there is a [bold cyan]Will[/bold cyan] there [u]is[/u] a [i]way[/i].")
     # print("Hello, [bold magenta]World[/bold magenta]!", ":vampire:", locals())
