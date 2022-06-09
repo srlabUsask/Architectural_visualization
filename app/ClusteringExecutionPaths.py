@@ -47,6 +47,7 @@ class ClusteringExecutionPath:
 
     def label_flat_clusters(self, document_nodes, mat):
         tree = []
+        cluster_to_tree_index = {}
         thresholds = [5, 4, 3, 2, 1.5, 0.9]
 
         for i, threshold in enumerate(thresholds):
@@ -55,14 +56,19 @@ class ClusteringExecutionPath:
             for cluster, leaves in self.cluster_to_leaf.items():
                 # print(leaves, type(leaves[0]))
                 if i == 0:
-                    tree.append(document_nodes.labeling_cluster(leaves, [], cluster, -1))
+                    tree.append(document_nodes.labeling_cluster(leaves, [], cluster, -1, None))
                 else:
                     # print(self.cluster_to_parent_leaf[self.parent_leaf_to_cluster[leaves[0]]])
                     # print(leaves)
                     # print([item for item in self.cluster_to_parent_leaf[self.parent_leaf_to_cluster[leaves[0]]] if item not in leaves])
                     # print("_________")
-                    tree.append(document_nodes.labeling_cluster(leaves, [item for item in self.cluster_to_parent_leaf[self.parent_leaf_to_cluster[leaves[0]]] if item not in leaves],
-                                                                cluster, self.parent_leaf_to_cluster[leaves[0]]))
+                    # print(leaves, cluster, self.parent_leaf_to_cluster[leaves[0]])
+                    siblings = [item for item in self.cluster_to_parent_leaf[self.parent_leaf_to_cluster[leaves[0]]] if item not in leaves]
+                    parent_label = None
+                    if len(siblings) == 0:
+                        parent_label = tree[cluster_to_tree_index[self.parent_leaf_to_cluster[leaves[0]]]]['key_words']
+                    tree.append(document_nodes.labeling_cluster(leaves, siblings, cluster, self.parent_leaf_to_cluster[leaves[0]], parent_label))
+                cluster_to_tree_index[cluster] = len(tree) - 1
 
         return tree
 

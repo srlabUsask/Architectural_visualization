@@ -60,28 +60,27 @@ class DocumentNodes:
             ret[str(path)] = []
             for func in path:
                 words = []
-                no_punctuation = re.sub(r'[^\w\s]', ' ', function_to_docstring[func])
-                # print(function_to_docstring[func], "||", no_punctuation)
+                no_punctuation = re.sub(r'[^\w\s]', '', function_to_docstring[func])
                 if no_punctuation == "":
                     words.append(function_id_to_name[func])
                 else:
-                    words.extend([word.lower() for word in no_punctuation.split(" ") if word != "" and word not in self.en_stop])
-                # print(words)
-                # print("____________")
+                    words.extend([word.lower() for word in no_punctuation.split(" ") if word.lower() != "" and word.lower() not in self.en_stop])
                 ret[str(path)].extend(words)
             ret[str(path)] = set(ret[str(path)])
         return ret
 
     def initalize_sheet(self):
         column = 0
-        sheet_labels = ['Cluster Id', 'Execution_Paths', 'tfidf_word', 'tfidf_method',
-                        'lda_word', 'lda_method', 'lsi_word', 'lsi_method', 'text_summary', 'SPM method']
+        sheet_labels = ['Cluster Id', 'Execution_Paths', 'tfidf_word', 'tfidf_method', 'tfidf_word_and_docstring',
+                        'tfidf_method_and_docstring', 'lda_word', 'lda_method', 'lsi_word', 'lsi_method', 'key_words',
+                        'text_summary', 'SPM method']
 
         for column in range(len(sheet_labels)):
             self.worksheet.write(0, column, sheet_labels[column])
 
-    def labeling_cluster(self, execution_paths_of_a_cluster, execution_paths_of_siblings, k, v):
+    def labeling_cluster(self, execution_paths_of_a_cluster, execution_paths_of_siblings, k, v, parent_label):
         """ Labelling a cluster using six variants """
+        print("_____________")
 
         spm_method = self.mining_sequential_patterns(
             execution_paths_of_a_cluster)
@@ -89,13 +88,21 @@ class DocumentNodes:
             execution_paths_of_a_cluster, 'method')
         tfidf_word = self.tf_idf_score_for_scipy_cluster(
             execution_paths_of_a_cluster, 'word')
+        tfidf_method_and_docstring = self.tf_idf_score_for_scipy_cluster(
+            execution_paths_of_a_cluster, 'docstring_and_method')
+        tfidf_word_and_docstring = self.tf_idf_score_for_scipy_cluster(
+            execution_paths_of_a_cluster, 'docstring_and_word')
         lda_method = self.topic_model_lda(
             execution_paths_of_a_cluster, 'method')
         lda_word = self.topic_model_lda(execution_paths_of_a_cluster, 'word')
+        lda_method_and_docstring = self.topic_model_lda(execution_paths_of_a_cluster, 'method_and_docstring')
+        lda_word_and_docstring = self.topic_model_lda(execution_paths_of_a_cluster, 'word_and_docstring')
         lsi_method = self.topic_model_lsi(
             execution_paths_of_a_cluster, 'method')
         lsi_word = self.topic_model_lsi(execution_paths_of_a_cluster, 'word')
-        key_words = self.key_words(execution_paths_of_a_cluster, execution_paths_of_siblings)  # Todo
+        lsi_method_and_docstring = self.topic_model_lsi(execution_paths_of_a_cluster, 'method_and_docstring')
+        lsi_word_and_docstring = self.topic_model_lsi(execution_paths_of_a_cluster, 'word_and_docstring')
+        key_words = self.key_words(execution_paths_of_a_cluster, execution_paths_of_siblings, parent_label)  # Todo
         text_summary = self.summarize_clusters_using_docstring(
             execution_paths_of_a_cluster, self.function_to_docstring)
         files_count, files = self.count_files_in_node(
@@ -109,22 +116,31 @@ class DocumentNodes:
             execution_paths_of_a_cluster))
         self.worksheet.write(self.row, 2, tfidf_word)
         self.worksheet.write(self.row, 3, tfidf_method)
-        self.worksheet.write(self.row, 4, lda_word)
-        self.worksheet.write(self.row, 5, lda_method)
-        self.worksheet.write(self.row, 6, lsi_word)
-        self.worksheet.write(self.row, 7, lsi_method)
-        self.worksheet.write(self.row, 8, key_words)
-        self.worksheet.write(self.row, 9, text_summary)
-        self.worksheet.write(self.row, 10, spm_method)
+        self.worksheet.write(self.row, 4, tfidf_word_and_docstring)
+        self.worksheet.write(self.row, 5, tfidf_method_and_docstring)
+        self.worksheet.write(self.row, 6, lda_word)
+        self.worksheet.write(self.row, 7, lda_method)
+        self.worksheet.write(self.row, 8, lda_word_and_docstring)
+        self.worksheet.write(self.row, 9, lda_method_and_docstring)
+        self.worksheet.write(self.row, 10, lsi_word)
+        self.worksheet.write(self.row, 11, lsi_method)
+        self.worksheet.write(self.row, 12, lsi_word_and_docstring)
+        self.worksheet.write(self.row, 13, lsi_method_and_docstring)
+        self.worksheet.write(self.row, 14, key_words)
+        self.worksheet.write(self.row, 15, text_summary)
+        self.worksheet.write(self.row, 16, spm_method)
         self.row += 1
 
         execution_paths = {ep: 1 for ep in execution_paths_of_a_cluster}
 
-        return {'key': k, 'parent': v, 'tfidf_word': tfidf_word, 'tfidf_method': tfidf_method, 'lda_word': lda_word,
-                'lda_method': lda_method, 'lsi_word': lsi_word, 'lsi_method': lsi_method, 'key_words': key_words,
-                'spm_method': spm_method, 'text_summary': text_summary, 'files_count': files_count, 'files': files,
-                'execution_path_count': execution_paths_count, 'function_id_to_name_file': function_id_to_name_file,
-                'execution_paths': execution_paths}
+        return {'key': k, 'parent': v, 'tfidf_word': tfidf_word, 'tfidf_method': tfidf_method,
+                'tfidf_word_and_docstring': tfidf_word_and_docstring, 'tfidf_method_and_docstring': tfidf_method_and_docstring,
+                'lda_word': lda_word, 'lda_method': lda_method, 'lda_word_and_docstring': lda_word_and_docstring,
+                'lda_method_and_docstring': lda_method_and_docstring, 'lsi_word': lsi_word, 'lsi_method': lsi_method,
+                'lsi_word_and_docstring': lsi_word_and_docstring, 'lsi_method_and_docstring': lsi_method_and_docstring,
+                'key_words': key_words, 'spm_method': spm_method, 'text_summary': text_summary,
+                'files_count': files_count, 'files': files, 'execution_path_count': execution_paths_count,
+                'function_id_to_name_file': function_id_to_name_file, 'execution_paths': execution_paths}
 
     def tf_idf_score_for_scipy_cluster(self, clusters, method_or_word):
         """
@@ -140,6 +156,10 @@ class DocumentNodes:
                 txt1 = self.make_documents_for_a_cluster_tfidf_method(clusters)
             elif method_or_word == 'word':
                 txt1 = self.make_documents_for_a_cluster_tfidf_word(clusters)
+            elif method_or_word == "docstring_and_method":
+                txt1 = self.make_documents_for_a_cluster_tfidf_method_and_docstring(clusters)
+            elif method_or_word == "docstring_and_word":
+                txt1 = self.make_documents_for_a_cluster_tfidf_word_and_docstring(clusters)
 
             tf = TfidfVectorizer(smooth_idf=False, sublinear_tf=False,
                                  norm=None, analyzer='word', token_pattern='[a-zA-Z0-9]+')
@@ -155,7 +175,7 @@ class DocumentNodes:
 
         if method_or_word == 'method':
             return self.id_to_sentence(feature_names[sort_by_tfidf[-10:]])
-        elif method_or_word == 'word':
+        elif method_or_word in ['word', "docstring_and_method", "docstring_and_word"]:
             return self.merge_words_as_sentence(feature_names[sort_by_tfidf[-10:]])
 
     def make_documents_for_a_cluster_tfidf_method(self, clusters):
@@ -173,6 +193,28 @@ class DocumentNodes:
 
         return documents
 
+    def make_documents_for_a_cluster_tfidf_method_and_docstring(self, cluster):
+        """
+
+        :param cluster:
+        :return:
+        """
+        documents = []
+
+        for c in cluster:
+            str = ''
+            for e in self.execution_paths[c]:
+                no_punctuation = re.sub(r'[^\w\s]', '', self.function_to_docstring[e])
+                if no_punctuation == '':
+                    str += "funcname" + e  #self.function_id_to_name[e]
+                else:
+                    str += ' '.join([word.lower() for word in no_punctuation.split(" ") if word.lower() != "" and
+                                     word.lower() not in self.en_stop])
+                str += ' '
+            documents.append(str)  # [:-6]
+        return documents
+
+
     def make_documents_for_a_cluster_tm_method(self, clusters):
         """
         Making documents using execution paths of a cluster for topic model method variant.
@@ -183,6 +225,28 @@ class DocumentNodes:
             str = ''
             for e in self.execution_paths[c]:
                 str += self.function_id_to_name[e]
+                str += ' '
+            documents.append(str)
+
+        return documents
+
+    def make_documents_for_a_cluster_tm_method_and_docstring(self, cluster):
+        """
+
+        :param cluster:
+        :return:
+        """
+        documents = []
+
+        for c in cluster:
+            str = ''
+            for e in self.execution_paths[c]:
+                no_punctuation = re.sub(r'[^\w\s]', '', self.function_to_docstring[e])
+                if no_punctuation == '':
+                    str += self.function_id_to_name[e]
+                else:
+                    str += ' '.join([word.lower() for word in no_punctuation.split(" ") if word.lower() != "" and
+                                     word.lower() not in self.en_stop])
                 str += ' '
             documents.append(str)
 
@@ -209,6 +273,32 @@ class DocumentNodes:
 
         return documents
 
+    def make_documents_for_a_cluster_tfidf_word_and_docstring(self, cluster):
+        """
+
+        :param cluster:
+        :return:
+        """
+        documents = []
+
+        for c in cluster:
+            str = ''
+            for e in self.execution_paths[c]:
+                no_punctuation = re.sub(r'[^\w\s]', '', self.function_to_docstring[e])
+                if no_punctuation == '':
+                    words_in_function_name = [
+                        w for w in util.parse_method_class_name_to_words(self.function_id_to_name[e]) if w not in self.en_stop]
+                    words_in_function_name = [self.get_lemma(
+                        w) for w in words_in_function_name]
+                    str += self.merge_words_as_sentence(words_in_function_name)
+                else:
+                    str += ' '.join([word.lower() for word in no_punctuation.split(" ") if word.lower() != "" and
+                                     word.lower() not in self.en_stop])
+                str += ' '
+            documents.append(str)
+
+        return documents
+
     def make_documents_for_a_cluster_tm_word(self, clusters):
         """
         Making documents using execution paths of a cluster for topic model word variant.
@@ -230,6 +320,32 @@ class DocumentNodes:
 
         return documents
 
+    def make_documents_for_a_cluster_tm_word_and_docstring(self, cluster):
+        """
+
+        :param cluster:
+        :return:
+        """
+        documents = []
+
+        for c in cluster:
+            str = ''
+            for e in self.execution_paths[c]:
+                no_punctuation = re.sub(r'[^\w\s]', '', self.function_to_docstring[e])
+                if no_punctuation == '':
+                    words_in_function_name = [
+                        w for w in util.parse_method_class_name_to_words(self.function_id_to_name[e]) if w not in self.en_stop]
+                    words_in_function_name = [self.get_lemma(
+                        w) for w in words_in_function_name]
+                    str += self.merge_words_as_sentence(words_in_function_name)
+                else:
+                    str += ' '.join([word.lower() for word in no_punctuation.split(" ") if word.lower() != "" and
+                                     word.lower() not in self.en_stop])
+                str += ' '
+            documents.append(str)
+
+        return documents
+
     def merge_words_as_sentence(self, identifiers):
         """
          Merging word as sentence.
@@ -244,8 +360,14 @@ class DocumentNodes:
                 result.append(i)
 
         for r in result:
-            st += r
+            if len(r) > 8 and r[:8] == 'funcname':
+                st += self.function_id_to_name[r[8:]]
+            else:
+                st += r
             st += ' '
+
+        if st == '':
+            st = "{low similarity}"
 
         return st
 
@@ -268,6 +390,12 @@ class DocumentNodes:
             txt = self.make_documents_for_a_cluster_tm_method(labels)
         elif method_or_word == 'word':
             txt = self.make_documents_for_a_cluster_tm_word(labels)
+        elif method_or_word == "method_and_docstring":
+            txt = self.make_documents_for_a_cluster_tm_method_and_docstring(labels)
+        elif method_or_word == "word_and_docstring":
+            txt = self.make_documents_for_a_cluster_tm_word_and_docstring(labels)
+
+        # print(method_or_word, txt)
 
         for line in txt:
 
@@ -285,7 +413,9 @@ class DocumentNodes:
             corpus, num_topics=NUM_TOPICS, id2word=dictionary, passes=3)
 
         topics = ldamodel.show_topic(0, topn=5)
+        # print(topics)
         topics = self.topic_model_output(topics)
+        # print(topics)
 
         return topics
 
@@ -300,6 +430,12 @@ class DocumentNodes:
             txt = self.make_documents_for_a_cluster_tm_method(labels)
         elif method_or_word == 'word':
             txt = self.make_documents_for_a_cluster_tm_word(labels)
+        elif method_or_word == 'method_and_docstring':
+            txt = self.make_documents_for_a_cluster_tm_method_and_docstring(labels)
+        elif method_or_word == 'word_and_docstring':
+            txt = self.make_documents_for_a_cluster_tm_word_and_docstring(labels)
+
+        print(method_or_word, txt)
 
         for line in txt:
 
@@ -320,7 +456,9 @@ class DocumentNodes:
         lsimodel = gensim.models.lsimodel.LsiModel(
             corpus, num_topics=5, id2word=dictionary)
         topics = lsimodel.show_topic(0, topn=5)
+        print(topics)
         topics = self.topic_model_output(topics)
+        print(topics)
 
         return topics
 
@@ -365,9 +503,11 @@ class DocumentNodes:
         else:
             return lemma
 
-    def key_words(self, execution_paths_of_a_cluster, execution_paths_of_siblings):
+    def key_words(self, execution_paths_of_a_cluster, execution_paths_of_siblings, parent_label):
         cluster_word_freq = {}
         sibling_word_freq = {}
+        if len(execution_paths_of_siblings) == 0 and len(execution_paths_of_a_cluster) != len(self.execution_paths):
+            return parent_label
         for path in execution_paths_of_a_cluster:
             for word in self.execution_path_words[str(self.execution_paths[path])]:
                 if word not in cluster_word_freq:
@@ -377,16 +517,10 @@ class DocumentNodes:
                 if len(execution_paths_of_siblings) == 0:
                     continue
                 for sibling_path in execution_paths_of_siblings:
-                    if word in self.execution_path_words[str(self.execution_paths[sibling_path])]:
-                        if word not in sibling_word_freq:
-                            sibling_word_freq[word] = 1
-                        else:
-                            sibling_word_freq[word] += 1
-                    else:
+                    if word not in sibling_word_freq:
                         sibling_word_freq[word] = 0
+                    sibling_word_freq[word] += word in self.execution_path_words[str(self.execution_paths[sibling_path])]
         for word in cluster_word_freq:
-            # print(cluster_word_freq.keys())
-            # print(sibling_word_freq.keys())
             cluster_word_freq[word] = cluster_word_freq[word] / len(execution_paths_of_a_cluster)
             if len(execution_paths_of_siblings) == 0:
                 continue
@@ -394,7 +528,7 @@ class DocumentNodes:
             cluster_word_freq[word] = cluster_word_freq[word] * (1 - sibling_word_freq[word])
         most_freq_words = [word_and_freq[0] for word_and_freq in sorted(cluster_word_freq.items(), key=lambda item: item[1], reverse=True)]
 
-        return self.merge_words_as_sentence(most_freq_words[:5])  # Todo case when not 5 words
+        return self.merge_words_as_sentence([word for index, word in enumerate(most_freq_words) if cluster_word_freq[word] > 0.25 and (index < 5 or cluster_word_freq[word] == 1)])  # Todo case when not 5 words
 
     def summarize_clusters_using_docstring(self, execution_paths_of_a_cluster, function_to_docstring):
         """  automatic text summarization for docstring of function names """
@@ -404,14 +538,7 @@ class DocumentNodes:
         for c in execution_paths_of_a_cluster:
             for f in self.execution_paths[c]:
                 if function_to_docstring[f] is not None:
-                    # if function_to_docstring[f] == "":
-                    #     print(function_to_docstring[f], self.function_id_to_name[f], self.function_id_to_file_name[f])
-                    #     print("____________________________________")
                     text_for_summary += function_to_docstring[f] + ' '
-                    # count += 1
-                # else:
-                #     print("None", self.function_id_to_name[f], self.function_id_to_file_name[f])
-                #     print("____________________________________")
 
         try:
             # cluster_summary = summarize(

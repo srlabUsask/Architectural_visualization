@@ -30,10 +30,16 @@ function setupDiagram(result, myDiagram) {
             node_text: result[x].tfidf_word,
             tfidf_word: result[x].tfidf_word,
             tfidf_method: result[x].tfidf_method,
+            tfidf_method_and_docstring: result[x].tfidf_method_and_docstring,
+            tfidf_word_and_docstring: result[x].tfidf_word_and_docstring,
             lda_word: result[x].lda_word,
             lda_method: result[x].lda_method,
+            lda_word_and_docstring: result[x].lda_word_and_docstring,
+            lda_method_and_docstring: result[x].lda_method_and_docstring,
             lsi_word: result[x].lsi_word,
             lsi_method: result[x].lsi_method,
+            lsi_word_and_docstring: result[x].lsi_word_and_docstring,
+            lsi_method_and_docstring: result[x].lsi_method_and_docstring,
             key_words: result[x].key_words,
             color: "black",
             spm_method: result[x].spm_method,
@@ -64,16 +70,27 @@ function update_node_text(node, technique, myDiagram) {
             m.set(node.data, "node_text", node.data.tfidf_word);
         } else if (technique == 'tfidf_method') {
             m.set(node.data, "node_text", node.data.tfidf_method);
+        } else if (technique == 'tfidf_method_and_docstring') {
+            m.set(node.data, "node_text", node.data.tfidf_method_and_docstring);
+        } else if (technique == 'tfidf_word_and_docstring') {
+            m.set(node.data, "node_text", node.data.tfidf_word_and_docstring);
         } else if (technique == 'lda_word') {
             m.set(node.data, "node_text", node.data.lda_word);
         } else if (technique == 'lda_method') {
             m.set(node.data, "node_text", node.data.lda_method);
+        } else if (technique == 'lda_word_and_docstring') {
+            m.set(node.data, "node_text", node.data.lda_word_and_docstring);
+        } else if (technique == 'lda_method_and_docstring') {
+            m.set(node.data, "node_text", node.data.lda_method_and_docstring);
         } else if (technique == 'lsi_word') {
             m.set(node.data, "node_text", node.data.lsi_word);
         } else if (technique == 'lsi_method') {
             m.set(node.data, "node_text", node.data.lsi_method);
-        }
-        else if (technique == 'key_words') {
+        } else if (technique == 'lsi_word_and_docstring') {
+            m.set(node.data, "node_text", node.data.lsi_word_and_docstring);
+        } else if (technique == 'lsi_method_and_docstring') {
+            m.set(node.data, "node_text", node.data.lsi_method_and_docstring);
+        } else if (technique == 'key_words') {
             m.set(node.data, "node_text", node.data.key_words);
         }
 
@@ -177,7 +194,7 @@ function get_some_execution_patterns(eps, index){
     count = 0
     for(const [key, value] of Object.entries(eps)){
         count += 1
-        if(count === 5){
+        if(count === 15){
             break
         }
         eps_preety += ' &#187; '

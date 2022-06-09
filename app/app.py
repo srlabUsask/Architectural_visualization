@@ -25,7 +25,9 @@ print(NUMBER_OF_SUBJECT_SYSTEMS)
 @app.route('/', methods=['GET'])
 def root():
     # return 'Hello world'
-    TECHNIQUE_CHOICES = ['tfidf_word', 'tfidf_method', 'lda_method', 'lda_word', 'lsi_method', 'lsi_word', 'key_words']
+    TECHNIQUE_CHOICES = ['tfidf_method', 'tfidf_word', 'tfidf_method_and_docstring', 'tfidf_word_and_docstring',
+                         'lda_method', 'lda_word', 'lda_method_and_docstring', 'lda_word_and_docstring', 'lsi_method',
+                         'lsi_word', 'lsi_method_and_docstring', 'lsi_word_and_docstring', 'key_words']
     return render_template('home.html', subject_systems=SUBJECT_SYSTEMS, technique_choices=TECHNIQUE_CHOICES)
 
 
@@ -38,11 +40,6 @@ def get_cluster():
         cluster = eval(content)
 
     return jsonify(cluster)
-
-
-@app.route('/leaf_similarity/', methods=['GET'])
-def leaf_similarity():
-    a = 0
 
 
 if __name__ == '__main__':

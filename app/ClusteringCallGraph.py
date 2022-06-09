@@ -26,6 +26,7 @@ from numpy import subtract
 from numpy import absolute
 from numpy import mean
 from numpy import any
+import nltk
 
 import config
 import util
@@ -49,6 +50,9 @@ class ClusteringCallGraph:
         Finally, clusters are renamed using the execution paths under them using different topic modelling techniques.
 
      """
+    nltk.download('stopwords')
+    en_stop = set(nltk.corpus.stopwords.words('english'))
+    # print(en_stop)
     entry_point = []
     exit_point = []
     tree = []
@@ -109,11 +113,13 @@ class ClusteringCallGraph:
         d2v_sentences = []
         index = 0
         for path in self.execution_paths:
-            # print(path)
             sentence = []
             for func in path:
                 no_punctuation = re.sub(r'[^\w\s]', '', self.function_to_docstring[func])
-                sentence.extend(no_punctuation.split(" ")) # sentence.append(self.function_id_to_name[func])
+                if no_punctuation == "":
+                    sentence.append(self.function_id_to_name[func])
+                else:
+                    sentence.extend([word.lower() for word in no_punctuation.split(" ") if word.lower() != "" and word.lower() not in self.en_stop]) # sentence.append(self.function_id_to_name[func])
                 sentence.append("calls")
             sentence.pop()
             # print(sentence, index)
@@ -182,7 +188,8 @@ class ClusteringCallGraph:
         plt.show()
         diff_mat = subtract(mat, mat_j)
         diff_mat = absolute(diff_mat)
-        print(any(diff_mat < 0))
+        if any(diff_mat < 0):
+            exit(1)
         plt.matshow(diff_mat)
         plt.colorbar()
         plt.show()
@@ -198,11 +205,10 @@ class ClusteringCallGraph:
         print("Difference Value: ", mean(diff_mat))
 
         self.graph.clear()
-
         document_nodes.initalize_graph_related_data_structures(
             self.execution_paths, self.function_id_to_name,
             self.function_id_to_file_name, self.id_to_sentence,
-            self.function_name_to_docstring, self.function_to_docstring)
+            self.function_name_to_docstring, self.function_to_docstring) # Todo wipe out self.function_name_to_docstring
 
         start = timer()
         ret = self.flat_cluster_and_label_nodes(mat)
@@ -570,7 +576,6 @@ class ClusteringCallGraph:
         for l in execution_paths:
             str += self.function_id_to_name[l]
             str += ' '
-
         return str
 
     def pretty_print_leaf_node(self, execution_paths):
