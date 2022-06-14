@@ -1,11 +1,13 @@
 const cluster_jsons = [];
-function get_cluster() {
+async function get_cluster() {
     Url = '/get_cluster';
     const diagrams = [myDiagram1, myDiagram2];
     for (let i = 1; i < diagrams.length + 1; i++){
         var subject_systems = document.getElementById("subject_system_id" + i);
-        $.getJSON(Url, {
-            subject_system: subject_systems.value
+        var other_subject_system = document.getElementById("subject_system_id" + ((i % 2) + 1));
+        await $.getJSON(Url, {
+            subject_system: subject_systems.value,
+            other_subject_system: other_subject_system.value
         }, function (result) {
             cluster_jsons[i - 1] = result;
             setupDiagram(result['cluster'], diagrams[i - 1]);
@@ -17,9 +19,20 @@ function get_cluster() {
 
 }
 
-function leaf_similarity(node) {
-    Url = '/similar_leaf';
+function get_similarity(part, identifier) {
+    Url = '/get_similarity';
+    var subject_system = document.getElementById("subject_system_id" + identifier);
+    $.getJSON(Url, {
+        subject_system: subject_system.value,
+        key: part.data.key
+    }, function (result) {
+        update_similarity(result, (identifier % 2) + 1, part.data.key);
+    })
 }
+
+// function heat_map(tree1, tree2) {
+//     Url = '/similar_leaf';
+// }
 
 function setupDiagram(result, myDiagram) {
     var nodeDataArray = [];
@@ -95,6 +108,41 @@ function update_node_text(node, technique, myDiagram) {
         }
 
     }, "update node text");
+}
+
+function update_similarity(similarity_values, identifier, selected_node_key) {
+    if (identifier == 1) {
+        myDiagram1.nodes.each(function (n) {
+            myDiagram1.model.commit(function (m) {
+                let value = 255 * (1 - similarity_values[String(n.data.key)]);
+                m.set(n.data, "similarity", "rgb(" + value + "," + value + "," + value + ")");
+            }, 'change similarity value')
+        });
+        myDiagram2.nodes.each(function (n) {
+            myDiagram2.model.commit(function (m) {
+                m.set(n.data, "similarity", "rgb(255, 255, 255)"); // similarity[n.data.key]
+                if (n.data.key === selected_node_key){
+                    m.set(n.data, "similarity", "rgb(255, 0, 0)"); // similarity[n.data.key]
+                }
+            }, 'change similarity value')
+        });
+    }
+    else {
+        myDiagram2.nodes.each(function (n) {
+            myDiagram2.model.commit(function (m) {
+                let value = 255 * (1 - similarity_values[String(n.data.key)]);
+                m.set(n.data, "similarity", "rgb(" + value + "," + value + "," + value + ")");
+            }, 'change similarity value')
+        });
+        myDiagram1.nodes.each(function (n) {
+            myDiagram1.model.commit(function (m) {
+                m.set(n.data, "similarity", "rgb(255, 255, 255)"); // similarity[n.data.key]
+                if (n.data.key === selected_node_key){
+                    m.set(n.data, "similarity", "rgb(255, 0, 0)"); // similarity[n.data.key]
+                }
+            }, 'change similarity value')
+        });
+    }
 }
 
 function showNodeDetails(part, identifier) {

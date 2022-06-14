@@ -62,6 +62,10 @@ function init_directory(){
                         } else {
                             cmd.expandTree(node);
                         }
+
+                        if (node.isTreeLeaf){
+                            leaf_similarity(node);
+                        }
                     }
                 },
                 $("TreeExpanderButton",
@@ -91,7 +95,15 @@ function init_directory(){
                         new go.Binding("text", "node_text", function(s) { return " " + s; }),
                         new go.Binding('stroke', 'color')
                     )
-                ) // end Horizontal Panel
+                ), // end Horizontal Panel
+                $(go.Shape, "RoundedRectangle",
+                    {position: new go.Point(-20,-3),
+                        width: 20,
+                        height: 20,
+                        stroke: "black",
+                        fill: "white"},
+                    new go.Binding("fill", "similarity")
+                ) // end Shape
             );  // end Node
 
         // without lines
@@ -145,7 +157,15 @@ function init_tree() {
                         new go.Binding("text", "node_text", function(s) { return " " + s; }),
                         new go.Binding('stroke', 'color')
                     )
-                ) // end Horizontal Panel
+                ), // end Horizontal Panel
+                $(go.Shape, "RoundedRectangle",
+                    {position: new go.Point(120,0),
+                    width: 20,
+                    height: 20,
+                    stroke: "black",
+                    fill: "white"},
+                    new go.Binding("fill", "similarity")
+                ) // end Shape
             );  // end Node
 
         // Links nodes using an arrow
@@ -172,13 +192,17 @@ function init_tree() {
 
         diagrams[i - 1].addDiagramListener("ObjectContextClicked",
             function (e) {
-                var part = e.subject.part;
-                if (!(part instanceof go.Link)) {
-                    // showUserStudyPanel(part);
-                    showNodeDetails(part, i);
+                var subject = e.subject;
+                if (!(subject.part instanceof go.Link)) {
+                    // showUserStudyPanel(subject.part);
+                    showNodeDetails(subject.part, i);
+                }
+                if (subject.figure == 'RoundedRectangle'){
+                    get_similarity(subject.part, i);
                 }
 
             });
+
         }
     myDiagram1 = diagrams[0];
     myDiagram2 = diagrams[1];
@@ -196,7 +220,6 @@ function imageConverter(prop, picture) {
     }
   }
 }
-
 
 
 function clearDiagram() {

@@ -80,7 +80,6 @@ class DocumentNodes:
 
     def labeling_cluster(self, execution_paths_of_a_cluster, execution_paths_of_siblings, k, v, parent_label):
         """ Labelling a cluster using six variants """
-        print("_____________")
 
         spm_method = self.mining_sequential_patterns(
             execution_paths_of_a_cluster)
@@ -110,6 +109,7 @@ class DocumentNodes:
         execution_paths_count = len(execution_paths_of_a_cluster)
         function_id_to_name_file = self.function_id_to_file_name_of_execution_path(
             execution_paths_of_a_cluster)
+        words_in_cluster = self.words_in_cluster(self.execution_path_words, execution_paths_of_a_cluster)
 
         self.worksheet.write(self.row, 0, k)
         self.worksheet.write(self.row, 1, self.execution_path_to_sentence(
@@ -129,6 +129,7 @@ class DocumentNodes:
         self.worksheet.write(self.row, 14, key_words)
         self.worksheet.write(self.row, 15, text_summary)
         self.worksheet.write(self.row, 16, spm_method)
+        self.worksheet.write(self.row, 17, words_in_cluster)
         self.row += 1
 
         execution_paths = {ep: 1 for ep in execution_paths_of_a_cluster}
@@ -138,9 +139,10 @@ class DocumentNodes:
                 'lda_word': lda_word, 'lda_method': lda_method, 'lda_word_and_docstring': lda_word_and_docstring,
                 'lda_method_and_docstring': lda_method_and_docstring, 'lsi_word': lsi_word, 'lsi_method': lsi_method,
                 'lsi_word_and_docstring': lsi_word_and_docstring, 'lsi_method_and_docstring': lsi_method_and_docstring,
-                'key_words': key_words, 'spm_method': spm_method, 'text_summary': text_summary,
-                'files_count': files_count, 'files': files, 'execution_path_count': execution_paths_count,
-                'function_id_to_name_file': function_id_to_name_file, 'execution_paths': execution_paths}
+                'key_words': key_words, 'spm_method': spm_method, 'words_in_cluster': words_in_cluster,
+                'text_summary': text_summary, 'files_count': files_count, 'files': files,
+                'execution_path_count': execution_paths_count, 'function_id_to_name_file': function_id_to_name_file,
+                'execution_paths': execution_paths}
 
     def tf_idf_score_for_scipy_cluster(self, clusters, method_or_word):
         """
@@ -435,8 +437,6 @@ class DocumentNodes:
         elif method_or_word == 'word_and_docstring':
             txt = self.make_documents_for_a_cluster_tm_word_and_docstring(labels)
 
-        print(method_or_word, txt)
-
         for line in txt:
 
             tokens = self.prepare_text_for_lda(line)
@@ -456,9 +456,7 @@ class DocumentNodes:
         lsimodel = gensim.models.lsimodel.LsiModel(
             corpus, num_topics=5, id2word=dictionary)
         topics = lsimodel.show_topic(0, topn=5)
-        print(topics)
         topics = self.topic_model_output(topics)
-        print(topics)
 
         return topics
 
@@ -529,6 +527,12 @@ class DocumentNodes:
         most_freq_words = [word_and_freq[0] for word_and_freq in sorted(cluster_word_freq.items(), key=lambda item: item[1], reverse=True)]
 
         return self.merge_words_as_sentence([word for index, word in enumerate(most_freq_words) if cluster_word_freq[word] > 0.25 and (index < 5 or cluster_word_freq[word] == 1)])  # Todo case when not 5 words
+
+    def words_in_cluster(self, execution_path_words, execution_paths):
+        words = set()
+        for path in execution_paths:
+            words |= execution_path_words[str(self.execution_paths[path])]
+        return self.merge_words_as_sentence(words)
 
     def summarize_clusters_using_docstring(self, execution_paths_of_a_cluster, function_to_docstring):
         """  automatic text summarization for docstring of function names """
