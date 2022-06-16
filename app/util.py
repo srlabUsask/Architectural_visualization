@@ -12,7 +12,7 @@ def method_pairs(execution_path):
         all_pairs.append(execution_path[i: i+2])
         
     return all_pairs
-    
+
 def compare_execution_paths(ep1, ep2):
     ''' Strike a match implementation '''
     ep1_pairs = method_pairs(ep1)

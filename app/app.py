@@ -6,6 +6,7 @@ from flask import url_for
 from flask_cors import CORS
 import glob
 import config
+import util
 
 # from ClusteringCallGraph import *
 
@@ -21,6 +22,7 @@ print(SUBJECT_SYSTEMS)
 NUMBER_OF_SUBJECT_SYSTEMS = len(SUBJECT_SYSTEMS)
 print(NUMBER_OF_SUBJECT_SYSTEMS)
 similarity = {}
+unique_execution_paths = {}
 
 
 @app.route('/', methods=['GET'])
@@ -67,13 +69,14 @@ def get_cluster():
             # print(set(words))
             # print(set(other_words))
             # print(set(words) & set(other_words))
-            print("___________")
+            # print("___________")
             cluster_similarity[str(key)][str(other_key)] = similarity_value
             if str(other_key) not in other_cluster_similarity:
                 other_cluster_similarity[str(other_key)] = {}
             other_cluster_similarity[str(other_key)][str(key)] = similarity_value
     similarity[subject_system] = cluster_similarity
     similarity[other_subject_system] = other_cluster_similarity
+    print(clusters['execution_paths'])
     return jsonify(clusters)
 
 @app.route('/get_similarity/', methods=['GET'])

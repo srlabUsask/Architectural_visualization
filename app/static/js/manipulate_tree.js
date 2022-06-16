@@ -1,4 +1,6 @@
 const cluster_jsons = [];
+const string_execution_paths = [];
+
 async function get_cluster() {
     Url = '/get_cluster';
     const diagrams = [myDiagram1, myDiagram2];
@@ -14,6 +16,8 @@ async function get_cluster() {
             setupSearchForFunction(result['cluster'][0].function_id_to_name_file);
         })
     }
+
+    setupSearchForUniqueExecutionPaths()
 
     clearDiagram();
 
@@ -175,7 +179,7 @@ function reset_node_color() {
     });
 }
 
-function highlight_node(function_id) {
+function function_highlight_node(function_id) {
     myDiagram1.nodes.each(function (n) {
 
         if (function_id in n.data.function_id_to_name_file){
@@ -196,6 +200,27 @@ function highlight_node(function_id) {
     });
 }
 
+function execution_path_highlight_node(execution_path, identifier) {
+    if (identifier === 0) {
+        myDiagram1.nodes.each(function (n) {
+            if (execution_path in n.data.execution_paths){
+                myDiagram1.model.commit(function (m) {
+                    m.set(n.data, "color", "red");
+                }, 'change node color');
+            }
+        });
+    }
+    else {
+        myDiagram2.nodes.each(function (n) {
+            if (execution_path in n.data.execution_paths){
+                myDiagram2.model.commit(function (m) {
+                    m.set(n.data, "color", "red");
+                }, 'change node color');
+            }
+        });
+    }
+}
+
 function find_execution_paths_for_function(function_id){
 
     for (let j = 0; j < cluster_jsons.length; j++) {
@@ -214,8 +239,7 @@ function find_execution_paths_for_function(function_id){
         for(ep = 0; ep < eps.length; ep++){
             eps_preety += ' &#187; '
             for(f = 0; f < cluster_jsons[j]['execution_paths'][eps[ep]].length; f++){
-                console.log(cluster_jsons[j]['execution_paths'][eps[ep]][f], parseInt(function_id));
-                if(cluster_jsons[j]['execution_paths'][eps[ep]][f] == function_id){
+                if(cluster_jsons[j]['execution_paths'][eps[ep]][f] === function_id){
 
                     eps_preety += '<b>' + cluster_jsons[j]['function_id_to_name'][cluster_jsons[j]['execution_paths'][eps[ep]][f]] + '</b>';
                     eps_preety += '(' + cluster_jsons[j]['function_id_to_file_name'][cluster_jsons[j]['execution_paths'][eps[ep]][f]] + ')';
@@ -263,11 +287,24 @@ jQuery(document).ready(function() {
       var function_id = document.getElementById('function_file').value;
       //console.log(function_id);
       reset_node_color();
-      highlight_node(parseInt(function_id));
+      function_highlight_node(parseInt(function_id));
       find_execution_paths_for_function(function_id);
     });
   });
 
+jQuery(document).ready(function () {
+    jQuery("#unique_execution_paths").change(function () {
+        var execution_path = document.getElementById('unique_execution_paths').value;
+        reset_node_color();
+        console.log(execution_path, -1);
+        if (execution_path !== "None") {
+            execution_path = JSON.parse(execution_path);
+            var subject_system = execution_path[1];
+            execution_path = execution_path[0];
+            execution_path_highlight_node(execution_path, subject_system);
+        }
+    });
+});
 
 jQuery(document).ready(function() {
     jQuery('#technique_choice_id').change(function () {
@@ -309,5 +346,42 @@ function setupSearchForFunction(function_id_to_name_file){
         data:  data
     });
 
+
+}
+
+function setupSearchForUniqueExecutionPaths() {
+    var data = []
+
+    for (let j = 0; j < cluster_jsons.length; j++) {
+        string_execution_paths[j] = []
+        const execution_paths = cluster_jsons[j]['execution_paths'];
+        for (let i = 0; i < execution_paths.length; i++) {
+            let execution_path_string = '';
+            execution_path_string += '';
+            for (let f = 0; f < execution_paths[i].length; f++) {
+                execution_path_string += cluster_jsons[j]['function_id_to_name'][execution_paths[i][f]];
+                execution_path_string += '(' + cluster_jsons[j]['function_id_to_file_name'][execution_paths[i][f]] + ')';
+
+                execution_path_string += ' -> ';
+            }
+            execution_path_string += '.';
+            string_execution_paths[j].push(execution_path_string);
+        }
+    }
+
+    for (let j = 0; j < cluster_jsons.length; j++) {
+        const execution_paths = string_execution_paths[j];
+        for (let i = 0; i < execution_paths.length; i++) {
+            if (!(string_execution_paths[(j + 1) % 2].includes(execution_paths[i]))) {
+                data.push({"id": JSON.stringify([i,j]), "text": execution_paths[i]});
+            }
+        }
+    }
+
+    jQuery('#unique_execution_paths').select2({
+        width: 'resolve',
+        placholder: 'Start typing...',
+        data: data
+    });
 
 }
