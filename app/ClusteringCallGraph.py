@@ -84,13 +84,13 @@ class ClusteringCallGraph:
         # self.tgf_to_networkX() #-- was used for the tgf files rather than log files
         # print(os.path.abspath(__file__))
         # We go one directory up to find the instance directory
-        self.graph = self.buildgraph(
+        self.graph = self.pythonbuildgraph(
             open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log")) #  pythonbuildgraph
 
         self.graph.remove_edges_from(nx.selfloop_edges(self.graph))
         # Visual of the call graph
-        # nx.draw(self.graph, nx.spring_layout(self.graph), with_labels=True, node_size=0)
-        # plt.show()
+        nx.draw(self.graph, nx.spring_layout(self.graph), with_labels=True, node_size=0)
+        plt.show()
 
         self.extracting_source_and_exit_node()
 
@@ -112,9 +112,12 @@ class ClusteringCallGraph:
         sentences = []
         d2v_sentences = []
         index = 0
+        exe = open(SUBJECT_SYSTEM_NAME + ".txt", "w")
         for path in self.execution_paths:
+            test = []
             sentence = []
             for func in path:
+                test.append(self.function_id_to_name[func])
                 no_punctuation = re.sub(r'[^\w\s]', '', self.function_to_docstring[func])
                 if no_punctuation == "":
                     sentence.append(self.function_id_to_name[func])
@@ -122,6 +125,7 @@ class ClusteringCallGraph:
                     sentence.extend([word.lower() for word in no_punctuation.split(" ") if word.lower() != "" and word.lower() not in self.en_stop]) # sentence.append(self.function_id_to_name[func])
                 sentence.append("calls")
             sentence.pop()
+            exe.write(str(test) + "\n")
             # print(sentence, index)
             sentences.append(sentence)
             d2v_sentences.append(TaggedDocument(words=sentence, tags=[index]))
@@ -403,6 +407,7 @@ class ClusteringCallGraph:
                 ln = line.split(' ')
                 self.function_id_to_name[ln[0]
                 ] = self.extract_function_name(ln[1])
+                self.function_to_docstring[ln[0]] = ""
                 self.function_id_to_file_name[ln[0]] = line.split(
                     '/')[-1].split(':')[0]
 
@@ -566,6 +571,12 @@ class ClusteringCallGraph:
     #                                'TREE_DICT_' + self.subject_system, 'w'))
     #
     #     return self.tree
+
+    def extract_function_name(self, str):
+        """ extracting function names from TGF file """
+        end = str.find('\\')
+
+        return str[:end]
 
     def id_to_sentence(self, execution_paths):
         """

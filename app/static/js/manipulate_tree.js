@@ -1,9 +1,9 @@
 const cluster_jsons = [];
-const string_execution_paths = [];
 
 async function get_cluster() {
     Url = '/get_cluster';
-    const diagrams = [myDiagram1, myDiagram2];
+    let diagrams = [myDiagram1, myDiagram2];
+
     for (let i = 1; i < diagrams.length + 1; i++){
         var subject_systems = document.getElementById("subject_system_id" + i);
         var other_subject_system = document.getElementById("subject_system_id" + ((i % 2) + 1));
@@ -33,10 +33,6 @@ function get_similarity(part, identifier) {
         update_similarity(result, (identifier % 2) + 1, part.data.key);
     })
 }
-
-// function heat_map(tree1, tree2) {
-//     Url = '/similar_leaf';
-// }
 
 function setupDiagram(result, myDiagram) {
     var nodeDataArray = [];
@@ -200,21 +196,31 @@ function function_highlight_node(function_id) {
     });
 }
 
-function execution_path_highlight_node(execution_path, identifier) {
-    if (identifier === 0) {
+function execution_path_highlight_node(execution_path, identifier, similar) {
+    if (identifier.includes(0)) {
         myDiagram1.nodes.each(function (n) {
             if (execution_path in n.data.execution_paths){
                 myDiagram1.model.commit(function (m) {
-                    m.set(n.data, "color", "red");
+                    if (similar) {
+                        m.set(n.data, "color", "green");
+                    }
+                    else {
+                        m.set(n.data, "color", "red");
+                    }
                 }, 'change node color');
             }
         });
     }
-    else {
+    if (identifier.includes(1)) {
         myDiagram2.nodes.each(function (n) {
             if (execution_path in n.data.execution_paths){
                 myDiagram2.model.commit(function (m) {
-                    m.set(n.data, "color", "red");
+                    if (similar) {
+                        m.set(n.data, "color", "green");
+                    }
+                    else {
+                        m.set(n.data, "color", "red");
+                    }
                 }, 'change node color');
             }
         });
@@ -293,15 +299,27 @@ jQuery(document).ready(function() {
   });
 
 jQuery(document).ready(function () {
-    jQuery("#unique_execution_paths").change(function () {
-        var execution_path = document.getElementById('unique_execution_paths').value;
+    for (let i = 0; i < 2; i++) { //Todo the 2 is hardcoded
+        jQuery("#unique_execution_paths" + (i + 1).toString()).change(function () {
+            var execution_path = document.getElementById('unique_execution_paths' + (i + 1).toString()).value;
+            reset_node_color();
+            if (execution_path !== "None") {
+                execution_path = JSON.parse(execution_path);
+                var subject_system = execution_path[1];
+                execution_path = execution_path[0];
+                execution_path_highlight_node(execution_path, [subject_system], false);
+            }
+        });
+    }
+});
+
+jQuery(document).ready(function () {
+    jQuery("#same_execution_paths").change(function () {
+        var execution_path = document.getElementById('same_execution_paths').value;
         reset_node_color();
-        console.log(execution_path, -1);
         if (execution_path !== "None") {
-            execution_path = JSON.parse(execution_path);
-            var subject_system = execution_path[1];
             execution_path = execution_path[0];
-            execution_path_highlight_node(execution_path, subject_system);
+            execution_path_highlight_node(execution_path, [0, 1], true);
         }
     });
 });
@@ -350,7 +368,7 @@ function setupSearchForFunction(function_id_to_name_file){
 }
 
 function setupSearchForUniqueExecutionPaths() {
-    var data = []
+    const string_execution_paths = [];
 
     for (let j = 0; j < cluster_jsons.length; j++) {
         string_execution_paths[j] = []
@@ -369,19 +387,33 @@ function setupSearchForUniqueExecutionPaths() {
         }
     }
 
+    let same = [];
     for (let j = 0; j < cluster_jsons.length; j++) {
+        let unique = [];
         const execution_paths = string_execution_paths[j];
         for (let i = 0; i < execution_paths.length; i++) {
             if (!(string_execution_paths[(j + 1) % 2].includes(execution_paths[i]))) {
-                data.push({"id": JSON.stringify([i,j]), "text": execution_paths[i]});
+                unique.push({"id": JSON.stringify([i,j]), "text": execution_paths[i]});
+            }
+            else if (j === 0) {
+                same.push({"id": i, "text": execution_paths[i]});
             }
         }
-    }
 
-    jQuery('#unique_execution_paths').select2({
-        width: 'resolve',
-        placholder: 'Start typing...',
-        data: data
-    });
+        jQuery('#unique_execution_paths' + [(j % 2) + 1].toString()).empty().append('<option value="None">None</option>').
+        select2({
+            width: 'resolve',
+            placholder: 'Start typing...',
+            data: unique,
+            allowClear: true
+        });
+
+        jQuery('#same_execution_paths').empty().append('<option value="None">None</option>').select2({
+            width: 'resolve',
+            placholder: 'Start typing...',
+            data: same,
+            allowClear: true
+        });
+    }
 
 }
