@@ -61,6 +61,7 @@ class ClusteringCallGraph:
     special_functions = ['lambda', 'genexpr',
                          'listcomp', 'setcomp', 'dictcomp']
     execution_paths = []
+    execution_paths2 = []
     graph = nx.DiGraph()
     function_id_to_name = {}
     function_id_to_file_name = {}
@@ -84,8 +85,9 @@ class ClusteringCallGraph:
         # self.tgf_to_networkX() #-- was used for the tgf files rather than log files
         # print(os.path.abspath(__file__))
         # We go one directory up to find the instance directory
-        self.graph = self.pythonbuildgraph(
-            open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log")) #  pythonbuildgraph
+        self.graph = self.buildgraph2(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))  # pythonbuildgraph
+        start = timer()
+        self.buildgraph(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
 
         self.graph.remove_edges_from(nx.selfloop_edges(self.graph))
         # Visual of the call graph
@@ -97,13 +99,13 @@ class ClusteringCallGraph:
         # See what are the entry nodes
         # for i in self.entry_point:
         #     print(self.function_id_to_name[i] + "-" + i)
-
-        start = timer()
         self.extracting_execution_paths()
         end = timer()
         print('Time required for extracting_execution_paths: ', end - start)
         print('No. of execution paths', len(self.execution_paths))
 
+        print(len(self.execution_paths))
+        print(len(self.execution_paths2))
         if len(self.execution_paths) > 5000:
             print("Over 5000 Execution Paths")
             self.execution_paths = util.random_sample_execution_paths(
@@ -122,24 +124,16 @@ class ClusteringCallGraph:
                 if no_punctuation == "":
                     sentence.append(self.function_id_to_name[func])
                 else:
-                    sentence.extend([word.lower() for word in no_punctuation.split(" ") if word.lower() != "" and word.lower() not in self.en_stop]) # sentence.append(self.function_id_to_name[func])
+                    sentence.extend([word.lower() for word in no_punctuation.split(" ") if
+                                     word.lower() != "" and word.lower() not in self.en_stop])  # sentence.append(self.function_id_to_name[func])
                 sentence.append("calls")
             sentence.pop()
             exe.write(str(test) + "\n")
-            # print(sentence, index)
             sentences.append(sentence)
             d2v_sentences.append(TaggedDocument(words=sentence, tags=[index]))
             index += 1
 
         cores = multiprocessing.cpu_count()
-        # self.w2v_model = Word2Vec(min_count=1,
-        #                      window=5,
-        #                      size=300,
-        #                      sample=6e-5,
-        #                      alpha=0.03,
-        #                      min_alpha=0.0007,
-        #                      negative=20,
-        #                      workers=cores-1)
         self.d2v_model = Doc2Vec(min_count=1,
                                  window=5,
                                  vector_size=50,
@@ -150,15 +144,14 @@ class ClusteringCallGraph:
                                  workers=cores - 1)
         t = timer()
 
-        # self.w2v_model.build_vocab(sentences, progress_per=50)
         self.d2v_model.build_vocab(d2v_sentences, progress_per=50)
 
         print('Time to build vocab: {} mins'.format(timer() - t))
 
         t = timer()
 
-        # self.w2v_model.train(sentences, total_examples=self.w2v_model.corpus_count, epochs=10, report_delay=1)
-        self.d2v_model.train(d2v_sentences, total_examples=self.d2v_model.corpus_count, epochs=100, report_delay=1)  # Usually 10000
+        self.d2v_model.train(d2v_sentences, total_examples=self.d2v_model.corpus_count, epochs=100,
+                             report_delay=1)  # Usually 10000
 
         print('Time to train the model: {} mins'.format(timer() - t))
 
@@ -173,9 +166,9 @@ class ClusteringCallGraph:
         # a = self.d2v_model[index]
         # b = self.d2v_model[self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[2][0]]
         # print(dot(a, b)/(norm(a)*norm(b)))
-        print(self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[2][1])
+        print(self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[1][1])
         print(self.d2v_model.docvecs.similarity(index,
-                                                self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[2][0]))
+                                                self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[1][0]))
         # print(cosine_similarity(self.d2v_model.infer_vector(sentences[index]), self.d2v_model.infer_vector(d2v_sentences[self.d2v_model.docvecs.most_similar([self.d2v_model.infer_vector(sentences[index])])[0][0]].words)))
 
         # self.remove_redundant_ep()
@@ -183,9 +176,10 @@ class ClusteringCallGraph:
         # print(self.execution_paths)
         start = timer()
         # mat = self.distance_matrix(self.execution_paths)
-        mat = self.distance_matrix3(self.execution_paths) # Change it to distance_matrix2() for doc2vec
+        mat = self.distance_matrix3(self.execution_paths)  # Change it to distance_matrix2() for doc2vec
         # print(mat)
-        mat_c = self.distance_matrix(self.execution_paths)
+        # mat_c = self.distance_matrix(self.execution_paths)  # Note problem with making pairs with new execution paths
+        # due to 1 func execution paths
         mat_j = self.distance_matrix3(self.execution_paths)
         plt.matshow(mat)
         plt.colorbar()
@@ -212,7 +206,8 @@ class ClusteringCallGraph:
         document_nodes.initalize_graph_related_data_structures(
             self.execution_paths, self.function_id_to_name,
             self.function_id_to_file_name, self.id_to_sentence,
-            self.function_name_to_docstring, self.function_to_docstring) # Todo wipe out self.function_name_to_docstring
+            self.function_name_to_docstring,
+            self.function_to_docstring)  # Todo wipe out self.function_name_to_docstring
 
         start = timer()
         ret = self.flat_cluster_and_label_nodes(mat)
@@ -221,7 +216,7 @@ class ClusteringCallGraph:
         return ret
         # return self.clustering_using_scipy(mat)
 
-    def buildgraph(self, f):
+    def buildgraph2(self, f):
         self.subject_system = SUBJECT_SYSTEM_NAME + '.log'
         g = nx.DiGraph()
         func_tracker = {}
@@ -291,7 +286,7 @@ class ClusteringCallGraph:
 
         return g
 
-    def pythonbuildgraph(self, f):
+    def pythonbuildgraph2(self, f):
         self.subject_system = SUBJECT_SYSTEM_NAME + '.log'
         g = nx.DiGraph()
         func_tracker = {}
@@ -356,12 +351,164 @@ class ClusteringCallGraph:
                 except Exception as e:
                     pass
         print('unique scenario extracted for', f.name)
+        f.close()
 
         # print(set(self.function_id_to_name.keys()).difference(set(self.function_to_docstring)))
         # for i in set(self.function_id_to_name.keys()).difference(set(self.function_to_docstring)):
         #     print(self.function_id_to_name[i], self.function_id_to_file_name[i], self.function_id_to_line_num[i])
 
         return g
+
+    def buildgraph(self, f):
+        self.subject_system = SUBJECT_SYSTEM_NAME + '.log'
+        func_tracker = {}
+        execution_path_tracker = []
+        stack = []
+        prev_character = None
+        index = 0
+        f.seek(0)
+        for line in f:
+            # get func and file names without unnecessary texts
+            if not "(" in line:
+                continue
+            if not "::" in line:
+                continue
+            funname = ''
+            if ':' in line:
+                funname = line.strip()[
+                          line.find(':') + 2:line.find('(') - 0]  # ::OnHint
+                # print funname
+            else:
+                funname = line.strip()[
+                          1:line.find('(') - 0]  # void__fastcallTMain::OnHint
+                # print funname
+
+            filename = line.strip()[
+                       line.find('@@@') + 3: -1]  # CRHMmain.cpp_nocom
+            # --adding the root node--
+
+            # Note usage of nearly all the line info was to make functions with
+            # the same name be identified as unique functions
+            if line[1:-2] not in func_tracker:
+                self.function_id_to_name[str(index)] = funname
+                self.function_id_to_file_name[str(index)] = filename
+                func_tracker[line[1:-2]] = str(index)
+                self.function_to_docstring[str(index)] = ''
+                index += 1
+
+            # root opening
+            if '<root>' in line:
+                print("????????")
+                stack.append('root')
+
+            # root closing
+            elif '</root>' in line:
+                print("????????")
+                stack.pop()
+
+            # opening other than root
+            elif '</' not in line:
+                stack.append(func_tracker[line[1:-2]])
+                prev_character = "c"
+            else:
+                if prev_character == "c" and list(stack) not in execution_path_tracker:  #Todo check if removing the execution_path_tracker speeds up or slows down
+                    execution_path_tracker.append(list(stack))
+                    execution_path = list(stack)
+                    execution_path = ",".join(execution_path) + ","
+                    previous = ""
+                    while execution_path != previous:
+                        previous = execution_path
+                        execution_path = re.sub(r'(.+?,)\1+', r'\1', execution_path) # the ? seems redundant
+
+                    execution_path = execution_path[:-1]
+                    execution_path = execution_path.split(",")
+
+                    if execution_path not in self.execution_paths:
+                        self.execution_paths.append(execution_path)
+                prev_character = "r"
+                try:
+                    stack.pop()
+                except Exception as e:
+                    pass
+
+        # end of loop
+
+        # print stack
+        print('unique scenario extracted for', f.name)
+
+    def pythonbuildgraph(self, f):
+        self.subject_system = SUBJECT_SYSTEM_NAME + '.log'
+        func_tracker = {}
+        stack = []
+        execution_path_tracker = []
+        prev_character = None
+        index = 0
+        f.seek(0)
+        for line in f:
+            funname = line[:line.find('@@@')]
+
+            filename = line[line.find('@@@') + 3: line.find('::')].split("\\")[-1]
+
+            if line[:-2] not in func_tracker:
+                self.function_id_to_name[str(index)] = funname
+                self.function_id_to_file_name[str(index)] = filename
+                self.function_id_to_line_num[str(index)] = line[line.find('::') + 2:-2]
+
+                file = open(line[line.find('@@@') + 3: line.find('::')], encoding='utf-8')
+                tree = ast.parse(file.read(), filename=line[line.find('@@@') + 3: line.find('::')], mode='exec')
+                file.seek(0)
+                lines = file.readlines()
+
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.ClassDef):
+                        for cn in ast.iter_child_nodes(node):
+                            if isinstance(cn, ast.FunctionDef) and funname == cn.name:
+                                i = 0
+                                while "def " not in lines[int(self.function_id_to_line_num[str(index)]) + i - 1]:
+                                    i += 1
+                                if int(self.function_id_to_line_num[str(index)]) + i == cn.lineno:
+                                    self.function_to_docstring[str(index)] = self.process_docstring(
+                                        ast.get_docstring(cn))
+                                    break
+
+                    if isinstance(node, ast.FunctionDef) and funname == node.name:
+                        i = 0
+                        while "def " not in lines[int(self.function_id_to_line_num[str(index)]) + i - 1]:
+                            i += 1
+
+                        if int(self.function_id_to_line_num[str(index)]) + i == node.lineno:
+                            self.function_to_docstring[str(index)] = self.process_docstring(
+                                ast.get_docstring(node))
+                            break
+                if str(index) not in self.function_to_docstring:
+                    self.function_to_docstring[str(index)] = ""  # was None before (tend to be classes)
+                func_tracker[line[:-2]] = str(index)
+                index += 1
+
+            # opening other than root
+            if line[-2] == "c":
+                stack.append(func_tracker[line[:-2]])
+                prev_character = "c"
+            else:
+                if prev_character == "c" and list(stack) not in execution_path_tracker:
+                    execution_path_tracker.append(list(stack))
+                    execution_path = list(stack)
+                    execution_path = ",".join(execution_path) + ","
+                    previous = ""
+                    while execution_path != previous:
+                        previous = execution_path
+                        execution_path = re.sub(r'(.+?,)\1+', r'\1', execution_path) # the ? seems redundant
+
+                    execution_path = execution_path[:-1]
+                    execution_path = execution_path.split(",")
+
+                    if execution_path not in self.execution_paths:
+                        self.execution_paths.append(execution_path)
+                prev_character = "r"
+                try:
+                    stack.pop()
+                except Exception as e:
+                    pass
 
     def process_docstring(self, doc):
         if doc is None:
@@ -370,10 +517,10 @@ class ClusteringCallGraph:
         for line in doc.split('\n'):
             if line == "" and complete_line != "":
                 if complete_line[-2] in string.punctuation:
-                    #print(complete_line)
+                    # print(complete_line)
                     return complete_line[:-1]
                 else:
-                    #print(complete_line[:-1] + ".")
+                    # print(complete_line[:-1] + ".")
                     return complete_line[:-1] + "."
 
             line = line.strip()
@@ -478,9 +625,9 @@ class ClusteringCallGraph:
             unpack_path = list(
                 nx.all_simple_paths(self.graph, s, self.exit_point))
             for p in unpack_path:
-                self.execution_paths.append(p)
+                self.execution_paths2.append(p)
 
-        print("Number of EP: ", len(self.execution_paths))
+        print("Number of EP: ", len(self.execution_paths2))
 
     def distance_matrix(self, paths):
         """ creating distance matrix using jaccard similarity value """

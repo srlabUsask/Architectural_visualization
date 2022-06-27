@@ -17,7 +17,7 @@ async function get_cluster() {
         })
     }
 
-    setupSearchForUniqueExecutionPaths()
+    setupSearchForUniqueAndSameExecutionPaths()
 
     clearDiagram();
 
@@ -111,7 +111,7 @@ function update_node_text(node, technique, myDiagram) {
 }
 
 function update_similarity(similarity_values, identifier, selected_node_key) {
-    if (identifier == 1) {
+    if (identifier === 1) {
         myDiagram1.nodes.each(function (n) {
             myDiagram1.model.commit(function (m) {
                 let value = 255 * (1 - similarity_values[String(n.data.key)]);
@@ -197,7 +197,7 @@ function function_highlight_node(function_id) {
 }
 
 function execution_path_highlight_node(execution_path, identifier, similar) {
-    if (identifier.includes(0)) {
+    if (identifier === 0) {
         myDiagram1.nodes.each(function (n) {
             if (execution_path in n.data.execution_paths){
                 myDiagram1.model.commit(function (m) {
@@ -211,7 +211,7 @@ function execution_path_highlight_node(execution_path, identifier, similar) {
             }
         });
     }
-    if (identifier.includes(1)) {
+    else {
         myDiagram2.nodes.each(function (n) {
             if (execution_path in n.data.execution_paths){
                 myDiagram2.model.commit(function (m) {
@@ -307,7 +307,7 @@ jQuery(document).ready(function () {
                 execution_path = JSON.parse(execution_path);
                 var subject_system = execution_path[1];
                 execution_path = execution_path[0];
-                execution_path_highlight_node(execution_path, [subject_system], false);
+                execution_path_highlight_node(execution_path, subject_system, false);
             }
         });
     }
@@ -318,8 +318,9 @@ jQuery(document).ready(function () {
         var execution_path = document.getElementById('same_execution_paths').value;
         reset_node_color();
         if (execution_path !== "None") {
-            execution_path = execution_path[0];
-            execution_path_highlight_node(execution_path, [0, 1], true);
+            execution_path = JSON.parse(execution_path);
+            execution_path_highlight_node(execution_path[0], 0, true);
+            execution_path_highlight_node(execution_path[1], 1, true);
         }
     });
 });
@@ -367,7 +368,7 @@ function setupSearchForFunction(function_id_to_name_file){
 
 }
 
-function setupSearchForUniqueExecutionPaths() {
+function setupSearchForUniqueAndSameExecutionPaths() {
     const string_execution_paths = [];
 
     for (let j = 0; j < cluster_jsons.length; j++) {
@@ -392,11 +393,12 @@ function setupSearchForUniqueExecutionPaths() {
         let unique = [];
         const execution_paths = string_execution_paths[j];
         for (let i = 0; i < execution_paths.length; i++) {
-            if (!(string_execution_paths[(j + 1) % 2].includes(execution_paths[i]))) {
+            const index = (string_execution_paths[(j + 1) % 2].indexOf(execution_paths[i]));
+            if (index === -1) {
                 unique.push({"id": JSON.stringify([i,j]), "text": execution_paths[i]});
             }
             else if (j === 0) {
-                same.push({"id": i, "text": execution_paths[i]});
+                same.push({"id": JSON.stringify([i, index]), "text": execution_paths[i]});
             }
         }
 

@@ -1,5 +1,6 @@
 from scipy.cluster.hierarchy import dendrogram, linkage, fcluster, to_tree
 from scipy.spatial import distance as ssd
+from timeit import default_timer as timer
 import copy
 
 class ClusteringExecutionPath:
@@ -51,10 +52,14 @@ class ClusteringExecutionPath:
         thresholds = [5, 4, 3, 2, 1.5, 0.9]
 
         for i, threshold in enumerate(thresholds):
+            start = timer()
             self.flat_cluster(mat, threshold, i+1)
+            end = timer()
+            print("Clustering time for threshold", threshold, end - start)
 
             for cluster, leaves in self.cluster_to_leaf.items():
                 # print(leaves, type(leaves[0]))
+                start = timer()
                 if i == 0:
                     tree.append(document_nodes.labeling_cluster(leaves, [], cluster, -1, None))
                 else:
@@ -68,6 +73,8 @@ class ClusteringExecutionPath:
                     if len(siblings) == 0:
                         parent_label = tree[cluster_to_tree_index[self.parent_leaf_to_cluster[leaves[0]]]]['key_words']
                     tree.append(document_nodes.labeling_cluster(leaves, siblings, cluster, self.parent_leaf_to_cluster[leaves[0]], parent_label))
+                end = timer()
+                print("___________Total Node Time:", end - start)
                 cluster_to_tree_index[cluster] = len(tree) - 1
 
         return tree

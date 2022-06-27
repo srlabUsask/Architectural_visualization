@@ -16,6 +16,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 import math
 import re
+from timeit import default_timer as timer
 
 import util
 
@@ -80,36 +81,69 @@ class DocumentNodes:
 
     def labeling_cluster(self, execution_paths_of_a_cluster, execution_paths_of_siblings, k, v, parent_label):
         """ Labelling a cluster using six variants """
-
+        start = timer()
         spm_method = self.mining_sequential_patterns(
             execution_paths_of_a_cluster)
+        end = timer()
+        print("Time mining seq patterns:", end - start)
+        start = timer()
         tfidf_method = self.tf_idf_score_for_scipy_cluster(
             execution_paths_of_a_cluster, 'method')
         tfidf_word = self.tf_idf_score_for_scipy_cluster(
             execution_paths_of_a_cluster, 'word')
+        end = timer()
+        print("Time tfidf method and word:", end - start)
+        start = timer()
         tfidf_method_and_docstring = self.tf_idf_score_for_scipy_cluster(
             execution_paths_of_a_cluster, 'docstring_and_method')
         tfidf_word_and_docstring = self.tf_idf_score_for_scipy_cluster(
             execution_paths_of_a_cluster, 'docstring_and_word')
+        end = timer()
+        print("Time tfidf docstring method and word:", end - start)
+        start = timer()
         lda_method = self.topic_model_lda(
             execution_paths_of_a_cluster, 'method')
         lda_word = self.topic_model_lda(execution_paths_of_a_cluster, 'word')
+        end = timer()
+        print("Time lda method and word:", end - start)
+        start = timer()
         lda_method_and_docstring = self.topic_model_lda(execution_paths_of_a_cluster, 'method_and_docstring')
         lda_word_and_docstring = self.topic_model_lda(execution_paths_of_a_cluster, 'word_and_docstring')
+        end = timer()
+        print("Time lda docstring method and word:", end - start)
+        start = timer()
         lsi_method = self.topic_model_lsi(
             execution_paths_of_a_cluster, 'method')
         lsi_word = self.topic_model_lsi(execution_paths_of_a_cluster, 'word')
+        end = timer()
+        print("Time lsi method and word:", end - start)
+        start = timer()
         lsi_method_and_docstring = self.topic_model_lsi(execution_paths_of_a_cluster, 'method_and_docstring')
         lsi_word_and_docstring = self.topic_model_lsi(execution_paths_of_a_cluster, 'word_and_docstring')
-        key_words = self.key_words(execution_paths_of_a_cluster, execution_paths_of_siblings, parent_label)  # Todo
+        end = timer()
+        print("Time lsi docstring method and word:", end - start)
+        start = timer()
+        key_words = self.key_words(execution_paths_of_a_cluster, execution_paths_of_siblings, parent_label)
+        end = timer()
+        print("Time key words:", end - start)
+        start = timer()
         text_summary = self.summarize_clusters_using_docstring(
             execution_paths_of_a_cluster, self.function_to_docstring)
+        end = timer()
+        print("Text summary:", end - start)
+        start = timer()
         files_count, files = self.count_files_in_node(
             execution_paths_of_a_cluster)
         execution_paths_count = len(execution_paths_of_a_cluster)
         function_id_to_name_file = self.function_id_to_file_name_of_execution_path(
             execution_paths_of_a_cluster)
+        end = timer()
+        print("Time file count and stuff and function id to name file:", end - start)
+        start = timer()
         words_in_cluster = self.words_in_cluster(self.execution_path_words, execution_paths_of_a_cluster)
+        end = timer()
+        print("Time word cluster:", end - start)
+        start = timer()
 
         self.worksheet.write(self.row, 0, k)
         self.worksheet.write(self.row, 1, self.execution_path_to_sentence(
@@ -131,6 +165,9 @@ class DocumentNodes:
         self.worksheet.write(self.row, 16, spm_method)
         self.worksheet.write(self.row, 17, words_in_cluster)
         self.row += 1
+
+        end = timer()
+        print("Work sheet write:", end - start)
 
         execution_paths = {ep: 1 for ep in execution_paths_of_a_cluster}
 
@@ -562,14 +599,20 @@ class DocumentNodes:
         preprocess = [self.execution_paths[item]
                       for item in execution_paths_of_a_cluster]
         #print(preprocess)
+        start = timer()
+        print("a", len(preprocess))
         ps = PrefixSpan(preprocess)
         ps.maxlen = 10
         ps.minlen = 3
         NUMBER_OF_PATTERNS = 2 * math.log(len(execution_paths_of_a_cluster)) + 6
-
+        print("b", NUMBER_OF_PATTERNS)
         top_patterns = ps.topk(NUMBER_OF_PATTERNS)
+        print("c")
         top_patterns = [ pattern[1] for pattern in top_patterns]
         # top_patterns = self.remove_similar_patterns(top_patterns)
+        end = timer()
+        print("MINING PART 1:", end - start)
+        print(len(top_patterns))
 
         sentence = ' '
         for pattern in top_patterns:

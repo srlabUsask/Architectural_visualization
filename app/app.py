@@ -76,7 +76,6 @@ def get_cluster():
             other_cluster_similarity[str(other_key)][str(key)] = similarity_value
     similarity[subject_system] = cluster_similarity
     similarity[other_subject_system] = other_cluster_similarity
-    print(clusters['execution_paths'])
     return jsonify(clusters)
 
 @app.route('/get_similarity/', methods=['GET'])

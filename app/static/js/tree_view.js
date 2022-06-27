@@ -112,10 +112,13 @@ function init_directory(){
 
         diagrams[i - 1].addDiagramListener("ObjectContextClicked",
             function (e) {
-                var part = e.subject.part;
-                if (!(part instanceof go.Link)) {
-                    // showUserStudyPanel(part);
-                    showNodeDetails(part, i);
+                var subject = e.subject;
+                if (!(subject.part instanceof go.Link)) {
+                    // showUserStudyPanel(subject.part);
+                    showNodeDetails(subject.part, i);
+                }
+                if (subject.figure === 'RoundedRectangle'){
+                    get_similarity(subject.part, i);
                 }
 
             });
@@ -197,7 +200,7 @@ function init_tree() {
                     // showUserStudyPanel(subject.part);
                     showNodeDetails(subject.part, i);
                 }
-                if (subject.figure == 'RoundedRectangle'){
+                if (subject.figure === 'RoundedRectangle'){
                     get_similarity(subject.part, i);
                 }
 
