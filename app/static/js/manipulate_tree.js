@@ -1,4 +1,6 @@
 const cluster_jsons = [];
+const string_execution_paths = [];
+let node_unique_execution_paths = [];
 
 async function get_cluster() {
     Url = '/get_cluster';
@@ -13,11 +15,13 @@ async function get_cluster() {
         }, function (result) {
             cluster_jsons[i - 1] = result;
             setupDiagram(result['cluster'], diagrams[i - 1]);
-            setupSearchForFunction(result['cluster'][0].function_id_to_name_file);
         })
     }
 
-    setupSearchForUniqueAndSameExecutionPaths()
+    setupSearchForFunction(cluster_jsons[0]['cluster'][0].function_id_to_name_file, cluster_jsons[1]['cluster'][0].function_id_to_name_file);
+
+    setupSearchForUniqueAndSameExecutionPaths();
+    setupUniqueNodeExecutionPaths();
 
     clearDiagram();
 
@@ -79,31 +83,31 @@ function update_node_text(node, technique, myDiagram) {
         // GoJS will be notified that the data has changed
         // and can update the node in the Diagram
         // and record the change in the UndoManager
-        if (technique == 'tfidf_word') {
+        if (technique === 'tfidf_word') {
             m.set(node.data, "node_text", node.data.tfidf_word);
-        } else if (technique == 'tfidf_method') {
+        } else if (technique === 'tfidf_method') {
             m.set(node.data, "node_text", node.data.tfidf_method);
-        } else if (technique == 'tfidf_method_and_docstring') {
+        } else if (technique === 'tfidf_method_and_docstring') {
             m.set(node.data, "node_text", node.data.tfidf_method_and_docstring);
-        } else if (technique == 'tfidf_word_and_docstring') {
+        } else if (technique === 'tfidf_word_and_docstring') {
             m.set(node.data, "node_text", node.data.tfidf_word_and_docstring);
-        } else if (technique == 'lda_word') {
+        } else if (technique === 'lda_word') {
             m.set(node.data, "node_text", node.data.lda_word);
-        } else if (technique == 'lda_method') {
+        } else if (technique === 'lda_method') {
             m.set(node.data, "node_text", node.data.lda_method);
-        } else if (technique == 'lda_word_and_docstring') {
+        } else if (technique === 'lda_word_and_docstring') {
             m.set(node.data, "node_text", node.data.lda_word_and_docstring);
-        } else if (technique == 'lda_method_and_docstring') {
+        } else if (technique === 'lda_method_and_docstring') {
             m.set(node.data, "node_text", node.data.lda_method_and_docstring);
-        } else if (technique == 'lsi_word') {
+        } else if (technique === 'lsi_word') {
             m.set(node.data, "node_text", node.data.lsi_word);
-        } else if (technique == 'lsi_method') {
+        } else if (technique === 'lsi_method') {
             m.set(node.data, "node_text", node.data.lsi_method);
-        } else if (technique == 'lsi_word_and_docstring') {
+        } else if (technique === 'lsi_word_and_docstring') {
             m.set(node.data, "node_text", node.data.lsi_word_and_docstring);
-        } else if (technique == 'lsi_method_and_docstring') {
+        } else if (technique === 'lsi_method_and_docstring') {
             m.set(node.data, "node_text", node.data.lsi_method_and_docstring);
-        } else if (technique == 'key_words') {
+        } else if (technique === 'key_words') {
             m.set(node.data, "node_text", node.data.key_words);
         }
 
@@ -161,6 +165,21 @@ function showNodeDetails(part, identifier) {
     document.getElementById('searched_execution_paths' + identifier).innerHTML = get_some_execution_patterns(part.data.execution_paths, identifier - 1);
 }
 
+function updateUniqueNodePaths(key1, key2) {
+    const unique_paths1 = node_unique_execution_paths[0][key1][key2];
+    const unique_paths2 = node_unique_execution_paths[1][key2][key1];
+    let string_version1 = "";
+    let string_version2 = "";
+    for (const path of unique_paths1) {
+        string_version1 += " &#187; " + path + "<br>";
+    }
+    for (const path of unique_paths2) {
+        string_version2 += " &#187; " + path + "<br>";
+    }
+    document.getElementById('unique_node_execution_paths1').innerHTML = string_version1.replaceAll("->", "&rarr;");
+    document.getElementById('unique_node_execution_paths2').innerHTML = string_version2.replaceAll("->", "&rarr;");
+}
+
 
 function reset_node_color() {
     myDiagram1.nodes.each(function (n) {
@@ -175,25 +194,28 @@ function reset_node_color() {
     });
 }
 
-function function_highlight_node(function_id) {
-    myDiagram1.nodes.each(function (n) {
+function function_highlight_node(key1, key2) {
+    if (key1 !== -1) {
+        myDiagram1.nodes.each(function (n) {
 
-        if (function_id in n.data.function_id_to_name_file){
-            myDiagram1.model.commit(function (m) {
-                m.set(n.data, "color", "red");
-            }, 'change node color');
-        }
+            if (key1 in n.data.function_id_to_name_file){
+                myDiagram1.model.commit(function (m) {
+                    m.set(n.data, "color", "red");
+                }, 'change node color');
+            }
+        });
+    }
 
-    });
-    myDiagram2.nodes.each(function (n) {
+    if (key2 !== -1) {
+        myDiagram2.nodes.each(function (n) {
 
-        if (function_id in n.data.function_id_to_name_file){
-            myDiagram2.model.commit(function (m) {
-                m.set(n.data, "color", "red");
-            }, 'change node color');
-        }
-
-    });
+            if (key2 in n.data.function_id_to_name_file){
+                myDiagram2.model.commit(function (m) {
+                    m.set(n.data, "color", "red");
+                }, 'change node color');
+            }
+        });
+    }
 }
 
 function execution_path_highlight_node(execution_path, identifier, similar) {
@@ -227,12 +249,12 @@ function execution_path_highlight_node(execution_path, identifier, similar) {
     }
 }
 
-function find_execution_paths_for_function(function_id){
-
+function find_execution_paths_for_function(key1, key2){
+    const indexes = [key1, key2];
     for (let j = 0; j < cluster_jsons.length; j++) {
         eps = []
         for (i = 0; i < cluster_jsons[j]['execution_paths'].length; i++) {
-            if (cluster_jsons[j]['execution_paths'][i].includes(function_id)) {
+            if (cluster_jsons[j]['execution_paths'][i].includes(indexes[j])) {
                 eps.push(i)
             }
             if (eps.length >= 3) {
@@ -245,7 +267,7 @@ function find_execution_paths_for_function(function_id){
         for(ep = 0; ep < eps.length; ep++){
             eps_preety += ' &#187; '
             for(f = 0; f < cluster_jsons[j]['execution_paths'][eps[ep]].length; f++){
-                if(cluster_jsons[j]['execution_paths'][eps[ep]][f] === function_id){
+                if(cluster_jsons[j]['execution_paths'][eps[ep]][f] === indexes[j]){
 
                     eps_preety += '<b>' + cluster_jsons[j]['function_id_to_name'][cluster_jsons[j]['execution_paths'][eps[ep]][f]] + '</b>';
                     eps_preety += '(' + cluster_jsons[j]['function_id_to_file_name'][cluster_jsons[j]['execution_paths'][eps[ep]][f]] + ')';
@@ -290,13 +312,15 @@ function get_some_execution_patterns(eps, index){
 
 jQuery(document).ready(function() {
     jQuery("#search_button").click(function () {
-      var function_id = document.getElementById('function_file').value;
-      //console.log(function_id);
-      reset_node_color();
-      function_highlight_node(parseInt(function_id));
-      find_execution_paths_for_function(function_id);
+        const function_ids = JSON.parse(document.getElementById('function_file').value);
+        const key1 = function_ids[0];
+        const key2 = function_ids[1];
+        //console.log(function_id);
+        reset_node_color();
+        function_highlight_node(key1, key2);
+        find_execution_paths_for_function(key1, key2);
+        });
     });
-  });
 
 jQuery(document).ready(function () {
     for (let i = 0; i < 2; i++) { //Todo the 2 is hardcoded
@@ -352,14 +376,34 @@ jQuery(document).ready(function () {
     });
 });
 
-function setupSearchForFunction(function_id_to_name_file){
+function setupSearchForFunction(function_id_to_name_file1, function_id_to_name_file2){
 
-    var data = []
-    for (var key in function_id_to_name_file) { // function_id_to_name_file
-        data.push({"id": key, "text": function_id_to_name_file[key]})
+    let data = [];
+    let tracker = []
+    for (const key1 in function_id_to_name_file1) { // function_id_to_name_file
+        let key2 = Object.keys(function_id_to_name_file2).find(k => function_id_to_name_file2[k] === function_id_to_name_file1[key1]);
+        if (key2 === undefined) {
+            key2 = -1;
+        }
+        data.push({"id": JSON.stringify([key1, key2]), "text": function_id_to_name_file1[key1]});
+        tracker.push(function_id_to_name_file1[key1]);
     }
 
-    jQuery('#function_file').select2({
+    for (const key2 in function_id_to_name_file2) { // function_id_to_name_file
+        if (tracker.includes(function_id_to_name_file2[key2])) {
+            continue;
+        }
+        let key1 = Object.keys(function_id_to_name_file1).find(k => function_id_to_name_file1[k] === function_id_to_name_file2[key2]);
+        if (key1 === undefined) {
+            key1 = -1;
+        }
+        data.push({"id": JSON.stringify([key1, key2]), "text": function_id_to_name_file2[key2]});
+        tracker.push(function_id_to_name_file2[key2]);
+    }
+
+    console.log(data);
+
+    jQuery('#function_file').empty().select2({
         width: 'resolve',
         placholder: 'Start typing...',
         data:  data
@@ -369,10 +413,8 @@ function setupSearchForFunction(function_id_to_name_file){
 }
 
 function setupSearchForUniqueAndSameExecutionPaths() {
-    const string_execution_paths = [];
-
     for (let j = 0; j < cluster_jsons.length; j++) {
-        string_execution_paths[j] = []
+        string_execution_paths[j] = [];
         const execution_paths = cluster_jsons[j]['execution_paths'];
         for (let i = 0; i < execution_paths.length; i++) {
             let execution_path_string = '';
@@ -418,4 +460,23 @@ function setupSearchForUniqueAndSameExecutionPaths() {
         });
     }
 
+}
+
+function setupUniqueNodeExecutionPaths() {
+    node_unique_execution_paths[0] = [];
+    node_unique_execution_paths[1] = [];
+    myDiagram1.nodes.each(function (n) {
+        node_unique_execution_paths[0][parseInt(n.key)] = [];
+        const index1 = n.data.execution_paths;
+        const execution_paths1 = Object.entries(index1).map(([k, v]) => string_execution_paths[0][parseInt(k)]);
+        myDiagram2.nodes.each(function (m) {
+            if (node_unique_execution_paths[1][parseInt(m.key)] === undefined) {
+                node_unique_execution_paths[1][parseInt(m.key)] = [];
+            }
+            const index2 = m.data.execution_paths;
+            const execution_paths2 = Object.entries(index2).map(([k, v]) => string_execution_paths[1][parseInt(k)]);
+            node_unique_execution_paths[0][parseInt(n.key)][parseInt(m.key)] = execution_paths1.filter(x => !execution_paths2.includes(x));
+            node_unique_execution_paths[1][parseInt(m.key)][parseInt(n.key)] = execution_paths2.filter(x => !execution_paths1.includes(x));
+        })
+    });
 }

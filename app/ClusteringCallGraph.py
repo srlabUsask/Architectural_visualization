@@ -85,9 +85,9 @@ class ClusteringCallGraph:
         # self.tgf_to_networkX() #-- was used for the tgf files rather than log files
         # print(os.path.abspath(__file__))
         # We go one directory up to find the instance directory
-        self.graph = self.buildgraph2(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))  # pythonbuildgraph
+        self.graph = self.pythonbuildgraph2(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))  # pythonbuildgraph
         start = timer()
-        self.buildgraph(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
+        self.pythonbuildgraph(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
 
         self.graph.remove_edges_from(nx.selfloop_edges(self.graph))
         # Visual of the call graph
@@ -155,25 +155,15 @@ class ClusteringCallGraph:
 
         print('Time to train the model: {} mins'.format(timer() - t))
 
-        # self.w2v_model.init_sims(replace=True)
         self.d2v_model.init_sims(replace=True)
 
-        # print(self.w2v_model.wv.most_similar(positive=["init"]))
         index = 0
-        # print(d2v_sentences[index].words)
         print(self.d2v_model.docvecs.most_similar([self.d2v_model[index]]))
-        # print(d2v_sentences[self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[1][0]].words)
-        # a = self.d2v_model[index]
-        # b = self.d2v_model[self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[2][0]]
-        # print(dot(a, b)/(norm(a)*norm(b)))
         print(self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[1][1])
         print(self.d2v_model.docvecs.similarity(index,
                                                 self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[1][0]))
-        # print(cosine_similarity(self.d2v_model.infer_vector(sentences[index]), self.d2v_model.infer_vector(d2v_sentences[self.d2v_model.docvecs.most_similar([self.d2v_model.infer_vector(sentences[index])])[0][0]].words)))
-
         # self.remove_redundant_ep()
 
-        # print(self.execution_paths)
         start = timer()
         # mat = self.distance_matrix(self.execution_paths)
         mat = self.distance_matrix3(self.execution_paths)  # Change it to distance_matrix2() for doc2vec
@@ -191,12 +181,6 @@ class ClusteringCallGraph:
         plt.matshow(diff_mat)
         plt.colorbar()
         plt.show()
-        # plt.matshow(mat_c)
-        # plt.colorbar()
-        # plt.show()
-        # plt.matshow(mat_j)
-        # plt.colorbar()
-        # plt.show()
         end = timer()
         print('Time required for distance_matrix: ', end - start)
 
