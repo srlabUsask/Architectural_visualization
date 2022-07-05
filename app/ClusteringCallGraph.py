@@ -70,10 +70,10 @@ class ClusteringCallGraph:
     w2v_model = None
     d2v_model = None
 
-    analyzeAST = AnalyzeAST()
-
-    function_name_to_docstring = analyzeAST.get_all_method_docstring_pair_of_a_project(
-        SUBJECT_SYSTEM_FOR_COMMENT)
+    # analyzeAST = AnalyzeAST()
+    #
+    # function_name_to_docstring = analyzeAST.get_all_method_docstring_pair_of_a_project(
+    #     SUBJECT_SYSTEM_FOR_COMMENT)
 
     def __del__(self):
         """ deletes the ClusteringCallGraph class objects """
@@ -85,27 +85,27 @@ class ClusteringCallGraph:
         # self.tgf_to_networkX() #-- was used for the tgf files rather than log files
         # print(os.path.abspath(__file__))
         # We go one directory up to find the instance directory
-        self.graph = self.pythonbuildgraph2(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))  # pythonbuildgraph
+        # self.graph = self.buildgraph2(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))  # pythonbuildgraph
         start = timer()
         self.pythonbuildgraph(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
 
-        self.graph.remove_edges_from(nx.selfloop_edges(self.graph))
-        # Visual of the call graph
-        nx.draw(self.graph, nx.spring_layout(self.graph), with_labels=True, node_size=0)
-        plt.show()
+        # self.graph.remove_edges_from(nx.selfloop_edges(self.graph))
+        # # Visual of the call graph
+        # nx.draw(self.graph, nx.spring_layout(self.graph), with_labels=True, node_size=0)
+        # plt.show()
 
-        self.extracting_source_and_exit_node()
+        # self.extracting_source_and_exit_node()
 
         # See what are the entry nodes
         # for i in self.entry_point:
         #     print(self.function_id_to_name[i] + "-" + i)
-        self.extracting_execution_paths()
+        # self.extracting_execution_paths()
         end = timer()
         print('Time required for extracting_execution_paths: ', end - start)
         print('No. of execution paths', len(self.execution_paths))
 
         print(len(self.execution_paths))
-        print(len(self.execution_paths2))
+        # print(len(self.execution_paths2))
         if len(self.execution_paths) > 5000:
             print("Over 5000 Execution Paths")
             self.execution_paths = util.random_sample_execution_paths(
@@ -190,8 +190,7 @@ class ClusteringCallGraph:
         document_nodes.initalize_graph_related_data_structures(
             self.execution_paths, self.function_id_to_name,
             self.function_id_to_file_name, self.id_to_sentence,
-            self.function_name_to_docstring,
-            self.function_to_docstring)  # Todo wipe out self.function_name_to_docstring
+            self.function_to_docstring)
 
         start = timer()
         ret = self.flat_cluster_and_label_nodes(mat)
