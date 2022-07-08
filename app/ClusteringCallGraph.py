@@ -40,8 +40,9 @@ OUTPUT_DIRECTORY = ROOT + '/output/'
 DATASET = ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".txt"
 # put location of repository for getting comments
 SUBJECT_SYSTEM_FOR_COMMENT = config.SUBJECT_SYSTEM_FOR_COMMENT
+EXECUTION_PATTERNS = config.EXECUTION_PATTERNS
 
-document_nodes = DocumentNodes(OUTPUT_DIRECTORY, SUBJECT_SYSTEM_NAME)
+document_nodes = DocumentNodes(OUTPUT_DIRECTORY, SUBJECT_SYSTEM_NAME, EXECUTION_PATTERNS)
 
 
 class ClusteringCallGraph:
@@ -158,10 +159,10 @@ class ClusteringCallGraph:
         self.d2v_model.init_sims(replace=True)
 
         index = 0
-        print(self.d2v_model.docvecs.most_similar([self.d2v_model[index]]))
-        print(self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[1][1])
-        print(self.d2v_model.docvecs.similarity(index,
-                                                self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[1][0]))
+        # print(self.d2v_model.docvecs.most_similar([self.d2v_model[index]]))
+        # print(self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[1][1])
+        # print(self.d2v_model.docvecs.similarity(index,
+        #                                         self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[1][0]))
         # self.remove_redundant_ep()
 
         start = timer()

@@ -27,7 +27,7 @@ class DocumentNodes:
     nltk.download('stopwords')
     en_stop = set(nltk.corpus.stopwords.words('english'))
 
-    def __init__(self, output_directory, subject_system_name):
+    def __init__(self, output_directory, subject_system_name, execution_patterns):
         self.workbook = xlsxwriter.Workbook(
             output_directory + subject_system_name+'.xlsx')
         self.worksheet = self.workbook.add_worksheet()
@@ -40,6 +40,7 @@ class DocumentNodes:
         self.id_to_sentence = {}
         self.execution_path_words = {}
         self.initalize_sheet()
+        self.execution_patterns = execution_patterns
 
     def initalize_graph_related_data_structures(self, execution_paths, function_id_to_name, function_id_to_file_name,
                                                 id_to_sentence, function_to_docstring
@@ -80,7 +81,10 @@ class DocumentNodes:
     def labeling_cluster(self, execution_paths_of_a_cluster, execution_paths_of_siblings, k, v, parent_label):
         """ Labelling a cluster using six variants """
         start = timer()
-        spm_method = ""  # self.mining_sequential_patterns(execution_paths_of_a_cluster)
+        if self.execution_patterns:
+            spm_method = self.mining_sequential_patterns(execution_paths_of_a_cluster)
+        else:
+            spm_method = ""
         end = timer()
         print("Time mining seq patterns:", end - start)
         start = timer()

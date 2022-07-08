@@ -10,8 +10,12 @@
 }
 
 .vertical-scrollbar{
-  height: 150px;
+  height: 100px;
   overflow-y: auto;
+}
+
+html {
+  font-size: 12px;
 }
 
 

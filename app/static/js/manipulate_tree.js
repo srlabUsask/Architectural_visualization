@@ -1,6 +1,7 @@
 const cluster_jsons = [];
 const string_execution_paths = [];
 let node_unique_execution_paths = [];
+let two_subject_system = true;
 
 async function get_cluster() {
     Url = '/get_cluster';
@@ -160,8 +161,8 @@ function showNodeDetails(part, identifier) {
     document.getElementById('node_summary' + identifier).innerHTML = part.data.text_summary;
     document.getElementById('node_patterns' + identifier).innerHTML = part.data.spm_method;
     document.getElementById('files' + identifier).innerHTML = clickable_text;
-    document.getElementById('number_of_files' + identifier).innerHTML = part.data.files_count;
-    document.getElementById('number_of_execution_paths' + identifier).innerHTML = part.data.execution_path_count;
+    document.getElementById('number_of_files' + identifier).innerHTML = "Number of Files: " + part.data.files_count;
+    document.getElementById('number_of_execution_paths' + identifier).innerHTML = "Number of Execution paths: " + part.data.execution_path_count;
     document.getElementById('searched_execution_paths' + identifier).innerHTML = get_some_execution_patterns(part.data.execution_paths, identifier - 1);
 }
 
@@ -376,6 +377,26 @@ jQuery(document).ready(function () {
     });
 });
 
+jQuery(document).ready(function () {
+    jQuery('#view :input').change(function() {
+        jQuery("#fullDiagram2").toggle();
+        jQuery("#subjectSystem2Info").toggle();
+        jQuery("#same_execution_paths_block").toggle();
+        if (this.id === "option1") {
+            jQuery("#fullDiagram1").height(400);
+            jQuery("#diagrams").addClass("col-6").removeClass("col-8");
+            two_subject_system = true;
+        }
+        else {
+            jQuery("#fullDiagram1").height(800);
+            jQuery("#diagrams").addClass("col-8").removeClass("col-6");
+            myDiagram2.layout.invalidateLayout();
+            two_subject_system = false;
+        }
+        myDiagram1.layout.invalidateLayout();
+    });
+});
+
 function setupSearchForFunction(function_id_to_name_file1, function_id_to_name_file2){
 
     let data = [];
@@ -400,8 +421,6 @@ function setupSearchForFunction(function_id_to_name_file1, function_id_to_name_f
         data.push({"id": JSON.stringify([key1, key2]), "text": function_id_to_name_file2[key2]});
         tracker.push(function_id_to_name_file2[key2]);
     }
-
-    console.log(data);
 
     jQuery('#function_file').empty().select2({
         width: 'resolve',
@@ -439,7 +458,7 @@ function setupSearchForUniqueAndSameExecutionPaths() {
             if (index === -1) {
                 unique.push({"id": JSON.stringify([i,j]), "text": execution_paths[i]});
             }
-            else if (j === 0) {
+            else if (j === 0 && two_subject_system) {
                 same.push({"id": JSON.stringify([i, index]), "text": execution_paths[i]});
             }
         }
