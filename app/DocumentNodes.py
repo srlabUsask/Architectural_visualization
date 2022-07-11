@@ -64,7 +64,7 @@ class DocumentNodes:
                 if no_punctuation == "":
                     words.append(function_id_to_name[func])
                 else:
-                    words.extend([word.lower() for word in no_punctuation.split(" ") if word.lower() != "" and word.lower() not in self.en_stop])
+                    words.extend([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and word.lower() not in self.en_stop])
                 ret[str(path)].extend(words)
             ret[str(path)] = set(ret[str(path)])
         return ret
@@ -239,7 +239,7 @@ class DocumentNodes:
 
                 words_in_function_name = [
                     w for w in util.parse_method_class_name_to_words(self.function_id_to_name[e]) if w not in self.en_stop]
-                words_in_function_name = [self.get_lemma(
+                words_in_function_name = [util.get_lemma(
                     w) for w in words_in_function_name]
                 word_str += self.merge_words_as_sentence(words_in_function_name)
 
@@ -248,10 +248,10 @@ class DocumentNodes:
                     method_and_docstring_str += "funcname" + e
                     word_and_docstring_str += self.merge_words_as_sentence(words_in_function_name)
                 else:
-                    method_and_docstring_str += ' '.join([word.lower() for word in no_punctuation.split(" ") if word.lower() != "" and
+                    temp = ' '.join([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
                                      word.lower() not in self.en_stop])
-                    word_and_docstring_str += ' '.join([word.lower() for word in no_punctuation.split(" ") if word.lower() != "" and
-                                     word.lower() not in self.en_stop])
+                    method_and_docstring_str += temp
+                    word_and_docstring_str += temp
                 method_str += ' '
                 word_str += ' '
                 method_and_docstring_str += ' '
@@ -294,7 +294,7 @@ class DocumentNodes:
                 if no_punctuation == '':
                     str += "funcname" + e  #self.function_id_to_name[e]
                 else:
-                    str += ' '.join([word.lower() for word in no_punctuation.split(" ") if word.lower() != "" and
+                    str += ' '.join([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
                                      word.lower() not in self.en_stop])
                 str += ' '
             documents.append(str)  # [:-6]
@@ -317,7 +317,7 @@ class DocumentNodes:
 
                 words_in_function_name = [
                     w for w in util.parse_method_class_name_to_words(self.function_id_to_name[e]) if w not in self.en_stop]
-                words_in_function_name = [self.get_lemma(
+                words_in_function_name = [util.get_lemma(
                     w) for w in words_in_function_name]
                 word_str += self.merge_words_as_sentence(words_in_function_name)
 
@@ -326,9 +326,9 @@ class DocumentNodes:
                     method_and_docstring_str += self.function_id_to_name[e]
                     word_and_docstring_str += self.merge_words_as_sentence(words_in_function_name)
                 else:
-                    method_and_docstring_str += ' '.join([word.lower() for word in no_punctuation.split(" ") if word.lower() != "" and
+                    method_and_docstring_str += ' '.join([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
                                                           word.lower() not in self.en_stop])
-                    word_and_docstring_str += ' '.join([word.lower() for word in no_punctuation.split(" ") if word.lower() != "" and
+                    word_and_docstring_str += ' '.join([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
                                                         word.lower() not in self.en_stop])
                 method_str += ' '
                 word_str += ' '
@@ -372,7 +372,7 @@ class DocumentNodes:
                 if no_punctuation == '':
                     str += self.function_id_to_name[e]
                 else:
-                    str += ' '.join([word.lower() for word in no_punctuation.split(" ") if word.lower() != "" and
+                    str += ' '.join([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
                                      word.lower() not in self.en_stop])
                 str += ' '
             documents.append(str)
@@ -391,7 +391,7 @@ class DocumentNodes:
 
                 words_in_function_name = [
                     w for w in util.parse_method_class_name_to_words(self.function_id_to_name[e]) if w not in self.en_stop]
-                words_in_function_name = [self.get_lemma(
+                words_in_function_name = [util.get_lemma(
                     w) for w in words_in_function_name]
                 str += self.merge_words_as_sentence(words_in_function_name)
                 str += ' '
@@ -415,11 +415,11 @@ class DocumentNodes:
                 if no_punctuation == '':
                     words_in_function_name = [
                         w for w in util.parse_method_class_name_to_words(self.function_id_to_name[e]) if w not in self.en_stop]
-                    words_in_function_name = [self.get_lemma(
+                    words_in_function_name = [util.get_lemma(
                         w) for w in words_in_function_name]
                     str += self.merge_words_as_sentence(words_in_function_name)
                 else:
-                    str += ' '.join([word.lower() for word in no_punctuation.split(" ") if word.lower() != "" and
+                    str += ' '.join([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
                                      word.lower() not in self.en_stop])
                 str += ' '
             documents.append(str)
@@ -437,7 +437,7 @@ class DocumentNodes:
             for e in self.execution_paths[c]:
                 words_in_function_name = [
                     w for w in util.parse_method_class_name_to_words(self.function_id_to_name[e]) if w not in self.en_stop]
-                words_in_function_name = [self.get_lemma(
+                words_in_function_name = [util.get_lemma(
                     w) for w in words_in_function_name]
                 str += self.merge_words_as_sentence(
                     words_in_function_name)
@@ -462,11 +462,11 @@ class DocumentNodes:
                 if no_punctuation == '':
                     words_in_function_name = [
                         w for w in util.parse_method_class_name_to_words(self.function_id_to_name[e]) if w not in self.en_stop]
-                    words_in_function_name = [self.get_lemma(
+                    words_in_function_name = [util.get_lemma(
                         w) for w in words_in_function_name]
                     str += self.merge_words_as_sentence(words_in_function_name)
                 else:
-                    str += ' '.join([word.lower() for word in no_punctuation.split(" ") if word.lower() != "" and
+                    str += ' '.join([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
                                      word.lower() not in self.en_stop])
                 str += ' '
             documents.append(str)
@@ -593,7 +593,7 @@ class DocumentNodes:
 
         tokens = [token for token in tokens if token not in self.en_stop]
 
-        tokens = [self.get_lemma(token) for token in tokens]
+        tokens = [util.get_lemma(token) for token in tokens]
 
         return tokens
 
@@ -614,16 +614,6 @@ class DocumentNodes:
                 lda_tokens.append(token.lower_)
         return lda_tokens
 
-    def get_lemma(self, word):
-        """
-        Getting lemma of a word.
-        """
-        lemma = wn.morphy(word)
-        if lemma is None:
-            return word
-        else:
-            return lemma
-
     def key_words(self, execution_paths_of_a_cluster, execution_paths_of_siblings, parent_label):
         cluster_word_freq = {}
         sibling_word_freq = {}
@@ -635,8 +625,6 @@ class DocumentNodes:
                     cluster_word_freq[word] = 1
                 else:
                     cluster_word_freq[word] += 1
-                if len(execution_paths_of_siblings) == 0:
-                    continue
                 for sibling_path in execution_paths_of_siblings:
                     if word not in sibling_word_freq:
                         sibling_word_freq[word] = 0
@@ -649,6 +637,9 @@ class DocumentNodes:
             cluster_word_freq[word] = cluster_word_freq[word] * (1 - sibling_word_freq[word])
         most_freq_words = [word_and_freq[0] for word_and_freq in sorted(cluster_word_freq.items(), key=lambda item: item[1], reverse=True)]
 
+        if len([word for index, word in enumerate(most_freq_words) if cluster_word_freq[word] > 0.25 and (index < 5 or cluster_word_freq[word] == 1)]) > 10:
+            print([word for index, word in enumerate(most_freq_words) if cluster_word_freq[word] > 0.25 and (index < 5 or cluster_word_freq[word] == 1)])
+            print([cluster_word_freq[word] for word in [word for index, word in enumerate(most_freq_words) if cluster_word_freq[word] > 0.25 and (index < 5 or cluster_word_freq[word] == 1)]])
         return self.merge_words_as_sentence([word for index, word in enumerate(most_freq_words) if cluster_word_freq[word] > 0.25 and (index < 5 or cluster_word_freq[word] == 1)])  # Todo case when not 5 words
 
     def words_in_cluster(self, execution_path_words, execution_paths):

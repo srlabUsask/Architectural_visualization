@@ -38,8 +38,6 @@ ROOT = config.ROOT
 SUBJECT_SYSTEM_NAME = config.SUBJECT_SYSTEM_NAME
 OUTPUT_DIRECTORY = ROOT + '/output/'
 DATASET = ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".txt"
-# put location of repository for getting comments
-SUBJECT_SYSTEM_FOR_COMMENT = config.SUBJECT_SYSTEM_FOR_COMMENT
 EXECUTION_PATTERNS = config.EXECUTION_PATTERNS
 
 document_nodes = DocumentNodes(OUTPUT_DIRECTORY, SUBJECT_SYSTEM_NAME, EXECUTION_PATTERNS)
@@ -71,11 +69,6 @@ class ClusteringCallGraph:
     w2v_model = None
     d2v_model = None
 
-    # analyzeAST = AnalyzeAST()
-    #
-    # function_name_to_docstring = analyzeAST.get_all_method_docstring_pair_of_a_project(
-    #     SUBJECT_SYSTEM_FOR_COMMENT)
-
     def __del__(self):
         """ deletes the ClusteringCallGraph class objects """
         print('deleted')
@@ -105,7 +98,6 @@ class ClusteringCallGraph:
         print('Time required for extracting_execution_paths: ', end - start)
         print('No. of execution paths', len(self.execution_paths))
 
-        print(len(self.execution_paths))
         # print(len(self.execution_paths2))
         if len(self.execution_paths) > 5000:
             print("Over 5000 Execution Paths")
@@ -125,7 +117,7 @@ class ClusteringCallGraph:
                 if no_punctuation == "":
                     sentence.append(self.function_id_to_name[func])
                 else:
-                    sentence.extend([word.lower() for word in no_punctuation.split(" ") if
+                    sentence.extend([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if
                                      word.lower() != "" and word.lower() not in self.en_stop])  # sentence.append(self.function_id_to_name[func])
                 sentence.append("calls")
             sentence.pop()
@@ -147,18 +139,18 @@ class ClusteringCallGraph:
 
         self.d2v_model.build_vocab(d2v_sentences, progress_per=50)
 
-        print('Time to build vocab: {} mins'.format(timer() - t))
+        print('Time to build vocab: {} secs'.format(timer() - t))
 
         t = timer()
 
         self.d2v_model.train(d2v_sentences, total_examples=self.d2v_model.corpus_count, epochs=100,
                              report_delay=1)  # Usually 10000
 
-        print('Time to train the model: {} mins'.format(timer() - t))
+        print('Time to train the model: {} secs'.format(timer() - t))
 
         self.d2v_model.init_sims(replace=True)
 
-        index = 0
+        # index = 0
         # print(self.d2v_model.docvecs.most_similar([self.d2v_model[index]]))
         # print(self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[1][1])
         # print(self.d2v_model.docvecs.similarity(index,

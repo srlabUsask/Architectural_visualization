@@ -1,5 +1,6 @@
 import random
 import re
+from nltk.corpus import wordnet as wn
 
 def test_strike_a_match():
     ep1 = ['58', '338', '342', '340'] #['F', 'R', 'A', 'N', 'C', 'E']
@@ -78,6 +79,16 @@ def parse_method_class_name_to_words(name):
         words =  re.sub('([A-Z][a-z]+)', r' \1', re.sub('([A-Z]+)', r' \1', name)).split()
 
     return [w for w in words if w != '']
+
+def get_lemma(word):
+    """
+    Getting lemma of a word.
+    """
+    lemma = wn.morphy(word)
+    if lemma is None:
+        return word
+    else:
+        return lemma
 
 
 
