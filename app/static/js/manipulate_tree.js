@@ -75,6 +75,11 @@ function setupDiagram(result, myDiagram) {
     // color: go.Brush.randomColor()
 
     myDiagram.model = new go.TreeModel(nodeDataArray);
+    
+    var technique_choice = document.getElementById('technique_choice_id').value;
+    myDiagram.nodes.each(function (n) {
+        update_node_text(n, technique_choice, myDiagram);
+    });
     // update_nodes_for_study();
 
 }
