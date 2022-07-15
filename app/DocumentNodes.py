@@ -17,6 +17,9 @@ import numpy as np
 import math
 import re
 from timeit import default_timer as timer
+import spacy
+import pytextrank
+from summa import keywords
 
 import util
 
@@ -131,6 +134,10 @@ class DocumentNodes:
             print(execution_paths_of_a_cluster, execution_paths_of_siblings, parent_label, "bbbbbbbbbbbb")
         print("Time key words:", end - start)
         start = timer()
+        text_rank = self.text_rank_words(tm_documents[2])
+        end = timer()
+        print("Time textrank:", end - start)
+        start = timer()
         text_summary = self.summarize_clusters_using_docstring(
             execution_paths_of_a_cluster, self.function_to_docstring)
         end = timer()
@@ -164,10 +171,11 @@ class DocumentNodes:
         self.worksheet.write(self.row, 11, lsi_method)
         self.worksheet.write(self.row, 12, lsi_word_and_docstring)
         self.worksheet.write(self.row, 13, lsi_method_and_docstring)
-        self.worksheet.write(self.row, 14, key_words)
-        self.worksheet.write(self.row, 15, text_summary)
-        self.worksheet.write(self.row, 16, spm_method)
-        self.worksheet.write(self.row, 17, words_in_cluster)
+        self.worksheet.write(self.row, 14, text_rank)
+        self.worksheet.write(self.row, 16, key_words)
+        self.worksheet.write(self.row, 17, text_summary)
+        self.worksheet.write(self.row, 18, spm_method)
+        self.worksheet.write(self.row, 19, words_in_cluster)
         self.row += 1
 
         end = timer()
@@ -176,14 +184,15 @@ class DocumentNodes:
         execution_paths = {ep: 1 for ep in execution_paths_of_a_cluster}
 
         return {'key': k, 'parent': v, 'tfidf_word': tfidf_word, 'tfidf_method': tfidf_method,
-                'tfidf_word_and_docstring': tfidf_word_and_docstring, 'tfidf_method_and_docstring': tfidf_method_and_docstring,
-                'lda_word': lda_word, 'lda_method': lda_method, 'lda_word_and_docstring': lda_word_and_docstring,
+                'tfidf_word_and_docstring': tfidf_word_and_docstring,
+                'tfidf_method_and_docstring': tfidf_method_and_docstring, 'lda_word': lda_word,
+                'lda_method': lda_method, 'lda_word_and_docstring': lda_word_and_docstring,
                 'lda_method_and_docstring': lda_method_and_docstring, 'lsi_word': lsi_word, 'lsi_method': lsi_method,
                 'lsi_word_and_docstring': lsi_word_and_docstring, 'lsi_method_and_docstring': lsi_method_and_docstring,
-                'key_words': key_words, 'spm_method': spm_method, 'words_in_cluster': words_in_cluster,
-                'text_summary': text_summary, 'files_count': files_count, 'files': files,
-                'execution_path_count': execution_paths_count, 'function_id_to_name_file': function_id_to_name_file,
-                'execution_paths': execution_paths}
+                'text_rank': text_rank, 'key_words': key_words, 'spm_method': spm_method,
+                'words_in_cluster': words_in_cluster, 'text_summary': text_summary, 'files_count': files_count,
+                'files': files, 'execution_path_count': execution_paths_count,
+                'function_id_to_name_file': function_id_to_name_file, 'execution_paths': execution_paths}
 
     def tf_idf_score_for_scipy_cluster(self, tfidif_documents, method_or_word):
         """
@@ -257,10 +266,10 @@ class DocumentNodes:
                 method_and_docstring_str += ' '
                 word_and_docstring_str += ' '
 
-            method_doc.append(method_str)
-            word_doc.append(word_str)
-            method_and_docstring_doc.append(method_and_docstring_str)
-            word_and_docstring_doc.append(word_and_docstring_str)
+            method_doc.append(method_str[:-1])
+            word_doc.append(word_str[:-1])
+            method_and_docstring_doc.append(method_and_docstring_str[:-1])
+            word_and_docstring_doc.append(word_and_docstring_str[:-1])
 
         return [method_doc, word_doc, method_and_docstring_doc, word_and_docstring_doc]
 
@@ -275,7 +284,7 @@ class DocumentNodes:
             for e in self.execution_paths[c]:
                 str += e
                 str += ' '
-            documents.append(str)
+            documents.append(str[:-1])
 
         return documents
 
@@ -297,7 +306,7 @@ class DocumentNodes:
                     str += ' '.join([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
                                      word.lower() not in self.en_stop])
                 str += ' '
-            documents.append(str)  # [:-6]
+            documents.append(str[:-1])  # [:-6]
         return documents
 
     def make_documents_for_a_cluster_tm(self, cluster):
@@ -335,10 +344,10 @@ class DocumentNodes:
                 method_and_docstring_str += ' '
                 word_and_docstring_str += ' '
 
-            method_doc.append(method_str)
-            word_doc.append(word_str)
-            method_and_docstring_doc.append(method_and_docstring_str)
-            word_and_docstring_doc.append(word_and_docstring_str)
+            method_doc.append(method_str[:-1])
+            word_doc.append(word_str[:-1])
+            method_and_docstring_doc.append(method_and_docstring_str[:-1])
+            word_and_docstring_doc.append(word_and_docstring_str[:-1])
 
         return [method_doc, word_doc, method_and_docstring_doc, word_and_docstring_doc]
 
@@ -353,7 +362,7 @@ class DocumentNodes:
             for e in self.execution_paths[c]:
                 str += self.function_id_to_name[e]
                 str += ' '
-            documents.append(str)
+            documents.append(str[:-1])
 
         return documents
 
@@ -375,7 +384,7 @@ class DocumentNodes:
                     str += ' '.join([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
                                      word.lower() not in self.en_stop])
                 str += ' '
-            documents.append(str)
+            documents.append(str[:-1])
 
         return documents
 
@@ -396,7 +405,7 @@ class DocumentNodes:
                 str += self.merge_words_as_sentence(words_in_function_name)
                 str += ' '
 
-            documents.append(str)
+            documents.append(str[:-1])
 
         return documents
 
@@ -422,7 +431,7 @@ class DocumentNodes:
                     str += ' '.join([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
                                      word.lower() not in self.en_stop])
                 str += ' '
-            documents.append(str)
+            documents.append(str[:-1])
 
         return documents
 
@@ -443,7 +452,7 @@ class DocumentNodes:
                     words_in_function_name)
                 str += ' '
 
-            documents.append(str)
+            documents.append(str[:-1])
 
         return documents
 
@@ -469,7 +478,7 @@ class DocumentNodes:
                     str += ' '.join([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
                                      word.lower() not in self.en_stop])
                 str += ' '
-            documents.append(str)
+            documents.append(str[:-1])
 
         return documents
 
@@ -494,9 +503,9 @@ class DocumentNodes:
             st += ' '
 
         if st == '':
-            st = "{low similarity}"
+            st = "{low similarity} "
 
-        return st
+        return st[:-1]
 
     def topic_model_output(self, topics):
         """ formatting topic model outputs """
@@ -625,22 +634,32 @@ class DocumentNodes:
                     cluster_word_freq[word] = 1
                 else:
                     cluster_word_freq[word] += 1
-                for sibling_path in execution_paths_of_siblings:
-                    if word not in sibling_word_freq:
-                        sibling_word_freq[word] = 0
-                    sibling_word_freq[word] += word in self.execution_path_words[str(self.execution_paths[sibling_path])]
+                if word not in sibling_word_freq:
+                    sibling_word_freq[word] = 0
+                    for sibling_path in execution_paths_of_siblings:
+                        sibling_word_freq[word] += word in self.execution_path_words[str(self.execution_paths[sibling_path])]
         for word in cluster_word_freq:
             cluster_word_freq[word] = cluster_word_freq[word] / len(execution_paths_of_a_cluster)
             if len(execution_paths_of_siblings) == 0:
                 continue
             sibling_word_freq[word] = sibling_word_freq[word] / len(execution_paths_of_siblings)
+            if sibling_word_freq[word] > 1:
+                exit(1)
             cluster_word_freq[word] = cluster_word_freq[word] * (1 - sibling_word_freq[word])
         most_freq_words = [word_and_freq[0] for word_and_freq in sorted(cluster_word_freq.items(), key=lambda item: item[1], reverse=True)]
 
-        if len([word for index, word in enumerate(most_freq_words) if cluster_word_freq[word] > 0.25 and (index < 5 or cluster_word_freq[word] == 1)]) > 10:
-            print([word for index, word in enumerate(most_freq_words) if cluster_word_freq[word] > 0.25 and (index < 5 or cluster_word_freq[word] == 1)])
-            print([cluster_word_freq[word] for word in [word for index, word in enumerate(most_freq_words) if cluster_word_freq[word] > 0.25 and (index < 5 or cluster_word_freq[word] == 1)]])
         return self.merge_words_as_sentence([word for index, word in enumerate(most_freq_words) if cluster_word_freq[word] > 0.25 and (index < 5 or cluster_word_freq[word] == 1)])  # Todo case when not 5 words
+
+    def text_rank_words(self, documents):
+        # nlp = spacy.load("en_core_web_sm")
+        # nlp.add_pipe("textrank")
+        # print("aaaaaaaa", ". ".join(documents))
+        # doc = nlp(". ".join(documents))
+        # pytextrank_words = ''
+        # for phrase in doc._.phrases[:5]:
+        #     pytextrank_words += phrase.text + ", "
+        # return pytextrank_words[:-2]
+        return ", ".join(keywords.keywords(". ".join(documents)).split("\n")[:5])
 
     def words_in_cluster(self, execution_path_words, execution_paths):
         words = set()
