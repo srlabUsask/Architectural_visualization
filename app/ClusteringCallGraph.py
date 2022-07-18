@@ -66,6 +66,7 @@ class ClusteringCallGraph:
     function_id_to_file_name = {}
     function_id_to_line_num = {}
     function_to_docstring = {}
+    function_id_to_name_file = {}
     w2v_model = None
     d2v_model = None
 
@@ -81,7 +82,7 @@ class ClusteringCallGraph:
         # We go one directory up to find the instance directory
         # self.graph = self.buildgraph2(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))  # pythonbuildgraph
         start = timer()
-        self.pythonbuildgraph(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
+        self.buildgraph(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
 
         # self.graph.remove_edges_from(nx.selfloop_edges(self.graph))
         # # Visual of the call graph
@@ -276,6 +277,7 @@ class ClusteringCallGraph:
             if line[:-2] not in func_tracker:
                 self.function_id_to_name[str(index)] = funname
                 self.function_id_to_file_name[str(index)] = filename
+                self.function_id_to_name_file[str(index)] = funname + '(' + filename + ')'
                 self.function_id_to_line_num[str(index)] = line[line.find('::') + 2:-2]
 
                 file = open(line[line.find('@@@') + 3: line.find('::')], encoding='utf-8')
@@ -365,9 +367,10 @@ class ClusteringCallGraph:
 
             # Note usage of nearly all the line info was to make functions with
             # the same name be identified as unique functions
-            if line[1:-2] not in func_tracker:
+            if '</' not in line and line[1:-2] not in func_tracker:
                 self.function_id_to_name[str(index)] = funname
                 self.function_id_to_file_name[str(index)] = filename
+                self.function_id_to_name_file[str(index)] = funname + '(' + filename + ')'
                 func_tracker[line[1:-2]] = str(index)
                 self.function_to_docstring[str(index)] = ''
                 index += 1
@@ -387,14 +390,15 @@ class ClusteringCallGraph:
                 stack.append(func_tracker[line[1:-2]])
                 prev_character = "c"
             else:
-                if prev_character == "c" and list(stack) not in execution_path_tracker:  #Todo check if removing the execution_path_tracker speeds up or slows down
+                if prev_character == "c" and list(
+                        stack) not in execution_path_tracker:  # Todo check if removing the execution_path_tracker speeds up or slows down
                     execution_path_tracker.append(list(stack))
                     execution_path = list(stack)
                     execution_path = ",".join(execution_path) + ","
                     previous = ""
                     while execution_path != previous:
                         previous = execution_path
-                        execution_path = re.sub(r'(.+?,)\1+', r'\1', execution_path) # the ? seems redundant
+                        execution_path = re.sub(r'(.+?,)\1+', r'\1', execution_path)  # the ? seems redundant
 
                     execution_path = execution_path[:-1]
                     execution_path = execution_path.split(",")
@@ -428,6 +432,7 @@ class ClusteringCallGraph:
             if line[:-2] not in func_tracker:
                 self.function_id_to_name[str(index)] = funname
                 self.function_id_to_file_name[str(index)] = filename
+                self.function_id_to_name_file[str(index)] = funname + '(' + filename + ')'
                 self.function_id_to_line_num[str(index)] = line[line.find('::') + 2:-2]
 
                 file = open(line[line.find('@@@') + 3: line.find('::')], encoding='utf-8')
@@ -473,7 +478,7 @@ class ClusteringCallGraph:
                     previous = ""
                     while execution_path != previous:
                         previous = execution_path
-                        execution_path = re.sub(r'(.+?,)\1+', r'\1', execution_path) # the ? seems redundant
+                        execution_path = re.sub(r'(.+?,)\1+', r'\1', execution_path)  # the ? seems redundant
 
                     execution_path = execution_path[:-1]
                     execution_path = execution_path.split(",")
@@ -528,11 +533,11 @@ class ClusteringCallGraph:
 
             if graph_started == False and '.py' in line:
                 ln = line.split(' ')
-                self.function_id_to_name[ln[0]
-                ] = self.extract_function_name(ln[1])
+                self.function_id_to_name[ln[0]] = self.extract_function_name(ln[1])
                 self.function_to_docstring[ln[0]] = ""
-                self.function_id_to_file_name[ln[0]] = line.split(
-                    '/')[-1].split(':')[0]
+                self.function_id_to_file_name[ln[0]] = line.split('/')[-1].split(':')[0]
+                self.function_id_to_name_file[ln[0]] = self.function_id_to_name[ln[0]] + '(' + \
+                                                self.function_id_to_file_name[ln[0]] + ')'
 
     def flat_cluster_and_label_nodes(self, mat):
         cep = ClusteringExecutionPath()
@@ -540,12 +545,25 @@ class ClusteringCallGraph:
         json_data = {'cluster': tree,
                      'function_id_to_name': self.function_id_to_name,
                      'function_id_to_file_name': self.function_id_to_file_name,
-                     'execution_paths': self.execution_paths}
+                     'execution_paths': self.execution_paths,
+                     'function_id_to_name_file': self.function_id_to_name_file}
 
         print(json_data, file=open(OUTPUT_DIRECTORY +
                                    'TREE_DICT_' + self.subject_system, 'w'))
 
         return tree
+
+    def function_id_to_file_name_of_execution_path(self):
+
+        function_id_to_name_file = {}
+        print(self.execution_paths)
+        for ep in self.execution_paths:
+            for method in ep:
+                id = str(method)
+                function_id_to_name_file[id] = self.function_id_to_name[id] + \
+                                               '(' + self.function_id_to_file_name[id] + ')'
+
+        return function_id_to_name_file
 
     def remove_redundant_ep(self):
         ''' this function removes redundant execution paths from list of execution paths.

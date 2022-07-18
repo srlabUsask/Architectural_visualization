@@ -146,10 +146,8 @@ class DocumentNodes:
         files_count, files = self.count_files_in_node(
             execution_paths_of_a_cluster)
         execution_paths_count = len(execution_paths_of_a_cluster)
-        function_id_to_name_file = self.function_id_to_file_name_of_execution_path(
-            execution_paths_of_a_cluster)
         end = timer()
-        print("Time file count and stuff and function id to name file:", end - start)
+        print("Time file count and stuff", end - start)
         start = timer()
         words_in_cluster = self.words_in_cluster(self.execution_path_words, execution_paths_of_a_cluster)
         end = timer()
@@ -191,8 +189,7 @@ class DocumentNodes:
                 'lsi_word_and_docstring': lsi_word_and_docstring, 'lsi_method_and_docstring': lsi_method_and_docstring,
                 'text_rank': text_rank, 'key_words': key_words, 'spm_method': spm_method,
                 'words_in_cluster': words_in_cluster, 'text_summary': text_summary, 'files_count': files_count,
-                'files': files, 'execution_path_count': execution_paths_count,
-                'function_id_to_name_file': function_id_to_name_file, 'execution_paths': execution_paths}
+                'files': files, 'execution_path_count': execution_paths_count, 'execution_paths': execution_paths}
 
     def tf_idf_score_for_scipy_cluster(self, tfidif_documents, method_or_word):
         """
@@ -791,15 +788,3 @@ class DocumentNodes:
                     files_count[self.function_id_to_file_name[f]] = 1
 
         return len(list(files_count.keys())), list(files_count.keys())
-
-    def function_id_to_file_name_of_execution_path(self, execution_paths_of_a_cluster):
-
-        function_id_to_name_file = {}
-
-        for ep in execution_paths_of_a_cluster:
-            for method in self.execution_paths[ep]:
-                id = str(method)
-                function_id_to_name_file[id] = self.function_id_to_name[id] + \
-                    '(' + self.function_id_to_file_name[id] + ')'
-
-        return function_id_to_name_file

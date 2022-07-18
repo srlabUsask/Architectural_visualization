@@ -19,7 +19,7 @@ async function get_cluster() {
         })
     }
 
-    setupSearchForFunction(cluster_jsons[0]['cluster'][0].function_id_to_name_file, cluster_jsons[1]['cluster'][0].function_id_to_name_file);
+    setupSearchForFunction(cluster_jsons[0]["function_id_to_name_file"], cluster_jsons[1]["function_id_to_name_file"]);
 
     setupSearchForUniqueAndSameExecutionPaths();
     setupUniqueNodeExecutionPaths();
@@ -66,7 +66,6 @@ function setupDiagram(result, myDiagram) {
             files: result[x].files,
             files_count: result[x].files_count,
             execution_path_count: result[x].execution_path_count,
-            function_id_to_name_file: result[x].function_id_to_name_file,
             execution_paths: result[x].execution_paths
         });
 
@@ -75,7 +74,7 @@ function setupDiagram(result, myDiagram) {
     // color: go.Brush.randomColor()
 
     myDiagram.model = new go.TreeModel(nodeDataArray);
-    
+
     var technique_choice = document.getElementById('technique_choice_id').value;
     myDiagram.nodes.each(function (n) {
         update_node_text(n, technique_choice, myDiagram);
@@ -203,28 +202,25 @@ function reset_node_color() {
     });
 }
 
-function function_highlight_node(key1, key2) {
-    if (key1 !== -1) {
-        myDiagram1.nodes.each(function (n) {
-
-            if (key1 in n.data.function_id_to_name_file){
-                myDiagram1.model.commit(function (m) {
-                    m.set(n.data, "color", "red");
+function function_highlight_node(execution_paths_for_func) {
+    console.log(execution_paths_for_func)
+    myDiagram1.nodes.each(function (n) {
+        console.log(Object.keys(n.data.execution_paths))
+        if (execution_paths_for_func[0].some(item => Object.keys(n.data.execution_paths).includes(item.toString()))){
+            myDiagram1.model.commit(function (m) {
+                m.set(n.data, "color", "red");
                 }, 'change node color');
-            }
-        });
-    }
+        }
+    });
 
-    if (key2 !== -1) {
-        myDiagram2.nodes.each(function (n) {
+    myDiagram2.nodes.each(function (n) {
 
-            if (key2 in n.data.function_id_to_name_file){
-                myDiagram2.model.commit(function (m) {
-                    m.set(n.data, "color", "red");
-                }, 'change node color');
-            }
-        });
-    }
+        if (execution_paths_for_func[1].some(item => Object.keys(n.data.execution_paths).includes(item.toString()))){
+            myDiagram2.model.commit(function (m) {
+                m.set(n.data, "color", "red");
+            }, 'change node color');
+        }
+    });
 }
 
 function execution_path_highlight_node(execution_path, identifier, similar) {
@@ -260,6 +256,7 @@ function execution_path_highlight_node(execution_path, identifier, similar) {
 
 function find_execution_paths_for_function(key1, key2){
     const indexes = [key1, key2];
+    let all_eps = [];
     for (let j = 0; j < cluster_jsons.length; j++) {
         eps = []
         for (i = 0; i < cluster_jsons[j]['execution_paths'].length; i++) {
@@ -270,6 +267,8 @@ function find_execution_paths_for_function(key1, key2){
                 break;
             }
         }
+
+        all_eps[j] = eps;
 
         eps_preety = ''
 
@@ -294,7 +293,7 @@ function find_execution_paths_for_function(key1, key2){
 
         document.getElementById('searched_execution_paths' + (j + 1)).innerHTML = eps_preety;
     }
-
+    return all_eps;
 }
 
 
@@ -326,10 +325,10 @@ jQuery(document).ready(function() {
         const key2 = function_ids[1];
         //console.log(function_id);
         reset_node_color();
-        function_highlight_node(key1, key2);
-        find_execution_paths_for_function(key1, key2);
-        });
+        const execution_paths_for_func = find_execution_paths_for_function(key1, key2);
+        function_highlight_node(execution_paths_for_func);
     });
+});
 
 jQuery(document).ready(function () {
     for (let i = 0; i < 2; i++) { //Todo the 2 is hardcoded
@@ -406,10 +405,9 @@ jQuery(document).ready(function () {
 });
 
 function setupSearchForFunction(function_id_to_name_file1, function_id_to_name_file2){
-
     let data = [];
     let tracker = []
-    for (const key1 in function_id_to_name_file1) { // function_id_to_name_file
+    for (const key1 in function_id_to_name_file1) {
         let key2 = Object.keys(function_id_to_name_file2).find(k => function_id_to_name_file2[k] === function_id_to_name_file1[key1]);
         if (key2 === undefined) {
             key2 = -1;
@@ -418,7 +416,7 @@ function setupSearchForFunction(function_id_to_name_file1, function_id_to_name_f
         tracker.push(function_id_to_name_file1[key1]);
     }
 
-    for (const key2 in function_id_to_name_file2) { // function_id_to_name_file
+    for (const key2 in function_id_to_name_file2) {
         if (tracker.includes(function_id_to_name_file2[key2])) {
             continue;
         }
@@ -427,7 +425,6 @@ function setupSearchForFunction(function_id_to_name_file1, function_id_to_name_f
             key1 = -1;
         }
         data.push({"id": JSON.stringify([key1, key2]), "text": function_id_to_name_file2[key2]});
-        tracker.push(function_id_to_name_file2[key2]);
     }
 
     jQuery('#function_file').empty().select2({
