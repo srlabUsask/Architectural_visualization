@@ -39,7 +39,7 @@ SUBJECT_SYSTEM_NAME = config.SUBJECT_SYSTEM_NAME
 OUTPUT_DIRECTORY = ROOT + '/output/'
 DATASET = ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".txt"
 EXECUTION_PATTERNS = config.EXECUTION_PATTERNS
-WORD2VEC = config.WORD2VEC
+WORD2VEC = config.DOC2VEC
 
 document_nodes = DocumentNodes(OUTPUT_DIRECTORY, SUBJECT_SYSTEM_NAME, EXECUTION_PATTERNS)
 
@@ -100,13 +100,14 @@ class ClusteringCallGraph:
         print('Time required for extracting_execution_paths: ', end - start)
         print('No. of execution paths', len(self.execution_paths))
 
-        # print(len(self.execution_paths2))
         if len(self.execution_paths) > 5000:
             print("Over 5000 Execution Paths")
             self.execution_paths = util.random_sample_execution_paths(
                 self.execution_paths)
 
-        if WORD2VEC:
+        # Uses execution paths to create "sentences" that are then used to build the vocabulary and train the doc2vec,
+
+        if DOC2VEC:
             sentences = []
             d2v_sentences = []
             index = 0
@@ -162,7 +163,7 @@ class ClusteringCallGraph:
 
         start = timer()
         # mat = self.distance_matrix(self.execution_paths)
-        if WORD2VEC:
+        if DOC2VEC:
             mat = self.distance_matrix2()  # Change it to distance_matrix2() for doc2vec
         else:
             mat = self.distance_matrix3(self.execution_paths)
