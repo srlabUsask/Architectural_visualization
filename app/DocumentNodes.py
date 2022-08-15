@@ -10,6 +10,7 @@ from gensim import corpora
 import pickle
 import gensim
 from gensim.summarization.summarizer import summarize
+from gensim.summarization.keywords import keywords
 from gensim.summarization.textcleaner import clean_text_by_sentences as _clean_text_by_sentences
 from gensim.summarization.textcleaner import get_sentences
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -17,9 +18,6 @@ import numpy as np
 import math
 import re
 from timeit import default_timer as timer
-import spacy
-import pytextrank
-from summa import keywords
 
 import util
 
@@ -90,68 +88,75 @@ class DocumentNodes:
             spm_method = ""
         end = timer()
         print("Time mining seq patterns:", end - start)
+
         start = timer()
         tfidif_documents = self.make_documents_for_a_cluster_tfidf(execution_paths_of_a_cluster)
-        tfidf_method = self.tf_idf_score_for_scipy_cluster(
-            tfidif_documents, 'method')
-        tfidf_word = self.tf_idf_score_for_scipy_cluster(
-            tfidif_documents, 'word')
+        tfidf_method = self.tf_idf_score_for_scipy_cluster(tfidif_documents, 'method')
+        tfidf_word = self.tf_idf_score_for_scipy_cluster(tfidif_documents, 'word')
         end = timer()
         print("Time tfidf method and word:", end - start)
+
         start = timer()
-        tfidf_method_and_docstring = self.tf_idf_score_for_scipy_cluster(
-            tfidif_documents, 'docstring_and_method')
-        tfidf_word_and_docstring = self.tf_idf_score_for_scipy_cluster(
-            tfidif_documents, 'docstring_and_word')
+        tfidf_method_and_docstring = self.tf_idf_score_for_scipy_cluster(tfidif_documents, 'docstring_and_method')
+        tfidf_word_and_docstring = self.tf_idf_score_for_scipy_cluster(tfidif_documents, 'docstring_and_word')
         end = timer()
         print("Time tfidf docstring method and word:", end - start)
+
         start = timer()
         tm_documents = self.make_documents_for_a_cluster_tm(execution_paths_of_a_cluster)
-        lda_method = self.topic_model_lda(
-            tm_documents, 'method')
+        lda_method = self.topic_model_lda(tm_documents, 'method')
         lda_word = self.topic_model_lda(tm_documents, 'word')
         end = timer()
         print("Time lda method and word:", end - start)
+
         start = timer()
         lda_method_and_docstring = self.topic_model_lda(tm_documents, 'method_and_docstring')
         lda_word_and_docstring = self.topic_model_lda(tm_documents, 'word_and_docstring')
         end = timer()
         print("Time lda docstring method and word:", end - start)
+
         start = timer()
         lsi_method = self.topic_model_lsi(tm_documents, 'method')
         lsi_word = self.topic_model_lsi(tm_documents, 'word')
         end = timer()
         print("Time lsi method and word:", end - start)
+
         start = timer()
         lsi_method_and_docstring = self.topic_model_lsi(tm_documents, 'method_and_docstring')
         lsi_word_and_docstring = self.topic_model_lsi(tm_documents, 'word_and_docstring')
         end = timer()
         print("Time lsi docstring method and word:", end - start)
+
         start = timer()
         key_words = self.key_words(execution_paths_of_a_cluster, execution_paths_of_siblings, parent_label)
         end = timer()
         if end - start > 30:
             print(execution_paths_of_a_cluster, execution_paths_of_siblings, parent_label, "bbbbbbbbbbbb")
         print("Time key words:", end - start)
+
         start = timer()
         text_rank = self.text_rank_words(tm_documents[2])
         end = timer()
         print("Time textrank:", end - start)
+
         start = timer()
         text_summary = self.summarize_clusters_using_docstring(
             execution_paths_of_a_cluster, self.function_to_docstring)
         end = timer()
         print("Text summary:", end - start)
+
         start = timer()
         files_count, files = self.count_files_in_node(
             execution_paths_of_a_cluster)
         execution_paths_count = len(execution_paths_of_a_cluster)
         end = timer()
         print("Time file count and stuff", end - start)
+
         start = timer()
         words_in_cluster = self.words_in_cluster(self.execution_path_words, execution_paths_of_a_cluster)
         end = timer()
         print("Time word cluster:", end - start)
+
         start = timer()
 
         self.worksheet.write(self.row, 0, k)
@@ -648,15 +653,12 @@ class DocumentNodes:
         return self.merge_words_as_sentence([word for index, word in enumerate(most_freq_words) if cluster_word_freq[word] > 0.25 and (index < 5 or cluster_word_freq[word] == 1)])  # Todo case when not 5 words
 
     def text_rank_words(self, documents):
-        # nlp = spacy.load("en_core_web_sm")
-        # nlp.add_pipe("textrank")
-        # print("aaaaaaaa", ". ".join(documents))
-        # doc = nlp(". ".join(documents))
-        # pytextrank_words = ''
-        # for phrase in doc._.phrases[:5]:
-        #     pytextrank_words += phrase.text + ", "
-        # return pytextrank_words[:-2]
-        return ", ".join(keywords.keywords(". ".join(documents)).split("\n")[:5])
+        try:
+            cluster_keywords = keywords(". ".join(documents), split=True, words=5, lemmatize=True)
+            cluster_keywords = ', '.join(list(set(cluster_keywords)))
+        except ValueError:
+            cluster_keywords = "Empty"
+        return cluster_keywords
 
     def words_in_cluster(self, execution_path_words, execution_paths):
         words = set()

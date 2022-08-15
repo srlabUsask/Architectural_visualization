@@ -39,6 +39,7 @@ SUBJECT_SYSTEM_NAME = config.SUBJECT_SYSTEM_NAME
 OUTPUT_DIRECTORY = ROOT + '/output/'
 DATASET = ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".txt"
 EXECUTION_PATTERNS = config.EXECUTION_PATTERNS
+WORD2VEC = config.WORD2VEC
 
 document_nodes = DocumentNodes(OUTPUT_DIRECTORY, SUBJECT_SYSTEM_NAME, EXECUTION_PATTERNS)
 
@@ -51,7 +52,6 @@ class ClusteringCallGraph:
      """
     nltk.download('stopwords')
     en_stop = set(nltk.corpus.stopwords.words('english'))
-    # print(en_stop)
     entry_point = []
     exit_point = []
     tree = []
@@ -77,12 +77,13 @@ class ClusteringCallGraph:
     def log_analysis(self):
         """ analyzing programs to build cluster tree of execution paths. """
 
+        total_start_time = timer()
         # self.tgf_to_networkX() #-- was used for the tgf files rather than log files
         # print(os.path.abspath(__file__))
         # We go one directory up to find the instance directory
         # self.graph = self.buildgraph2(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))  # pythonbuildgraph
         start = timer()
-        self.buildgraph(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
+        self.pythonbuildgraph(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
 
         # self.graph.remove_edges_from(nx.selfloop_edges(self.graph))
         # # Visual of the call graph
@@ -105,67 +106,74 @@ class ClusteringCallGraph:
             self.execution_paths = util.random_sample_execution_paths(
                 self.execution_paths)
 
-        sentences = []
-        d2v_sentences = []
-        index = 0
-        exe = open(SUBJECT_SYSTEM_NAME + ".txt", "w")
-        for path in self.execution_paths:
-            test = []
-            sentence = []
-            for func in path:
-                test.append(self.function_id_to_name[func])
-                no_punctuation = re.sub(r'[^\w\s]', '', self.function_to_docstring[func])
-                if no_punctuation == "":
-                    sentence.append(self.function_id_to_name[func])
-                else:
-                    sentence.extend([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if
-                                     word.lower() != "" and word.lower() not in self.en_stop])  # sentence.append(self.function_id_to_name[func])
-                sentence.append("calls")
-            sentence.pop()
-            exe.write(str(test) + "\n")
-            sentences.append(sentence)
-            d2v_sentences.append(TaggedDocument(words=sentence, tags=[index]))
-            index += 1
+        if WORD2VEC:
+            sentences = []
+            d2v_sentences = []
+            index = 0
+            # exe = open(SUBJECT_SYSTEM_NAME + ".txt", "w")
+            for path in self.execution_paths:
+                # test = []
+                sentence = []
+                for func in path:
+                    # test.append(self.function_id_to_name[func])
+                    no_punctuation = re.sub(r'[^\w\s]', '', self.function_to_docstring[func])
+                    if no_punctuation == "":
+                        sentence.append(self.function_id_to_name[func])
+                    else:
+                        sentence.extend([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if
+                                         word.lower() != "" and word.lower() not in self.en_stop])  # sentence.append(self.function_id_to_name[func])
+                    sentence.append("calls")
+                sentence.pop()
+                # exe.write(str(test) + "\n")
+                sentences.append(sentence)
+                d2v_sentences.append(TaggedDocument(words=sentence, tags=[index]))
+                index += 1
 
-        cores = multiprocessing.cpu_count()
-        self.d2v_model = Doc2Vec(min_count=1,
-                                 window=5,
-                                 vector_size=50,
-                                 sample=6e-5,
-                                 alpha=0.03,
-                                 min_alpha=0.0007,
-                                 negative=20,
-                                 workers=cores - 1)
-        t = timer()
+            cores = multiprocessing.cpu_count()
+            self.d2v_model = Doc2Vec(min_count=1,
+                                     window=5,
+                                     vector_size=50,
+                                     sample=6e-5,
+                                     alpha=0.03,
+                                     min_alpha=0.0007,
+                                     negative=20,
+                                     workers=cores - 1)
+            t = timer()
 
-        self.d2v_model.build_vocab(d2v_sentences, progress_per=50)
+            self.d2v_model.build_vocab(d2v_sentences, progress_per=50)
 
-        print('Time to build vocab: {} secs'.format(timer() - t))
+            print('Time to build vocab: {} secs'.format(timer() - t))
 
-        t = timer()
+            t = timer()
 
-        self.d2v_model.train(d2v_sentences, total_examples=self.d2v_model.corpus_count, epochs=100,
-                             report_delay=1)  # Usually 10000
+            self.d2v_model.train(d2v_sentences, total_examples=self.d2v_model.corpus_count, epochs=5000,
+                                 report_delay=1)  # Usually 10000
 
-        print('Time to train the model: {} secs'.format(timer() - t))
+            print('Time to train the model: {} secs'.format(timer() - t))
 
-        self.d2v_model.init_sims(replace=True)
+            self.d2v_model.init_sims(replace=True)
 
-        # index = 0
-        # print(self.d2v_model.docvecs.most_similar([self.d2v_model[index]]))
-        # print(self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[1][1])
-        # print(self.d2v_model.docvecs.similarity(index,
-        #                                         self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[1][0]))
-        # self.remove_redundant_ep()
+            # index = 0
+            # print(self.d2v_model.docvecs.most_similar([self.d2v_model[index]]))
+            # print(self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[1][1])
+            # print(self.d2v_model.docvecs.similarity(index,
+            #                                         self.d2v_model.docvecs.most_similar([self.d2v_model[index]])[1][0]))
+            # self.remove_redundant_ep()
 
         start = timer()
         # mat = self.distance_matrix(self.execution_paths)
-        mat = self.distance_matrix3(self.execution_paths)  # Change it to distance_matrix2() for doc2vec
+        if WORD2VEC:
+            mat = self.distance_matrix2()  # Change it to distance_matrix2() for doc2vec
+        else:
+            mat = self.distance_matrix3(self.execution_paths)
         # print(mat)
         # mat_c = self.distance_matrix(self.execution_paths)  # Note problem with making pairs with new execution paths
         # due to 1 func execution paths
         mat_j = self.distance_matrix3(self.execution_paths)
         plt.matshow(mat)
+        plt.colorbar()
+        plt.show()
+        plt.matshow(mat_j)
         plt.colorbar()
         plt.show()
         diff_mat = subtract(mat, mat_j)
@@ -190,6 +198,8 @@ class ClusteringCallGraph:
         ret = self.flat_cluster_and_label_nodes(mat)
         end = timer()
         print('Time required for cluster operations: ', end - start)
+        total_end_time = timer()
+        print('Total time required: ', total_end_time - total_start_time)
         return ret
         # return self.clustering_using_scipy(mat)
 
@@ -538,6 +548,7 @@ class ClusteringCallGraph:
                 self.function_id_to_file_name[ln[0]] = line.split('/')[-1].split(':')[0]
                 self.function_id_to_name_file[ln[0]] = self.function_id_to_name[ln[0]] + '(' + \
                                                 self.function_id_to_file_name[ln[0]] + ')'
+                self.function_to_docstring[ln[0]] = ''  # Temporary
 
     def flat_cluster_and_label_nodes(self, mat):
         cep = ClusteringExecutionPath()
@@ -619,17 +630,15 @@ class ClusteringCallGraph:
             unpack_path = list(
                 nx.all_simple_paths(self.graph, s, self.exit_point))
             for p in unpack_path:
-                self.execution_paths2.append(p)
+                self.execution_paths.append(p)
 
-        print("Number of EP: ", len(self.execution_paths2))
+        print("Number of EP: ", len(self.execution_paths))
 
     def distance_matrix(self, paths):
         """ creating distance matrix using jaccard similarity value """
         print('distance_matrix')
         length = len(paths)
         Matrix = [[0 for x in range(length)] for y in range(length)]
-        similar = 0
-        dissimilar = 0
 
         for i in range(len(paths)):
             for j in range(len(paths)):
