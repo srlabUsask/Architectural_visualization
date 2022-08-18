@@ -27,7 +27,9 @@ unique_execution_paths = {}
 
 @app.route('/', methods=['GET'])
 def root():
-    # return 'Hello world'
+    """
+    Renders the HCPC tool
+    """
     TECHNIQUE_CHOICES = ['tfidf_method', 'tfidf_word', 'tfidf_method_and_docstring', 'tfidf_word_and_docstring',
                          'lda_method', 'lda_word', 'lda_method_and_docstring', 'lda_word_and_docstring', 'lsi_method',
                          'lsi_word', 'lsi_method_and_docstring', 'lsi_word_and_docstring', 'text_rank', 'key_words']
@@ -36,6 +38,10 @@ def root():
 
 @app.route('/get_cluster/', methods=['GET'])
 def get_cluster():
+    """
+    Returns the clusters trees of the two subject systems but first calculates the similarity values of each node in one
+    cluster tree with every node in the other cluster tree
+    """
     subject_system = request.args.get('subject_system')
     other_subject_system = request.args.get('other_subject_system')
     with open(ROOT + subject_system, 'r') as f:
@@ -65,11 +71,6 @@ def get_cluster():
             other_words = other_words.split(" ")
             other_key = other_cluster['key']
             similarity_value = len(set(words) & set(other_words)) / len(set(words) | set(other_words))
-            # print(similarity_value)
-            # print(set(words))
-            # print(set(other_words))
-            # print(set(words) & set(other_words))
-            # print("___________")
             cluster_similarity[str(key)][str(other_key)] = similarity_value
             if str(other_key) not in other_cluster_similarity:
                 other_cluster_similarity[str(other_key)] = {}
@@ -80,6 +81,9 @@ def get_cluster():
 
 @app.route('/get_similarity/', methods=['GET'])
 def get_similarity():
+    """
+    Returns similarity values array based on a given node
+    """
     subject_system = request.args.get('subject_system')
     key = request.args.get('key')
     return similarity[subject_system][key]
