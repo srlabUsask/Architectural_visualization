@@ -3,6 +3,7 @@ const string_execution_paths = [];
 let node_unique_execution_paths = [];
 let two_subject_system = true;
 
+// Gets the two requested subject systems and sets up the NodeJS diagram and searching for the tool
 async function get_cluster() {
     Url = '/get_cluster';
     let diagrams = [myDiagram1, myDiagram2];
@@ -28,6 +29,7 @@ async function get_cluster() {
 
 }
 
+// Gets similarity values for a given node and then updates the heat map based on the similarity values
 function get_similarity(part, identifier) {
     Url = '/get_similarity';
     var subject_system = document.getElementById("subject_system_id" + identifier);
@@ -39,6 +41,7 @@ function get_similarity(part, identifier) {
     })
 }
 
+// Sets up the values for a given diagram
 function setupDiagram(result, myDiagram) {
     var nodeDataArray = [];
     for (x in result) {
@@ -83,6 +86,7 @@ function setupDiagram(result, myDiagram) {
 
 }
 
+// Updates the label for a node based on the labeling technique choice
 function update_node_text(node, technique, myDiagram) {
     myDiagram.model.commit(function (m) { // this Model
         // This is the safe way to change model data
@@ -122,6 +126,7 @@ function update_node_text(node, technique, myDiagram) {
     }, "update node text");
 }
 
+// Updates the similarity values
 function update_similarity(similarity_values, identifier, selected_node_key) {
     if (identifier === 1) {
         myDiagram1.nodes.each(function (n) {
@@ -157,6 +162,7 @@ function update_similarity(similarity_values, identifier, selected_node_key) {
     }
 }
 
+// Sets and shows a given nodes details
 function showNodeDetails(part, identifier) {
     var clickable_text = '';
 
@@ -173,6 +179,7 @@ function showNodeDetails(part, identifier) {
     document.getElementById('searched_execution_paths' + identifier).innerHTML = get_some_execution_patterns(part.data.execution_paths, identifier - 1);
 }
 
+// Updates the node details panels with the unique execution paths for each of the two nodes being compared
 function updateUniqueNodePaths(key1, key2) {
     const unique_paths1 = node_unique_execution_paths[0][key1][key2];
     const unique_paths2 = node_unique_execution_paths[1][key2][key1];
@@ -188,7 +195,7 @@ function updateUniqueNodePaths(key1, key2) {
     document.getElementById('unique_node_execution_paths2').innerHTML = string_version2.replaceAll("->", "&rarr;");
 }
 
-
+// Resets color of text in the nodes to the color black
 function reset_node_color() {
     myDiagram1.nodes.each(function (n) {
         myDiagram1.model.commit(function (m) {
@@ -202,11 +209,11 @@ function reset_node_color() {
     });
 }
 
+// Every node that has an execution path in that's also in execution_paths_for_func gets highlighted by its text being
+// turned to red
 function function_highlight_node(execution_paths_for_func) {
-    console.log(execution_paths_for_func)
     myDiagram1.nodes.each(function (n) {
-        console.log(Object.keys(n.data.execution_paths))
-        if (execution_paths_for_func[0].some(item => Object.keys(n.data.execution_paths).includes(item.toString()))){
+        if (execution_paths_for_func[0].some(item => Object.keys(n.data.execution_paths).includes(item.toString()))) {
             myDiagram1.model.commit(function (m) {
                 m.set(n.data, "color", "red");
                 }, 'change node color');
@@ -214,8 +221,7 @@ function function_highlight_node(execution_paths_for_func) {
     });
 
     myDiagram2.nodes.each(function (n) {
-
-        if (execution_paths_for_func[1].some(item => Object.keys(n.data.execution_paths).includes(item.toString()))){
+        if (execution_paths_for_func[1].some(item => Object.keys(n.data.execution_paths).includes(item.toString()))) {
             myDiagram2.model.commit(function (m) {
                 m.set(n.data, "color", "red");
             }, 'change node color');
@@ -223,12 +229,17 @@ function function_highlight_node(execution_paths_for_func) {
     });
 }
 
-function execution_path_highlight_node(execution_path, identifier, similar) {
+/* This method is for highlighting nodes that have a certain execution path. 'same' is used to choose which color do
+you want to change the text to when highlighting the node with True being green and False being red. The intended
+purpose of 'same' is to show whether the node we are highlighting is for a unique node or a node that exists in both
+cluster trees. 'identifier' is used to track which of the two trees we are searching in.
+ */
+function execution_path_highlight_node(execution_path, identifier, same) {
     if (identifier === 0) {
         myDiagram1.nodes.each(function (n) {
             if (execution_path in n.data.execution_paths){
                 myDiagram1.model.commit(function (m) {
-                    if (similar) {
+                    if (same) {
                         m.set(n.data, "color", "green");
                     }
                     else {
@@ -242,7 +253,7 @@ function execution_path_highlight_node(execution_path, identifier, similar) {
         myDiagram2.nodes.each(function (n) {
             if (execution_path in n.data.execution_paths){
                 myDiagram2.model.commit(function (m) {
-                    if (similar) {
+                    if (same) {
                         m.set(n.data, "color", "green");
                     }
                     else {
@@ -254,6 +265,8 @@ function execution_path_highlight_node(execution_path, identifier, similar) {
     }
 }
 
+// Find all execution paths that have a given function. As the ids for a function may be different depending on the
+// subject system, there are two keys inputted in the function for each of the two systems.
 function find_execution_paths_for_function(key1, key2){
     const indexes = [key1, key2];
     let all_eps = [];
@@ -296,7 +309,7 @@ function find_execution_paths_for_function(key1, key2){
     return all_eps;
 }
 
-
+// Returns a maximum of 15 execution paths in a more visually appealing block of text.
 function get_some_execution_patterns(eps, index){
     eps_preety = ''
     count = 0
@@ -305,12 +318,12 @@ function get_some_execution_patterns(eps, index){
         if(count === 15){
             break
         }
-        eps_preety += ' &#187; '
+        eps_preety += ' &#187; ' // Double arrow (use Google to see the visual of this)
         for(f = 0; f < cluster_jsons[index]['execution_paths'][key].length; f++){
             eps_preety += cluster_jsons[index]['function_id_to_name'][cluster_jsons[index]['execution_paths'][key][f]]
             eps_preety += '(' + cluster_jsons[index]['function_id_to_file_name'][cluster_jsons[index]['execution_paths'][key][f]] + ')'
 
-            eps_preety += ' &rarr; '
+            eps_preety += ' &rarr; ' // Arrow (use Google to see the visual of this)
         }
         eps_preety += '. <br> '
     }
@@ -318,18 +331,19 @@ function get_some_execution_patterns(eps, index){
     return eps_preety
 }
 
+// Adds the functionality for the search button that finds execution paths with a specific function in it
 jQuery(document).ready(function() {
     jQuery("#search_button").click(function () {
         const function_ids = JSON.parse(document.getElementById('function_file').value);
         const key1 = function_ids[0];
         const key2 = function_ids[1];
-        //console.log(function_id);
         reset_node_color();
         const execution_paths_for_func = find_execution_paths_for_function(key1, key2);
         function_highlight_node(execution_paths_for_func);
     });
 });
 
+// Adds the functionality to highlight nodes that have an execution path that are unique for a given subject system
 jQuery(document).ready(function () {
     for (let i = 0; i < 2; i++) { //Todo the 2 is hardcoded
         jQuery("#unique_execution_paths" + (i + 1).toString()).change(function () {
@@ -345,6 +359,7 @@ jQuery(document).ready(function () {
     }
 });
 
+// Adds the functionality to highlight nodes that have an execution path that exists in both subject systems
 jQuery(document).ready(function () {
     jQuery("#same_execution_paths").change(function () {
         var execution_path = document.getElementById('same_execution_paths').value;
@@ -357,6 +372,7 @@ jQuery(document).ready(function () {
     });
 });
 
+// Adds the functionality to change the labeling technique of the nodes in both cluster trees
 jQuery(document).ready(function() {
     jQuery('#technique_choice_id').change(function () {
         var technique_choice = document.getElementById('technique_choice_id').value;
@@ -371,6 +387,7 @@ jQuery(document).ready(function() {
     });
 });
 
+// Adds the functionality to be able to choose how you want to visualise the cluster trees: directory or tree view
 jQuery(document).ready(function () {
     jQuery('#graph_model_id').change(function() {
         myDiagram1.div = null;
@@ -384,6 +401,8 @@ jQuery(document).ready(function () {
     });
 });
 
+// Adds the functionality to be able to switch between seeing two subject systems to just one. Note only the top tree
+// gets carried over and back when switching between seeing one and two subject systems.
 jQuery(document).ready(function () {
     jQuery('#view :input').change(function() {
         jQuery("#fullDiagram2").toggle();
@@ -404,6 +423,7 @@ jQuery(document).ready(function () {
     });
 });
 
+// Sets up the data structures used for searching for a given function existence in a node
 function setupSearchForFunction(function_id_to_name_file1, function_id_to_name_file2){
     let data = [];
     let tracker = []
@@ -432,10 +452,12 @@ function setupSearchForFunction(function_id_to_name_file1, function_id_to_name_f
         placholder: 'Start typing...',
         data:  data
     });
-
-
 }
 
+/* Sets up the data structures used for searching for execution paths existence in a node. The execution paths are first
+divided into three groups: paths that appear only in one cluster tree, paths that appear only in the other cluster tree,
+and paths that appear in both trees. This is to make finding for paths that are unique or shared much easier to do.
+ */
 function setupSearchForUniqueAndSameExecutionPaths() {
     for (let j = 0; j < cluster_jsons.length; j++) {
         string_execution_paths[j] = [];
@@ -486,6 +508,7 @@ function setupSearchForUniqueAndSameExecutionPaths() {
 
 }
 
+// Sets up the data structures used for getting unique execution paths of each of the two nodes that are being compared
 function setupUniqueNodeExecutionPaths() {
     node_unique_execution_paths[0] = [];
     node_unique_execution_paths[1] = [];

@@ -21,8 +21,12 @@ from timeit import default_timer as timer
 
 import util
 
-class DocumentNodes:
 
+class DocumentNodes:
+    """
+    This class takes information on a call log and then takes in any node in a cluster tree to label it and put any
+    relevant information for the HCPC tool into a document for use by the tool.
+    """
     nltk.download('wordnet')
     parser = English()
     nltk.download('stopwords')
@@ -30,7 +34,7 @@ class DocumentNodes:
 
     def __init__(self, output_directory, subject_system_name, execution_patterns):
         self.workbook = xlsxwriter.Workbook(
-            output_directory + subject_system_name+'.xlsx')
+            output_directory + subject_system_name + '.xlsx')
         self.worksheet = self.workbook.add_worksheet()
         self.row = 0
         self.initalize_sheet()
@@ -43,9 +47,11 @@ class DocumentNodes:
         self.initalize_sheet()
         self.execution_patterns = execution_patterns
 
-    def initalize_graph_related_data_structures(self, execution_paths, function_id_to_name, function_id_to_file_name,
-                                                id_to_sentence, function_to_docstring
-                                                ):
+    def initialize_graph_related_data_structures(self, execution_paths, function_id_to_name, function_id_to_file_name,
+                                                 id_to_sentence, function_to_docstring):
+        """
+        Sets the data structures that will be used to label the nodes and create the document used in HCPC tool
+        """
         self.execution_paths = execution_paths
         self.function_id_to_name = function_id_to_name
         self.function_id_to_file_name = function_id_to_file_name
@@ -56,6 +62,10 @@ class DocumentNodes:
         return
 
     def extract_words_in_execution_paths(self, execution_paths, function_to_docstring, function_id_to_name):
+        """
+        Gets the set of words in an execution path. The words are obtained from each method in the execution path's
+        docstring or if the docstring doesn't exist, the method's name.
+        """
         ret = {}
         for path in execution_paths:
             ret[str(path)] = []
@@ -65,23 +75,30 @@ class DocumentNodes:
                 if no_punctuation == "":
                     words.append(function_id_to_name[func])
                 else:
-                    words.extend([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and word.lower() not in self.en_stop])
+                    words.extend([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if
+                                  word.lower() != "" and word.lower() not in self.en_stop])
                 ret[str(path)].extend(words)
             ret[str(path)] = set(ret[str(path)])
         return ret
 
     def initalize_sheet(self):
-        column = 0
+        """
+        Initialises the Excel sheet (don't think this document does anything other than give a better way to see data
+        of the cluster tree)
+        """
         sheet_labels = ['Cluster Id', 'Execution_Paths', 'tfidf_word', 'tfidf_method', 'tfidf_word_and_docstring',
                         'tfidf_method_and_docstring', 'lda_word', 'lda_method', 'lsi_word', 'lsi_method', 'key_words',
                         'text_summary', 'SPM method']
 
         for column in range(len(sheet_labels)):
+            print("Column:", column)
             self.worksheet.write(0, column, sheet_labels[column])
 
     def labeling_cluster(self, execution_paths_of_a_cluster, execution_paths_of_siblings, k, v, parent_label):
-        """ Labelling a cluster using six variants """
+        """ Labelling a cluster using multiple variants """
         start = timer()
+        # The reason the sequential pattern mining is optional is due to certain subject systems are complex enough that
+        # mining sequential patterns take hours upon hours (potentially days as I gave up after 6 hours).
         if self.execution_patterns:
             spm_method = self.mining_sequential_patterns(execution_paths_of_a_cluster)
         else:
@@ -130,8 +147,6 @@ class DocumentNodes:
         start = timer()
         key_words = self.key_words(execution_paths_of_a_cluster, execution_paths_of_siblings, parent_label)
         end = timer()
-        if end - start > 30:
-            print(execution_paths_of_a_cluster, execution_paths_of_siblings, parent_label, "bbbbbbbbbbbb")
         print("Time key words:", end - start)
 
         start = timer()
@@ -234,6 +249,10 @@ class DocumentNodes:
             return self.merge_words_as_sentence(feature_names[sort_by_tfidf[-10:]])
 
     def make_documents_for_a_cluster_tfidf(self, cluster):
+        """
+        Sets up data structures needed to get all the labels that use the TFIDF algorithm
+        """
+
         method_doc = []
         method_and_docstring_doc = []
         word_doc = []
@@ -249,7 +268,8 @@ class DocumentNodes:
                 method_str += e
 
                 words_in_function_name = [
-                    w for w in util.parse_method_class_name_to_words(self.function_id_to_name[e]) if w not in self.en_stop]
+                    w for w in util.parse_method_class_name_to_words(self.function_id_to_name[e]) if
+                    w not in self.en_stop]
                 words_in_function_name = [util.get_lemma(
                     w) for w in words_in_function_name]
                 word_str += self.merge_words_as_sentence(words_in_function_name)
@@ -259,8 +279,9 @@ class DocumentNodes:
                     method_and_docstring_str += "funcname" + e
                     word_and_docstring_str += self.merge_words_as_sentence(words_in_function_name)
                 else:
-                    temp = ' '.join([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
-                                     word.lower() not in self.en_stop])
+                    temp = ' '.join(
+                        [util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
+                         word.lower() not in self.en_stop])
                     method_and_docstring_str += temp
                     word_and_docstring_str += temp
                 method_str += ' '
@@ -275,43 +296,10 @@ class DocumentNodes:
 
         return [method_doc, word_doc, method_and_docstring_doc, word_and_docstring_doc]
 
-    def make_documents_for_a_cluster_tfidf_method(self, clusters):
-        """
-        Making documents using execution paths of a cluster for tfidf method variant.
-        """
-        documents = []
-
-        for c in clusters:
-            str = ''
-            for e in self.execution_paths[c]:
-                str += e
-                str += ' '
-            documents.append(str[:-1])
-
-        return documents
-
-    def make_documents_for_a_cluster_tfidf_method_and_docstring(self, cluster):
-        """
-
-        :param cluster:
-        :return:
-        """
-        documents = []
-
-        for c in cluster:
-            str = ''
-            for e in self.execution_paths[c]:
-                no_punctuation = re.sub(r'[^\w\s]', '', self.function_to_docstring[e])
-                if no_punctuation == '':
-                    str += "funcname" + e  #self.function_id_to_name[e]
-                else:
-                    str += ' '.join([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
-                                     word.lower() not in self.en_stop])
-                str += ' '
-            documents.append(str[:-1])  # [:-6]
-        return documents
-
     def make_documents_for_a_cluster_tm(self, cluster):
+        """
+        Sets up data structures needed to get all the labels that use either the LDA or LSI algorithm
+        """
         method_doc = []
         method_and_docstring_doc = []
         word_doc = []
@@ -327,7 +315,8 @@ class DocumentNodes:
                 method_str += self.function_id_to_name[e]
 
                 words_in_function_name = [
-                    w for w in util.parse_method_class_name_to_words(self.function_id_to_name[e]) if w not in self.en_stop]
+                    w for w in util.parse_method_class_name_to_words(self.function_id_to_name[e]) if
+                    w not in self.en_stop]
                 words_in_function_name = [util.get_lemma(
                     w) for w in words_in_function_name]
                 word_str += self.merge_words_as_sentence(words_in_function_name)
@@ -337,10 +326,12 @@ class DocumentNodes:
                     method_and_docstring_str += self.function_id_to_name[e]
                     word_and_docstring_str += self.merge_words_as_sentence(words_in_function_name)
                 else:
-                    method_and_docstring_str += ' '.join([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
-                                                          word.lower() not in self.en_stop])
-                    word_and_docstring_str += ' '.join([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
-                                                        word.lower() not in self.en_stop])
+                    method_and_docstring_str += ' '.join(
+                        [util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
+                         word.lower() not in self.en_stop])
+                    word_and_docstring_str += ' '.join(
+                        [util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
+                         word.lower() not in self.en_stop])
                 method_str += ' '
                 word_str += ' '
                 method_and_docstring_str += ' '
@@ -353,140 +344,10 @@ class DocumentNodes:
 
         return [method_doc, word_doc, method_and_docstring_doc, word_and_docstring_doc]
 
-    def make_documents_for_a_cluster_tm_method(self, clusters):
-        """
-        Making documents using execution paths of a cluster for topic model method variant.
-        """
-        documents = []
-
-        for c in clusters:
-            str = ''
-            for e in self.execution_paths[c]:
-                str += self.function_id_to_name[e]
-                str += ' '
-            documents.append(str[:-1])
-
-        return documents
-
-    def make_documents_for_a_cluster_tm_method_and_docstring(self, cluster):
-        """
-
-        :param cluster:
-        :return:
-        """
-        documents = []
-
-        for c in cluster:
-            str = ''
-            for e in self.execution_paths[c]:
-                no_punctuation = re.sub(r'[^\w\s]', '', self.function_to_docstring[e])
-                if no_punctuation == '':
-                    str += self.function_id_to_name[e]
-                else:
-                    str += ' '.join([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
-                                     word.lower() not in self.en_stop])
-                str += ' '
-            documents.append(str[:-1])
-
-        return documents
-
-    def make_documents_for_a_cluster_tfidf_word(self, clusters):
-        """
-        Making documents using execution paths of a cluster for tfidf word variant.
-        """
-        documents = []
-
-        for c in clusters:
-            str = ''
-            for e in self.execution_paths[c]:
-
-                words_in_function_name = [
-                    w for w in util.parse_method_class_name_to_words(self.function_id_to_name[e]) if w not in self.en_stop]
-                words_in_function_name = [util.get_lemma(
-                    w) for w in words_in_function_name]
-                str += self.merge_words_as_sentence(words_in_function_name)
-                str += ' '
-
-            documents.append(str[:-1])
-
-        return documents
-
-    def make_documents_for_a_cluster_tfidf_word_and_docstring(self, cluster):
-        """
-
-        :param cluster:
-        :return:
-        """
-        documents = []
-
-        for c in cluster:
-            str = ''
-            for e in self.execution_paths[c]:
-                no_punctuation = re.sub(r'[^\w\s]', '', self.function_to_docstring[e])
-                if no_punctuation == '':
-                    words_in_function_name = [
-                        w for w in util.parse_method_class_name_to_words(self.function_id_to_name[e]) if w not in self.en_stop]
-                    words_in_function_name = [util.get_lemma(
-                        w) for w in words_in_function_name]
-                    str += self.merge_words_as_sentence(words_in_function_name)
-                else:
-                    str += ' '.join([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
-                                     word.lower() not in self.en_stop])
-                str += ' '
-            documents.append(str[:-1])
-
-        return documents
-
-    def make_documents_for_a_cluster_tm_word(self, clusters):
-        """
-        Making documents using execution paths of a cluster for topic model word variant.
-        """
-        documents = []
-
-        for c in clusters:
-            str = ''
-            for e in self.execution_paths[c]:
-                words_in_function_name = [
-                    w for w in util.parse_method_class_name_to_words(self.function_id_to_name[e]) if w not in self.en_stop]
-                words_in_function_name = [util.get_lemma(
-                    w) for w in words_in_function_name]
-                str += self.merge_words_as_sentence(
-                    words_in_function_name)
-                str += ' '
-
-            documents.append(str[:-1])
-
-        return documents
-
-    def make_documents_for_a_cluster_tm_word_and_docstring(self, cluster):
-        """
-
-        :param cluster:
-        :return:
-        """
-        documents = []
-
-        for c in cluster:
-            str = ''
-            for e in self.execution_paths[c]:
-                no_punctuation = re.sub(r'[^\w\s]', '', self.function_to_docstring[e])
-                if no_punctuation == '':
-                    words_in_function_name = [
-                        w for w in util.parse_method_class_name_to_words(self.function_id_to_name[e]) if w not in self.en_stop]
-                    words_in_function_name = [util.get_lemma(
-                        w) for w in words_in_function_name]
-                    str += self.merge_words_as_sentence(words_in_function_name)
-                else:
-                    str += ' '.join([util.get_lemma(word.lower()) for word in no_punctuation.split(" ") if word.lower() != "" and
-                                     word.lower() not in self.en_stop])
-                str += ' '
-            documents.append(str[:-1])
-
-        return documents
-
     def merge_words_as_sentence(self, identifiers):
         """
-         Merging word as sentence.
+        Merging array of words as sentence. If identifiers is an empty array or filled with empty strings, then returns
+        "{low similarity}" instead.
         """
         result = []
         st = ''
@@ -521,7 +382,7 @@ class DocumentNodes:
 
     def topic_model_lda(self, tm_documents, method_or_word):
         """
-        LDA algorithm for method and word variants.
+        LDA algorithm based labels generation.
         """
         self.text_data = []
         if method_or_word == 'method':
@@ -534,7 +395,6 @@ class DocumentNodes:
             txt = tm_documents[3]
 
         for line in txt:
-
             tokens = self.prepare_text_for_lda(line)
             # if random.random() > .99:
             # print(tokens)
@@ -557,7 +417,7 @@ class DocumentNodes:
 
     def topic_model_lsi(self, tm_documents, method_or_word):
         """
-        LSI algorithm for both method and word variant.
+        LSI algorithm based labels generation.
         """
 
         self.text_data = []
@@ -572,7 +432,6 @@ class DocumentNodes:
             txt = tm_documents[3]
 
         for line in txt:
-
             tokens = self.prepare_text_for_lda(line)
             # if random.random() > .99:
             # print(tokens)
@@ -639,7 +498,8 @@ class DocumentNodes:
                 if word not in sibling_word_freq:
                     sibling_word_freq[word] = 0
                     for sibling_path in execution_paths_of_siblings:
-                        sibling_word_freq[word] += word in self.execution_path_words[str(self.execution_paths[sibling_path])]
+                        sibling_word_freq[word] += word in self.execution_path_words[
+                            str(self.execution_paths[sibling_path])]
         for word in cluster_word_freq:
             cluster_word_freq[word] = cluster_word_freq[word] / len(execution_paths_of_a_cluster)
             if len(execution_paths_of_siblings) == 0:
@@ -648,11 +508,17 @@ class DocumentNodes:
             if sibling_word_freq[word] > 1:
                 exit(1)
             cluster_word_freq[word] = cluster_word_freq[word] * (1 - sibling_word_freq[word])
-        most_freq_words = [word_and_freq[0] for word_and_freq in sorted(cluster_word_freq.items(), key=lambda item: item[1], reverse=True)]
+        most_freq_words = [word_and_freq[0] for word_and_freq in
+                           sorted(cluster_word_freq.items(), key=lambda item: item[1], reverse=True)]
 
-        return self.merge_words_as_sentence([word for index, word in enumerate(most_freq_words) if cluster_word_freq[word] > 0.25 and (index < 5 or cluster_word_freq[word] == 1)])  # Todo case when not 5 words
+        return self.merge_words_as_sentence([word for index, word in enumerate(most_freq_words) if
+                                             cluster_word_freq[word] > 0.25 and (index < 5 or cluster_word_freq[
+                                                 word] == 1)])  # Todo case when not 5 words
 
     def text_rank_words(self, documents):
+        """
+        Label generation based on text rank algorithm
+        """
         try:
             cluster_keywords = keywords(". ".join(documents), split=True, words=5, lemmatize=True)
             cluster_keywords = ', '.join(list(set(cluster_keywords)))
@@ -661,13 +527,17 @@ class DocumentNodes:
         return cluster_keywords
 
     def words_in_cluster(self, execution_path_words, execution_paths):
+        """
+        Get the set the words in a node in a cluster tree. This is done by doing the union between sets of words in each
+        execution path in the node.
+        """
         words = set()
         for path in execution_paths:
             words |= execution_path_words[str(self.execution_paths[path])]
         return self.merge_words_as_sentence(words)
 
     def summarize_clusters_using_docstring(self, execution_paths_of_a_cluster, function_to_docstring):
-        """  automatic text summarization for docstring of function names """
+        """  automatic text summarization for docstring of function names based on text rank algorithm """
 
         text_for_summary = ''
         # count = 0
@@ -690,10 +560,10 @@ class DocumentNodes:
     def mining_sequential_patterns(self, execution_paths_of_a_cluster):
         """ This function mines sequential patterns from execution paths """
 
-        #print(self.execution_paths)
+        # print(self.execution_paths)
         preprocess = [self.execution_paths[item]
                       for item in execution_paths_of_a_cluster]
-        #print(preprocess)
+        # print(preprocess)
         start = timer()
         print("a", len(preprocess))
         ps = PrefixSpan(preprocess)
@@ -703,7 +573,7 @@ class DocumentNodes:
         print("b", NUMBER_OF_PATTERNS)
         top_patterns = ps.topk(NUMBER_OF_PATTERNS)
         print("c")
-        top_patterns = [ pattern[1] for pattern in top_patterns]
+        top_patterns = [pattern[1] for pattern in top_patterns]
         # top_patterns = self.remove_similar_patterns(top_patterns)
         end = timer()
         print("MINING PART 1:", end - start)
@@ -714,8 +584,8 @@ class DocumentNodes:
             sentence += ' &#187; '
             for method in pattern:
                 sentence += self.function_id_to_name[method] + \
-                    '(' + self.function_id_to_file_name[method] + ')'
-                if method != pattern[len(pattern)-1]:
+                            '(' + self.function_id_to_file_name[method] + ')'
+                if method != pattern[len(pattern) - 1]:
                     sentence += ' &rarr; '
 
             sentence += ' . <br>'
@@ -736,33 +606,10 @@ class DocumentNodes:
 
         return list(similar_pattern_removed.values())
 
-    def mining_sequential_patterns_from_initial_execution_paths(self, execution_paths):
-        ''' This function takes input inital execution paths and outputs frequent mined patterns for
-            focusing the further analysis on important parts
-        '''
-        number_of_patterns_to_pick = 3000
-        extracted_patterns = []
-        preprocess = execution_paths
-
-        ps = PrefixSpan(preprocess)
-
-        ps.minlen = 20
-
-        ps.maxlen = 30
-
-        top = ps.topk(number_of_patterns_to_pick, closed=True, generator=True)
-
-        for i in top:
-            extracted_patterns.append(i[1])
-
-        return extracted_patterns
-
     def execution_path_to_sentence(self, execution_paths_of_a_cluster):
         """
         This function takes execution paths of a cluster. Then creates a printable string with execution paths with function names.
         """
-        documents = []
-
         try:
             str = ''
             for l in execution_paths_of_a_cluster:
@@ -771,14 +618,15 @@ class DocumentNodes:
                     str += self.function_id_to_name[e]
                     str += ', '
                 str += ' ;'
-                # documents.append(str)
         except:
             print('Crushed : ', e)
 
         return str
 
     def count_files_in_node(self, execution_paths_of_a_cluster):
-
+        """
+        Returns the number and set of files that are accessed when going through all the execution paths in a node.
+        """
         files_count = {}
 
         for c in execution_paths_of_a_cluster:

@@ -116,6 +116,11 @@ function init_directory(){
                 if (!(subject.part instanceof go.Link)) {
                     // showUserStudyPanel(subject.part);
                     showNodeDetails(subject.part, i);
+                    const key1 = document.getElementById("node_key1").innerHTML;
+                    const key2 = document.getElementById("node_key2").innerHTML;
+                    if (key1 !== "Node Key" && key2 !== "Node Key") {
+                        updateUniqueNodePaths(parseInt(key1.split(" ")[2]), parseInt(key2.split(" ")[2]));
+                    }
                 }
                 if (subject.figure === 'RoundedRectangle'){
                     get_similarity(subject.part, i);
@@ -215,6 +220,8 @@ function init_tree() {
     myDiagram2 = diagrams[1];
 }
 
+// Sets the directory view version of the tree's icons depending on if a node is open or closed in the directory or if
+// the node is a leaf node
 function imageConverter(prop, picture) {
   var node = picture.part;
   if (node.isTreeLeaf) {
@@ -228,7 +235,7 @@ function imageConverter(prop, picture) {
   }
 }
 
-
+// Clears the two subject system's diagrams
 function clearDiagram() {
   myDiagram1.model = null;
   myDiagram2.model = null;
