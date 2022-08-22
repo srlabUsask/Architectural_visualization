@@ -91,7 +91,6 @@ class DocumentNodes:
                         'text_summary', 'SPM method']
 
         for column in range(len(sheet_labels)):
-            print("Column:", column)
             self.worksheet.write(0, column, sheet_labels[column])
 
     def labeling_cluster(self, execution_paths_of_a_cluster, execution_paths_of_siblings, k, v, parent_label):
