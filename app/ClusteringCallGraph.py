@@ -40,7 +40,6 @@ OUTPUT_DIRECTORY = ROOT + '/output/'
 DATASET = ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".txt"
 EXECUTION_PATTERNS = config.EXECUTION_PATTERNS
 DOC2VEC = config.DOC2VEC
-
 document_nodes = DocumentNodes(OUTPUT_DIRECTORY, SUBJECT_SYSTEM_NAME, EXECUTION_PATTERNS)
 
 
@@ -153,11 +152,11 @@ class ClusteringCallGraph:
 
             # Train the model
             t = timer()
-            self.d2v_model.train(d2v_sentences, total_examples=self.d2v_model.corpus_count, epochs=5000,
+            self.d2v_model.train(d2v_sentences, total_examples=self.d2v_model.corpus_count, epochs=10000,
                                  report_delay=1)  # Usually 10000
             print('Time to train the model: {} secs'.format(timer() - t))
 
-            self.d2v_model.init_sims(replace=True)  # Supposively makes the model more memory efficient
+            self.d2v_model.init_sims(replace=True)  # Supposedly makes the model more memory efficient
 
         # Building a distance matrix between execution paths. distance_matrix_doc2vec() uses the doc2vec model while
         # distance_matrix_jaccard() uses Jaccard similarity coefficients. distance_matrix() currently doesn't work properly,
@@ -499,7 +498,6 @@ class ClusteringCallGraph:
         Creating distance matrix using Jaccard similarity value with elements of the set being consecutive pairs of
         functions. Note the current version of this method doesn't work mainly due to existence of single method paths.
         """
-        print('distance_matrix')
         length = len(paths)
         Matrix = [[0 for x in range(length)] for y in range(length)]
 
@@ -513,7 +511,6 @@ class ClusteringCallGraph:
         Creating distance matrix using Jaccard similarity value with elements of the set being method names in
         execution paths
         """
-        print('distance_matrix')
         length = len(paths)
         Matrix = [[0 for x in range(length)] for y in range(length)]
 
@@ -526,7 +523,6 @@ class ClusteringCallGraph:
         """
         Creating distance matrix by using doc2vec model vectors to get cosine similarity values
         """
-        print('distance_matrix')
         length = len(self.d2v_model.docvecs)
         Matrix = [[0 for x in range(length)] for y in range(length)]
 

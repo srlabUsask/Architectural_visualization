@@ -575,7 +575,7 @@ class DocumentNodes:
         top_patterns = [pattern[1] for pattern in top_patterns]
         # top_patterns = self.remove_similar_patterns(top_patterns)
         end = timer()
-        print("MINING PART 1:", end - start)
+        print("MINING:", end - start)
         print(len(top_patterns))
 
         sentence = ' '

@@ -47,14 +47,9 @@ def random_sample_execution_paths(execution_paths):
 
 
 def jaccard_similarity(list1, list2):
-    """ calculating jaccard similarity """
+    """ calculating Jaccard similarity """
     intersection = len(list(set(list1).intersection(list2)))
-    # print(list(set(list1).intersection(list2)))
     union = len(list(set(list1).union(list2)))
-    if list1 == list2 and intersection != union:
-        print(1 - float(intersection / union), intersection, union)
-        print(list1)
-        print(list2)
 
     return 1 - float(intersection / union)
 
