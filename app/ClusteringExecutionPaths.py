@@ -80,7 +80,7 @@ class ClusteringExecutionPath:
                                 item not in leaves]
                     parent_label = None
                     if len(siblings) == 0:
-                        parent_label = tree[cluster_to_tree_index[self.parent_leaf_to_cluster[leaves[0]]]]['key_words']
+                        parent_label = tree[cluster_to_tree_index[self.parent_leaf_to_cluster[leaves[0]]]]['tree_context_based_label']
                     tree.append(document_nodes.labeling_cluster(leaves, siblings, cluster,
                                                                 self.parent_leaf_to_cluster[leaves[0]], parent_label))
                 end = timer()

@@ -62,7 +62,7 @@ function setupDiagram(result, myDiagram) {
             lsi_word_and_docstring: result[x].lsi_word_and_docstring,
             lsi_method_and_docstring: result[x].lsi_method_and_docstring,
             text_rank: result[x].text_rank,
-            key_words: result[x].key_words,
+            tree_context_based_label: result[x].tree_context_based_label,
             color: "black",
             spm_method: result[x].spm_method,
             text_summary: result[x].text_summary,
@@ -119,8 +119,8 @@ function update_node_text(node, technique, myDiagram) {
             m.set(node.data, "node_text", node.data.lsi_method_and_docstring);
         } else if (technique === 'text_rank') {
             m.set(node.data, "node_text", node.data.text_rank);
-        } else if (technique === 'key_words') {
-            m.set(node.data, "node_text", node.data.key_words);
+        } else if (technique === 'tree_context_based_label') {
+            m.set(node.data, "node_text", node.data.tree_context_based_label);
         }
 
     }, "update node text");

@@ -32,7 +32,8 @@ def root():
     """
     TECHNIQUE_CHOICES = ['tfidf_method', 'tfidf_word', 'tfidf_method_and_docstring', 'tfidf_word_and_docstring',
                          'lda_method', 'lda_word', 'lda_method_and_docstring', 'lda_word_and_docstring', 'lsi_method',
-                         'lsi_word', 'lsi_method_and_docstring', 'lsi_word_and_docstring', 'text_rank', 'key_words']
+                         'lsi_word', 'lsi_method_and_docstring', 'lsi_word_and_docstring', 'text_rank',
+                         'tree_context_based_label']
     return render_template('home.html', subject_systems=SUBJECT_SYSTEMS, technique_choices=TECHNIQUE_CHOICES)
 
 
