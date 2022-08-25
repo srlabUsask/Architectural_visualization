@@ -65,17 +65,11 @@ class ClusteringExecutionPath:
             print("Clustering time for threshold", threshold, end - start)
 
             for cluster, leaves in self.cluster_to_leaf.items():
-                # print(leaves, type(leaves[0]))
                 start = timer()
                 if i == 0:
                     siblings = [item for item in range(len(mat)) if item not in leaves]
                     tree.append(document_nodes.labeling_cluster(leaves, siblings, cluster, -1, None))
                 else:
-                    # print(self.cluster_to_parent_leaf[self.parent_leaf_to_cluster[leaves[0]]])
-                    # print(leaves)
-                    # print([item for item in self.cluster_to_parent_leaf[self.parent_leaf_to_cluster[leaves[0]]] if item not in leaves])
-                    # print("_________")
-                    # print(leaves, cluster, self.parent_leaf_to_cluster[leaves[0]])
                     siblings = [item for item in self.cluster_to_parent_leaf[self.parent_leaf_to_cluster[leaves[0]]] if
                                 item not in leaves]
                     parent_label = None
