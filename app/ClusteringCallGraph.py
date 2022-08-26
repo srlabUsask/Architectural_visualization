@@ -277,7 +277,7 @@ class ClusteringCallGraph:
                 stack.append(func_tracker[line[1:-2]])
                 prev_character = "c"
             else:
-                if prev_character == "c" and list(stack) not in execution_path_tracker:  # Todo check if removing the execution_path_tracker speeds up or slows down
+                if prev_character == "c" and list(stack) not in execution_path_tracker:
                     execution_path_tracker.append(list(stack))
                     execution_path = list(stack)
                     execution_path = ",".join(execution_path) + ","
