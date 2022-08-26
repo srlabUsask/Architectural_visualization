@@ -80,16 +80,14 @@ class ClusteringCallGraph:
         # self.tgf_to_networkX() #-- was used for the tgf files rather than log files
         # print(os.path.abspath(__file__))
         # We go one directory up to find the instance directory
-        # self.graph = self.buildgraph2(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))  # pythonbuildgraph
-        start = timer()
-        self.pythonbuildgraph(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
-
+        # self.graph = self.buildgraph(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
         # self.graph.remove_edges_from(nx.selfloop_edges(self.graph))
         # # Visual of the call graph
         # nx.draw(self.graph, nx.spring_layout(self.graph), with_labels=True, node_size=0)
         # plt.show()
-
         # self.extracting_source_and_exit_node()
+        start = timer()
+        self.pythonbuildgraph(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
 
         # See what are the entry nodes
         # for i in self.entry_point:
