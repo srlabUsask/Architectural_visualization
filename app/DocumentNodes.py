@@ -239,7 +239,7 @@ class DocumentNodes:
             print(e)
             exit(1)
 
-        feature_names = np.array(tf.get_feature_names())
+        feature_names = np.array(tf.get_feature_names_out())
         max_val = txt_transformed.max(axis=0).toarray().ravel()
         sort_by_tfidf = max_val.argsort()
 

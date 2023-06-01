@@ -183,7 +183,6 @@ class ClusteringCallGraph:
         plt.matshow(mat_j)
         plt.colorbar()
         plt.show()
-        plt.matshow(mat_j2)
         plt.colorbar()
         plt.show()
         diff_mat = subtract(mat, mat_j)
@@ -191,9 +190,6 @@ class ClusteringCallGraph:
         plt.matshow(diff_mat)
         plt.colorbar()
         plt.show()
-        diff_mat2 = subtract(mat, mat_j2)
-        diff_mat2 = absolute(diff_mat2)
-        plt.matshow(diff_mat2)
         plt.colorbar()
         plt.show()
         end = timer()
@@ -201,7 +197,14 @@ class ClusteringCallGraph:
 
         # Number used to see how similar the mat matrix and Jaccard are to each other.
         print("Difference Value: ", mean(diff_mat))
-        print("Difference Value 2: ", mean(diff_mat2))
+
+        if DOC2VEC:
+            plt.matshow(mat_j2)
+            diff_mat2 = subtract(mat, mat_j2)
+            diff_mat2 = absolute(diff_mat2)
+            plt.matshow(diff_mat2)
+            print("Difference Value 2: ", mean(diff_mat2))
+
 
         self.graph.clear()
 

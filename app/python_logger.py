@@ -1,7 +1,7 @@
 import sys
 from datetime import date
-from rich.rich.console import Console
-from rich.rich import print
+from rich.console import Console
+from rich import print
 
 file = open("../instance/callLogs/test2_" + date.today().strftime("%m-%d-%Y") + ".log", "w")
 
