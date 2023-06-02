@@ -405,23 +405,43 @@ jQuery(document).ready(function () {
 // gets carried over and back when switching between seeing one and two subject systems.
 jQuery(document).ready(function () {
     jQuery('#view :input').change(function() {
-        jQuery("#fullDiagram2").toggle();
-        jQuery("#subjectSystem2Info").toggle();
-        jQuery("#same_execution_paths_block").toggle();
-        if (this.id === "option1") {
+
+        if (this.id === "systemBoth") {
+            toggleSubjectSystems(true,true)
             jQuery("#fullDiagram1").height(400);
+            jQuery("#fullDiagram2").height(400);
             jQuery("#diagrams").addClass("col-6").removeClass("col-8");
             two_subject_system = true;
+            myDiagram1.layout.invalidateLayout();
+            myDiagram2.layout.invalidateLayout();
+        }
+        else if(this.id==="system2"){
+            toggleSubjectSystems(false,true)
+            jQuery("#fullDiagram2").height(800);
+            jQuery("#diagrams").addClass("col-8").removeClass("col-6");
+            two_subject_system = false;
+            myDiagram2.layout.invalidateLayout();
         }
         else {
+            toggleSubjectSystems(true,false)
             jQuery("#fullDiagram1").height(800);
             jQuery("#diagrams").addClass("col-8").removeClass("col-6");
-            myDiagram2.layout.invalidateLayout();
             two_subject_system = false;
+            myDiagram1.layout.invalidateLayout();
         }
-        myDiagram1.layout.invalidateLayout();
+
     });
 });
+
+
+function toggleSubjectSystems(first=false, second=false) {
+    jQuery("#fullDiagram2").toggle(second);
+    jQuery("#subjectSystem2Info").toggle(second);
+    jQuery("#fullDiagram1").toggle(first);
+    jQuery("#subjectSystem1Info").toggle(first);
+    jQuery("#same_execution_paths_block").toggle(first && second);
+}
+
 
 // Sets up the data structures used for searching for a given function existence in a node
 function setupSearchForFunction(function_id_to_name_file1, function_id_to_name_file2){
