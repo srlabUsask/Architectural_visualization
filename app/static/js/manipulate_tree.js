@@ -333,9 +333,8 @@ function find_execution_paths_for_function(key1, key2){
         all_eps[j] = eps;
 
         eps_preety = ''
-
+        eps_list=[]
         for(ep = 0; ep < eps.length; ep++){
-            eps_preety += ' &#187; '
             for(f = 0; f < cluster_jsons[j]['execution_paths'][eps[ep]].length; f++){
                 if(cluster_jsons[j]['execution_paths'][eps[ep]][f] === indexes[j]){
 
@@ -348,12 +347,11 @@ function find_execution_paths_for_function(key1, key2){
                 }
 
 
-                eps_preety += ' &rarr; '
+                eps_preety += '->'
             }
-            eps_preety += '. <br> '
+            eps_list.push(eps_preety)
         }
-
-        document.getElementById('searched_execution_paths' + (j + 1)).innerHTML = eps_preety;
+        document.getElementById('searched_execution_paths' + (j + 1)).innerHTML = listExecutionPaths(eps_list);
     }
     return all_eps;
 }
@@ -362,22 +360,22 @@ function find_execution_paths_for_function(key1, key2){
 function get_some_execution_patterns(eps, index){
     eps_preety = ''
     count = 0
+    eps_list=[]
     for(const [key, value] of Object.entries(eps)){
         count += 1
         if(count === 15){
             break
         }
-        eps_preety += ' &#187; ' // Double arrow (use Google to see the visual of this)
         for(f = 0; f < cluster_jsons[index]['execution_paths'][key].length; f++){
             eps_preety += cluster_jsons[index]['function_id_to_name'][cluster_jsons[index]['execution_paths'][key][f]]
             eps_preety += '(' + cluster_jsons[index]['function_id_to_file_name'][cluster_jsons[index]['execution_paths'][key][f]] + ')'
 
-            eps_preety += ' &rarr; ' // Arrow (use Google to see the visual of this)
+            eps_preety += '->' // Arrow (use Google to see the visual of this)
         }
-        eps_preety += '. <br> '
+        eps_list.push(eps_preety)
     }
 
-    return eps_preety
+    return listExecutionPaths(eps_list)
 }
 
 // Adds the functionality for the search button that finds execution paths with a specific function in it
