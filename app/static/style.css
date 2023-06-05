@@ -9,9 +9,40 @@
   grid-gap: 10px;
 }
 
+
+
+/*
+Changing the scrollbar of the accordion
+*/
+
 .vertical-scrollbar{
-  height: 100px;
   overflow-y: auto;
+  max-height: 300px;
+  padding-right: 7px;
+}
+
+#diagram1Accordion .accordion-body{
+  padding-right: 2px;
+}
+
+.vertical-scrollbar::-webkit-scrollbar-track
+{
+  border-radius: 11px;
+  background-color: #f3f0f0;
+  -webkit-box-shadow: inset 0 0 7px rgba(0,0,0,0.28);
+}
+
+.vertical-scrollbar::-webkit-scrollbar
+{
+  width: 12px;
+  background-color: #f3f0f0;
+}
+
+.vertical-scrollbar::-webkit-scrollbar-thumb
+{
+  -webkit-box-shadow: inset 0 0 7px rgba(0,0,0,.28);
+  border-radius: 11px;
+  background-color: #9f9f9f;
 }
 
 html {
@@ -19,7 +50,20 @@ html {
 }
 
 
+/*
+accordion files section list
+ */
 
+div[id^='files'] ol{
+  padding-left: 1.5rem;
+
+}
+div[id^='files'] ol li{
+  margin-bottom: 13px;
+}
+div[id^='files'] ol li::marker{
+  font-weight: bold;
+}
 /* 
 textarea{
   white-space: nowrap;

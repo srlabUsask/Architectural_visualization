@@ -25,7 +25,8 @@ async function get_cluster() {
     setupSearchForUniqueAndSameExecutionPaths();
     setupUniqueNodeExecutionPaths();
 
-    clearDiagram();
+    //the method is causing error, temporarily disabled
+    //clearDiagram();
 
 }
 
@@ -173,7 +174,19 @@ function showNodeDetails(part, identifier) {
     document.getElementById('node_key' + identifier).innerHTML = 'Node Key: ' + part.data.key;
     document.getElementById('node_summary' + identifier).innerHTML = part.data.text_summary;
     document.getElementById('node_patterns' + identifier).innerHTML = part.data.spm_method;
-    document.getElementById('files' + identifier).innerHTML = clickable_text;
+
+
+    //Change the file text into a numbered list
+
+    let files = document.getElementById('files' + identifier)
+    let items = clickable_text.trim().split(',');
+
+   files.innerHTML="<ol></ol>";
+    for (var i = 0; i < items.length; i++) {
+        if(items[i].length >0) $( '#files' + identifier+ " ol").append('<li value="'+i+'">' + items[i] + '</li>');
+    }
+
+
     document.getElementById('number_of_files' + identifier).innerHTML = "Number of Files: " + part.data.files_count;
     document.getElementById('number_of_execution_paths' + identifier).innerHTML = "Number of Execution paths: " + part.data.execution_path_count;
     document.getElementById('searched_execution_paths' + identifier).innerHTML = get_some_execution_patterns(part.data.execution_paths, identifier - 1);
