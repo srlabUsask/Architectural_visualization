@@ -215,20 +215,79 @@
               <br>
               <b class="node_details_label" id="number_of_execution_paths2"> Number of Execution paths </b>
               <br>
-              <b class="node_details_label"> Files</b>
-              <div id="files2" class="vertical-scrollbar"> </div>
-              <b class="node_details_label"> Node summary</b>
-              <div id="node_summary2" class="vertical-scrollbar"> </div>
-              <b class="node_details_label"> Execution patterns </b>
-              <div class="vertical-scrollbar" id="node_patterns2"> </div>
-              <b class="node_details_label"> Unique Node Specific Execution Paths </b>
-              <div class="vertical-scrollbar" id="unique_node_execution_paths2"> </div>
+
+              <div class="accordion " id="diagram2Accordion">
+                <div class="accordion-item">
+                  <h2 class="node_details_label accordion-header" id="diagram2-headingOne">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#diagram2-collapseOne" aria-expanded="false" aria-controls="diagram2-collapseOne">
+                      Files
+                    </button>
+                  </h2>
+
+                  <div id="diagram2-collapseOne" class="accordion-collapse collapse" aria-labelledby="diagram2-headingOne">
+                    <div class="accordion-body">
+                      <div id="files2" class="vertical-scrollbar"> </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="accordion-item">
+                  <h2 class="node_details_label accordion-header" id="diagram2-headingTwo">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#diagram2-collapseTwo" aria-expanded="false" aria-controls="diagram2-collapseTwo">
+                      Node summary
+                    </button>
+                  </h2>
+
+
+                  <div id="diagram2-collapseTwo" class="accordion-collapse collapse" aria-labelledby="diagram2-headingTwo">
+                    <div class="accordion-body">
+                      <div id="node_summary2" class="vertical-scrollbar"> </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="accordion-item">
+                  <h2 class="accordion-header node_details_label" id="diagram2-headingThree">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#diagram2-collapseThree" aria-expanded="false" aria-controls="diagram2-collapseThree">
+                      Execution patterns
+                    </button>
+                  </h2>
+                  <div id="diagram2-collapseThree" class="accordion-collapse collapse" aria-labelledby="diagram2-headingThree">
+                    <div class="accordion-body">
+                      <div class="vertical-scrollbar" id="node_patterns2"> </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="accordion-item">
+                  <h2 class="accordion-header node_details_label" id="diagram2-headingFour">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#diagram2-collapseFour" aria-expanded="false" aria-controls="diagram2-collapseFour">
+                      Unique Node Specific Execution Paths
+                    </button>
+                  </h2>
+                  <div id="diagram2-collapseFour" class="accordion-collapse collapse" aria-labelledby="diagram2-headingFour">
+                    <div class="accordion-body">
+                      <div class="vertical-scrollbar" id="unique_node_execution_paths2"> </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="accordion-item">
+                  <h2 class="accordion-header node_details_label" id="diagram2-headingFive">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#diagram2-collapseFive" aria-expanded="false" aria-controls="diagram2-collapseFive">
+                      Execution Paths
+                    </button>
+                  </h2>
+                  <div id="diagram2-collapseFive" class="accordion-collapse collapse" aria-labelledby="diagram2-headingFive">
+                    <div class="accordion-body">
+                      <p class="card-text vertical-scrollbar" id="searched_execution_paths2"></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+
+
+
             </div>
 
-            <div class="card-body">
-              <b class="card-title">Execution Paths</b>
-              <p class="card-text vertical-scrollbar" id="searched_execution_paths2"></p>
-            </div>
+
 
             <div class="row">
               <div class="col">

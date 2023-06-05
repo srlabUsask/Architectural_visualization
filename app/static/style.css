@@ -20,8 +20,11 @@ Changing the scrollbar of the accordion
   max-height: 300px;
   padding-right: 7px;
 }
+#diagram1Accordion,#diagram2Accordion{
+  margin-top: 10px;
+}
 
-#diagram1Accordion .accordion-body{
+#diagram1Accordion .accordion-body, #diagram2Accordion .accordion-body{
   padding-right: 2px;
 }
 
