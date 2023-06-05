@@ -26,6 +26,7 @@ Changing the scrollbar of the accordion
 
 #diagram1Accordion .accordion-body, #diagram2Accordion .accordion-body{
   padding-right: 2px;
+  padding-left: 2px;
 }
 
 .vertical-scrollbar::-webkit-scrollbar-track
@@ -67,6 +68,23 @@ div[id^='files'] ol li{
 div[id^='files'] ol li::marker{
   font-weight: bold;
 }
+
+/*
+Execution Path
+ */
+.executionPathContainer div{
+  border: 2px solid #3d3d3d;
+  border-radius: 8px;
+  margin-bottom: 11px;
+  padding: 8px;
+}
+.executionPathArrowDown{
+  text-align: center;
+  font-weight: bold;
+  font-size: 28px;
+  margin-bottom: 0px!important;
+}
+
 /* 
 textarea{
   white-space: nowrap;
