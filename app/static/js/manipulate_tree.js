@@ -196,16 +196,52 @@ function showNodeDetails(part, identifier) {
 function updateUniqueNodePaths(key1, key2) {
     const unique_paths1 = node_unique_execution_paths[0][key1][key2];
     const unique_paths2 = node_unique_execution_paths[1][key2][key1];
-    let string_version1 = "";
-    let string_version2 = "";
+    let list_version1 = [];
+    let list_version2 = [];
     for (const path of unique_paths1) {
-        string_version1 += " &#187; " + path + "<br>";
+        list_version1.push(path);
     }
     for (const path of unique_paths2) {
-        string_version2 += " &#187; " + path + "<br>";
+        list_version2.push(path);
     }
-    document.getElementById('unique_node_execution_paths1').innerHTML = string_version1.replaceAll("->", "&rarr;");
-    document.getElementById('unique_node_execution_paths2').innerHTML = string_version2.replaceAll("->", "&rarr;");
+
+    document.getElementById('unique_node_execution_paths1').innerHTML = listExecutionPaths(list_version1)
+    document.getElementById('unique_node_execution_paths2').innerHTML = listExecutionPaths(list_version2)
+}
+
+/*
+Takes a list of execution paths, replaces arrows into a list structure
+ */
+function listExecutionPaths(paths){
+    //if no path is to be found
+    if(paths.length===0) return "";
+    //creates list of all items separated by downward arrow
+    result = "<div class='executionPathContainer'>"
+    for(let i=0;i<paths.length;i++) {
+        let items = paths[i].trim().split('->');
+        if(items==="") continue
+        result+="<div>"
+        let firstItem = true;//Track if this is the first item of list that is not empty string
+
+
+
+
+
+        for (let j = 0; j < items.length; j++) {
+            items[j] = items[j].trim()//remove white space
+            if (items[j] === "" || items[j]===".") continue//exclude empty or dot
+
+
+            if (!firstItem)
+                result += "<p class='executionPathArrowDown'> &#8595; </p>"
+            result +=items[j]
+            firstItem = false
+        }
+
+        result+="</div>"
+    }
+    result += "</div>"
+    return result
 }
 
 // Resets color of text in the nodes to the color black
