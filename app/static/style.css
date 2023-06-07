@@ -29,22 +29,32 @@ navigation bar
   padding-bottom: 13px;
   overflow: hidden;
 }
+#navBar .nabBarCollapse .container-fluid{
+  margin-bottom: 20px;
+}
+
 #navBar .navCollapseButton{
   text-align: right;
-  padding-right: 30px;
 
 }
 #navBar .nabBarCollapse ul{
   margin-top: 40px;
 }
 
+#navBar .navBarLoadButton button{
+  padding:10px 15px;
+  font-size: 15px !important;
+}
+
+#navBar #view label{
+  font-size: 15px;
+}
 /*
 Nav bar arrow icon
  */
 #navBar .navCollapseButton i{
-  font-size: 3rem !important;
+  font-size: 5rem !important;
   transition: all 0.5s ease;
-  margin-top: 20px;
   font-weight: bold;
   cursor: pointer;
   text-align: right;
