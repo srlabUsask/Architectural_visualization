@@ -32,16 +32,18 @@
   <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename = 'style.css')}}">
   <script src="{{ url_for('static',filename = 'js/tree_view.js')}}"></script>
   <script src="{{ url_for('static',filename = 'js/manipulate_tree.js')}}"></script>
-
+  <script src="{{ url_for('static',filename = 'js/homePage.js')}}"></script>
 
   <title>HCPC: Human Centric Program Comprehension Through Higher Level Abstraction</title>
 </head>
 
 <body onload="init_directory()">
 
-  <ul class="nav justify-content-center">
-    <div class="btn-group btn-group-toggle" data-toggle="buttons" id="view">
-
+  <div class="nav row justify-content-end" id="navBar">
+  <div class="nabBarCollapse">
+    <div class="row ">
+    <div  class="col col-md-4 col-xs-12" id="view">
+      <div class="btn-group btn-group-toggle"  data-toggle="buttons" >
         <input type="radio" name="options" id="system1"  class="btn-check" autocomplete="off">
       <label class="btn btn-secondary" for="system1">First Subject System</label>
 
@@ -51,10 +53,65 @@
 
         <input type="radio" name="options" id="system2" class="btn-check" autocomplete="off">
       <label class="btn btn-secondary" for="system2">Second Subject System</label>
+      </div>
 
+  </div>
+
+
+  <div class="col col-md-8 col-xs-12 row">
+      <div class="col-md-5">
+        <b> Technique to label nodes</b> <br>
+
+        <select class="form-control" name="technique_choice" id="technique_choice_id">
+          {% for tc in technique_choices %}
+          <option value="{{tc}}">{{tc}}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-5">
+        <b> Model for Graph</b> <br>
+        <select class="form-control" name="graph_model" id="graph_model_id">
+          <option value="directory">Directory</option>
+          <option value="tree">Tree</option>
+        </select>
+      </div>
+
+      <div class="col-md-2" style="padding-top: 18px">
+
+        <button onclick="get_cluster()" type="submit" class="btn btn-secondary float-end"> Load Cluster Tree </button>
+
+      </div>
+  </div>
+
+  </div>
+    <div class="row">
+      <ul class="row text-center">
+
+        <div class="col" id="same_execution_paths_block">
+          <b> Show Same Execution Path </b> <br>
+          <select class="form-control" name="same_paths" id="same_execution_paths">
+            <option value="None">None</option>
+          </select>
+        </div>
+
+        <div class="col">
+          <b> Highlight Functions</b> <br>
+          <div class="d-flex">
+            <select id='function_file' name='select_elem' class="form-control"> </select>
+            <button type="submit" class="btn btn-secondary" id="search_button"> Search </button>
+          </div>
+        </div>
+      </ul>
     </div>
+  </div>
+  <div class="navCollapseButton d-flex align-items-end justify-content-center">
+    <i class="fa fa-angle-up">
+    </i>
 
-  </ul>
+  </div>
+
+  </div>
 
 
   <div class="container-fluid">
@@ -302,44 +359,7 @@
 
     </div>
 
-    <ul class="row text-center">
-      <div class="col">
-        <b> Technique to label nodes</b> <br>
 
-        <select class="form-control" name="technique_choice" id="technique_choice_id">
-          {% for tc in technique_choices %}
-          <option value="{{tc}}">{{tc}}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div class="col">
-        <b> Model for Graph</b> <br>
-        <select class="form-control" name="graph_model" id="graph_model_id">
-          <option value="directory">Directory</option>
-          <option value="tree">Tree</option>
-        </select>
-      </div>
-
-      <div class="col" style="padding-top: 18px">
-        <button onclick="get_cluster()" type="submit" class="btn btn-secondary"> Load Cluster Tree </button>
-      </div>
-
-      <div class="col" id="same_execution_paths_block">
-        <b> Show Same Execution Path </b> <br>
-        <select class="form-control" name="same_paths" id="same_execution_paths">
-          <option value="None">None</option>
-        </select>
-      </div>
-
-      <div class="col">
-        <b> Highlight Functions</b> <br>
-        <div class="d-flex">
-          <select id='function_file' name='select_elem' class="form-control"> </select>
-          <button type="submit" class="btn btn-secondary" id="search_button"> Search </button>
-        </div>
-      </div>
-    </ul>
 
 
     </div>

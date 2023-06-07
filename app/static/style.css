@@ -9,8 +9,51 @@
   grid-gap: 10px;
 }
 
+/*
+navigation bar
+ */
 
+#navBar {
+  background-color: #d0dae8;
+  padding-left: 10px;
+  transition: opacity 0.2s ease;
 
+}
+#view{
+  margin-top: 10px;
+}
+#navBar .nabBarCollapse{
+
+  transition: none;
+  padding-top: 10px;
+  padding-bottom: 13px;
+  overflow: hidden;
+}
+#navBar .navCollapseButton{
+  text-align: right;
+  padding-right: 30px;
+
+}
+#navBar .nabBarCollapse ul{
+  margin-top: 40px;
+}
+
+/*
+Nav bar arrow icon
+ */
+#navBar .navCollapseButton i{
+  font-size: 3rem !important;
+  transition: all 0.5s ease;
+  margin-top: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: right;
+}
+#navBar .navCollapseButton i.navToggled{
+
+  font-size: 2rem !important;
+  margin-top: 0px;
+}
 /*
 Changing the scrollbar of the accordion
 */
@@ -84,7 +127,14 @@ Execution Path
   font-size: 28px;
   margin-bottom: 0px!important;
 }
-
+.executionPathContainer span{
+  display: block;
+  margin-bottom: 10px;
+}
+.executionPathContainer .functionName{
+  text-align: center;
+  font-weight: bold;
+}
 /* 
 textarea{
   white-space: nowrap;
