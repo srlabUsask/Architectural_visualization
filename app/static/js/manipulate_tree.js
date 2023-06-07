@@ -173,7 +173,7 @@ function showNodeDetails(part, identifier) {
 
     document.getElementById('node_key' + identifier).innerHTML = 'Node Key: ' + part.data.key;
     document.getElementById('node_summary' + identifier).innerHTML = part.data.text_summary;
-    document.getElementById('node_patterns' + identifier).innerHTML = part.data.spm_method;
+    document.getElementById('node_patterns' + identifier).innerHTML = listNodePatterns(part.data.spm_method);
 
 
     //Change the file text into a numbered list
@@ -211,14 +211,19 @@ function updateUniqueNodePaths(key1, key2) {
 
 /*
 Takes a list of execution paths, replaces arrows into a list structure
+split is the string that will be used to split the text( either -> or &rarr(HTML code for -> symbol)
  */
-function listExecutionPaths(paths){
+function listExecutionPaths(paths,split='->'){
+
+    const newFileNameSeparator="&#8681;" //double downwards arrow
+    const defaultSeparator="&#8595;" //downwards arrow
+
     //if no path is to be found
     if(paths.length===0) return "";
     //creates list of all items separated by downward arrow
     result = "<div class='executionPathContainer'>"
     for(let i=0;i<paths.length;i++) {
-        let items = paths[i].trim().split('->');
+        let items = paths[i].trim().split(split);
         if(items==="") continue
         result+="<div>"
         let firstItem = true;//Track if this is the first item of list that is not empty string
@@ -226,15 +231,35 @@ function listExecutionPaths(paths){
 
 
 
-
+        let currentFileName="";//function name(the path to the file)
         for (let j = 0; j < items.length; j++) {
             items[j] = items[j].trim()//remove white space
             if (items[j] === "" || items[j]===".") continue//exclude empty or dot
 
+            //separate function name from path
+            let filePath = items[j].split("(")
+            let functionName = filePath[0]
+            filePath=filePath[1]
 
-            if (!firstItem)
-                result += "<p class='executionPathArrowDown'> &#8595; </p>"
-            result +=items[j]
+            filePath = filePath.substring(0,filePath.length-1)//exclude last closing parenthesis symbol
+
+
+            if (!firstItem) {
+                result += "<p class='executionPathArrowDown'>";
+
+                //Setting the separator symbol for when new file is selected or new function in same file
+                if (filePath !== currentFileName) result += newFileNameSeparator;
+                else result += defaultSeparator;
+
+                result += "</p>"
+            }
+
+            //if different file is selected add the file path to top
+            if(filePath!==currentFileName) {
+                result+="<span>"+filePath+"</span>"
+                currentFileName=filePath;
+            }
+            result +="<p class='functionName'>"+functionName+"</p>"
             firstItem = false
         }
 
@@ -242,6 +267,17 @@ function listExecutionPaths(paths){
     }
     result += "</div>"
     return result
+}
+
+/*
+Takes a string node patterns, replaces arrows into a list structure
+string uses  &rarr as separation string
+ */
+function listNodePatterns(paths){
+
+    paths= paths.replaceAll(". <br>","")//remove page breaks
+    paths=paths.trim().split("&#187;").filter(i=>i)//split by >> symbol, filter out empty strings
+    return listExecutionPaths(paths,"&rarr;")
 }
 
 // Resets color of text in the nodes to the color black
