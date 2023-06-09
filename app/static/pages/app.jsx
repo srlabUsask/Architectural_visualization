@@ -1,10 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
+import Application from "./Components/Application";
 
 const root = document.querySelector('#root');
 
 ReactDOM.render(
-  <h1>Test</h1>,
+  <Application/>,
     root
 );

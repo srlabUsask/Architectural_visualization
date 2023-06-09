@@ -8,6 +8,7 @@
     "@babel/preset-env": "^7.22.5",
     "@babel/preset-react": "^7.22.5",
     "babel-loader": "^9.1.2",
+    "bootstrap": "^5.3.0",
     "css-loader": "^6.8.1",
     "html-webpack-plugin": "^5.5.2",
     "jquery": "^3.7.0",
@@ -24,9 +25,9 @@
   "scripts": {
     "start": "react-scripts start",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --progress --config webpack.config.js",
+    "build": "webpack --mode=production --progress --config webpack.config.js",
     "dev-build": "webpack --progress -d --config webpack.config.js",
-    "watch": "webpack --progress -d --config webpack.config.js --watch",
+    "watch": "webpack --progress --mode=production --config webpack.config.js --watch",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

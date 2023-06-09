@@ -2,10 +2,24 @@
 <html lang="en" dir="ltr">
 <head>
   <meta charset="utf-8">
+  <script type="text/javascript" src="{{ url_for('static',filename = 'js/go-debug.js')}}"></script>
+  <link rel="stylesheet" href="{{url_for('static', filename='node_modules/bootstrap/dist/css/bootstrap.min.css')}}" type="text/css">
+
+
+
+ <!-- temporary -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="{{ url_for('static',filename = 'js/tree_view.js')}}"></script>
+  <script src="{{ url_for('static',filename = 'js/manipulate_tree.js')}}"></script>
+  <script src="{{ url_for('static',filename = 'js/homePage.js')}}"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+  <!-- endTemporary> -->
+
 
   {% block head %}{% endblock %}
 </head>
-<body>
+<body onload="init_directory()">
 <header>
   {% block header %}{% endblock %}
 </header>
@@ -19,6 +33,11 @@
 
 
 {% block bundle %}
+<script src="{{url_for('static', filename='node_modules/bootstrap/dist/bootrstrap.bundle.js') }}" type="text/javascript"></script>
+
+
+
+
 
 {% endblock %}
 
