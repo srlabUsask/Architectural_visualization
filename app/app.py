@@ -37,14 +37,15 @@ def root():
     return render_template('visualization_app/App.html', subject_systems=SUBJECT_SYSTEMS, technique_choices=TECHNIQUE_CHOICES)
 
 
-@app.route('/get_cluster/', methods=['GET'])
+@app.route('/get_cluster', methods=['POST'])
 def get_cluster():
     """
     Returns the clusters trees of the two subject systems but first calculates the similarity values of each node in one
     cluster tree with every node in the other cluster tree
     """
-    subject_system = request.args.get('subject_system')
-    other_subject_system = request.args.get('other_subject_system')
+    form = request.form
+    subject_system = form.get('subject_system')
+    other_subject_system = form.get('other_subject_system')
     with open(ROOT + subject_system, 'r') as f:
         print(subject_system)
         content = f.read()
