@@ -18,26 +18,53 @@ export default class Header extends Component {
 
 
         this.state = {
-
-        subjectSystems:[this.props.subject_systems[0],this.props.subject_systems[0]],//initialized to first value
-        selectedTechnique:[this.props.technique_choices[0]],
-        selectedSameExecutionPath:null,
-        selectedHighlightFunction:null,
+            renderMode:1,
+            subjectSystems:[this.props.subject_systems[0],this.props.subject_systems[0]],//initialized to first value
+            selectedTechnique:this.props.technique_choices[0],
+            diagramDrawMode:0,
+            selectedSameExecutionPath:null,
+            selectedHighlightFunction:null,
         }
         this.renderModeChange= this.renderModeChange.bind(this);
+        this.diagramModeChange=this.diagramModeChange.bind(this);
         this.handleSubjectSystemChange=this.handleSubjectSystemChange.bind(this);
         this.handleSubmit=this.handleSubmit.bind(this);
+        this.handleTechniqueChange = this.handleTechniqueChange.bind(this)
+        this.setUpSameExecutionPaths = this.setUpSameExecutionPaths.bind(this)
     }
 
 
+
+    /*
+    chosing between first subject system, both subject systems, second subject system
+     */
     renderModeChange(e){
 
         this.props.setSystemRenderMode(parseInt(e)-1)
+
+
+        //Store mode in state to disable/enable rendering the same execution path block
+        this.setState({
+                renderMode:parseInt(e)-1,
+            } )
     }
 
+    /*
+ chosing between first subject system, both subject systems, second subject system
+  */
+   diagramModeChange(e) {
+
+       this.setState({
+           diagramDrawMode:parseInt(e.target.value)
+       })
+   }
+
+        /*
+        when "Load cluster tree" is clicked
+         */
     handleSubmit(){
 
-        this.props.initializeGraph(this.state.subjectSystems, this.state.selectedTechnique)
+        this.props.initializeGraph(this.state.subjectSystems, this.state.selectedTechnique,this.state.diagramDrawMode)
     }
 
     /*
@@ -48,11 +75,45 @@ export default class Header extends Component {
         let subjectSystems = [...this.state.subjectSystems]
         subjectSystems[index-1]=value
 
+
         this.setState({
             subjectSystems:subjectSystems,
         })
     }
+    handleTechniqueChange(e){
+        this.setState({
+            selectedTechnique:e.target.value
+        })
+    }
+
+    setUpSameExecutionPaths(){
+        //if no file is selected yet
+        if(this.props.stringExecutionPaths[0]===undefined || this.props.stringExecutionPaths[1]===undefined){
+            return ""
+        }
+
+        let same = [];
+        for (let j = 0; j < 2; j++) {
+            let unique = [];
+            const execution_paths = this.props.stringExecutionPaths[j];
+            for (let i = 0; i < execution_paths.length; i++) {
+                const index = (this.props.stringExecutionPaths[(j + 1) % 2].indexOf(execution_paths[i]));
+                if (j === 0 && this.state.renderMode===1) {
+                    same.push(<option key={String(j)+":"+i} value={"["+i+","+index+"]"}>{execution_paths[i]}</option>);
+                }
+            }
+
+
+
+
+        }
+
+        return same
+    }
+
     render() {
+        const sameExecutionPaths = this.setUpSameExecutionPaths();
+
         return (
             <Row className={"nav justify-content-end"} id="navBar">
                 <Col className={"nabBarCollapse"}>
@@ -84,7 +145,7 @@ export default class Header extends Component {
                             <b> Technique to label nodes</b> <br/>
 
 
-                                <select name="technique_choice" id="technique_choice_id" className={"form-control"}>
+                                <select onChange={this.handleTechniqueChange} title={"technique_choice"} name="technique_choice" id="technique_choice_id" className={"form-control"}>
                                     {this.props.technique_choices.map(function(object, i){
 
 
@@ -98,11 +159,11 @@ export default class Header extends Component {
 
                         </Col>
 
-                        <Col md-6>
+                        <Col md={6}>
                             <b> Model for Graph</b> <br/>
-                            <select className={"form-control"} name="graph_model" id="graph_model_id">
-                                <option value="directory">Directory</option>
-                                <option value="tree">Tree</option>
+                            <select onChange={this.diagramModeChange} title="Model for grapgh" className={"form-control"} name="graph_model" id="graph_model_id">
+                                <option value={0}>Directory</option>
+                                <option value={1}>Tree</option>
                             </select>
                         </Col>
                         </Row>
@@ -111,9 +172,9 @@ export default class Header extends Component {
 
                     <Container fluid >
                         <Row>
-                        <Col md-6 xs-12>
+                        <Col md={6} xs={12}>
                             <b> Subject System 1 </b> <br/>
-                            <select onChange={(e)=>{this.handleSubjectSystemChange(e.target.value,1)}} name="subject_system" id="subject_system_id1" className={"form-control"}>
+                            <select title="Subject System 1" onChange={(e)=>{this.handleSubjectSystemChange(e.target.value,1)}} name="subject_system" id="subject_system_id1" className={"form-control"}>
 
                                 {
                                     this.props.subject_systems.map(function(object, i){
@@ -123,9 +184,9 @@ export default class Header extends Component {
 
                             </select>
                         </Col>
-                        <Col md-6 xs-12>
+                        <Col md={6} xs={12}>
                             <b> Subject System 2 </b> <br/>
-                            <select onChange={(e)=>{this.handleSubjectSystemChange(e.target.value,2)}} name="subject_system" id="subject_system_id2" className={"form-control"}>
+                            <select title="Subject System 2" onChange={(e)=>{this.handleSubjectSystemChange(e.target.value,2)}} name="subject_system" id="subject_system_id2" className={"form-control"}>
                                 {this.props.subject_systems.map(function(object, i){
                                     return <option key={object} value={object}>{object}</option>;
                                 })
@@ -136,24 +197,25 @@ export default class Header extends Component {
                         </Row>
                     </Container>
 
-
+                    {this.state.renderMode===1 &&
                     <Container fluid id="same_execution_paths_block">
 
                         <div >
                             <b> Show Same Execution Path </b> <br/>
-                            <select className={"form-control"} name="same_paths" id="same_execution_paths">
-                                <option value="None">None</option>
+                            <select title="Same Execution Path" className={"form-control"} name="same_paths" id="same_execution_paths">
+                                {sameExecutionPaths===""? <option value="None">None</option>:sameExecutionPaths}
                             </select>
                         </div>
 
                     </Container>
+                    }
 
                     <Container fluid >
 
                         <div >
                             <b> Highlight Functions</b> <br/>
                             <div className={"d-flex"}>
-                                <select id='function_file' name='select_elem' className={"form-control"}> </select>
+                                <select title="Highlight Functions" id='function_file' name='select_elem' className={"form-control"}> </select>
                                 <button type="submit" className={"btn btn-secondary"} id="search_button"> Search</button>
                             </div>
                         </div>

@@ -5,13 +5,16 @@ const config = {
     entry: {
         app: __dirname + '/pages/app.jsx',
     },
+    mode: 'development',
     // Where files should be sent once they are bundled
     output: {
         path:resolve('./dist'),
         filename: '[name].bundle.js',
         publicPath: resolve('./dist')
     },
-
+    resolve: {
+        extensions: ['.js', '.jsx', '.css']
+    },
     devtool: 'eval-source-map',
     // Rules of how webpack will take our files, complie & bundle them for the browser
     module: {

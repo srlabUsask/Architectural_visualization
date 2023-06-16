@@ -30,6 +30,8 @@ async function get_cluster() {
 
 }
 
+
+//Done
 // Gets similarity values for a given node and then updates the heat map based on the similarity values
 function get_similarity(part, identifier) {
     Url = '/get_similarity';
@@ -42,6 +44,7 @@ function get_similarity(part, identifier) {
     })
 }
 
+//DONE
 // Sets up the values for a given diagram
 function setupDiagram(result, myDiagram) {
     var nodeDataArray = [];
@@ -87,6 +90,8 @@ function setupDiagram(result, myDiagram) {
 
 }
 
+
+//DONE
 // Updates the label for a node based on the labeling technique choice
 function update_node_text(node, technique, myDiagram) {
     myDiagram.model.commit(function (m) { // this Model
@@ -127,6 +132,7 @@ function update_node_text(node, technique, myDiagram) {
     }, "update node text");
 }
 
+//Done
 // Updates the similarity values
 function update_similarity(similarity_values, identifier, selected_node_key) {
     if (identifier === 1) {
@@ -163,6 +169,8 @@ function update_similarity(similarity_values, identifier, selected_node_key) {
     }
 }
 
+
+//DONE
 // Sets and shows a given nodes details
 function showNodeDetails(part, identifier) {
     var clickable_text = '';
@@ -209,6 +217,8 @@ function updateUniqueNodePaths(key1, key2) {
     document.getElementById('unique_node_execution_paths2').innerHTML = listExecutionPaths(list_version2)
 }
 
+
+//Done
 /*
 Takes a list of execution paths, replaces arrows into a list structure
 split is the string that will be used to split the text( either -> or &rarr(HTML code for -> symbol)
@@ -269,6 +279,7 @@ function listExecutionPaths(paths,split='->'){
     return result
 }
 
+//Done
 /*
 Takes a string node patterns, replaces arrows into a list structure
 string uses  &rarr as separation string
@@ -470,6 +481,8 @@ jQuery(document).ready(function() {
     });
 });
 
+
+
 // Adds the functionality to be able to choose how you want to visualise the cluster trees: directory or tree view
 jQuery(document).ready(function () {
     jQuery('#graph_model_id').change(function() {
@@ -484,6 +497,9 @@ jQuery(document).ready(function () {
     });
 });
 
+
+
+//Not Needed
 // Adds the functionality to be able to switch between seeing two subject systems to just one. Note only the top tree
 // gets carried over and back when switching between seeing one and two subject systems.
 jQuery(document).ready(function () {
@@ -517,6 +533,7 @@ jQuery(document).ready(function () {
 });
 
 
+//Not needed
 function toggleSubjectSystems(first=false, second=false) {
     jQuery("#fullDiagram2").toggle(second);
     jQuery("#subjectSystem2Info").toggle(second);
@@ -556,7 +573,7 @@ function setupSearchForFunction(function_id_to_name_file1, function_id_to_name_f
         data:  data
     });
 }
-
+//DONE
 /* Sets up the data structures used for searching for execution paths existence in a node. The execution paths are first
 divided into three groups: paths that appear only in one cluster tree, paths that appear only in the other cluster tree,
 and paths that appear in both trees. This is to make finding for paths that are unique or shared much easier to do.
@@ -611,6 +628,7 @@ function setupSearchForUniqueAndSameExecutionPaths() {
 
 }
 
+//Done
 // Sets up the data structures used for getting unique execution paths of each of the two nodes that are being compared
 function setupUniqueNodeExecutionPaths() {
     node_unique_execution_paths[0] = [];

@@ -18,9 +18,7 @@ CORS(app)
 
 ROOT = config.ROOT + '/output/'
 SUBJECT_SYSTEMS = glob.glob1(ROOT, 'TREE_DICT*')
-print(SUBJECT_SYSTEMS)
 NUMBER_OF_SUBJECT_SYSTEMS = len(SUBJECT_SYSTEMS)
-print(NUMBER_OF_SUBJECT_SYSTEMS)
 similarity = {}
 unique_execution_paths = {}
 
@@ -47,7 +45,6 @@ def get_cluster():
     subject_system = form.get('subject_system')
     other_subject_system = form.get('other_subject_system')
     with open(ROOT + subject_system, 'r') as f:
-        print(subject_system)
         content = f.read()
         clusters = eval(content)
 
@@ -81,13 +78,14 @@ def get_cluster():
     similarity[other_subject_system] = other_cluster_similarity
     return jsonify(clusters)
 
-@app.route('/get_similarity/', methods=['GET'])
+@app.route('/get_similarity/', methods=['POST'])
 def get_similarity():
     """
     Returns similarity values array based on a given node
     """
-    subject_system = request.args.get('subject_system')
-    key = request.args.get('key')
+    subject_system = request.form.get('subject_system')
+    key = request.form.get('key')
+
     return similarity[subject_system][key]
 
 
