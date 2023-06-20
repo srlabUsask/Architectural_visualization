@@ -54,6 +54,10 @@ componentDidUpdate(prevProps, prevState, snapshot) {
              }
 
 
+
+
+
+
              if(this.state.diagramReadyStatus1===true && this.state.diagramReadyStatus2===true){
                  if(prevState.diagramReadyStatus1===false || prevState.diagramReadyStatus2===false){
                      this.setupUniqueNodeExecutionPaths()
@@ -191,6 +195,9 @@ componentDidUpdate(prevProps, prevState, snapshot) {
      updateUniqueNodePaths(key1, key2,identifier) {
          const unique_paths1 = this.state.diagramUniqueExecutionPaths.diagram1[key1][key2];
          const unique_paths2 = this.state.diagramUniqueExecutionPaths.diagram2[key1][key2];
+
+         if(unique_paths1===undefined || unique_paths2===undefined) return;
+
          let list_version1 = [];
          let list_version2 = [];
          for (let i=0; i<unique_paths1.length;i++) {
@@ -256,6 +263,8 @@ componentDidUpdate(prevProps, prevState, snapshot) {
                          setReadyStatus={this.setDiagramReadyStatus}
                          updateUniqueNodePaths={this.updateUniqueNodePaths}
                          drawMode={this.props.drawMode}
+                         searchedExecutionPaths = {this.props.searchedExecutionPaths}
+                          sameExecutionPath={this.props.sameExecutionPath[0]}
                          />
 
 
@@ -273,6 +282,9 @@ componentDidUpdate(prevProps, prevState, snapshot) {
                                   setReadyStatus={this.setDiagramReadyStatus}
                                   drawMode={this.props.drawMode} key={"tree2"}
                                   diagram={this.diagram2}
+                                  searchedExecutionPaths = {this.props.searchedExecutionPaths}
+                                  sameExecutionPath={this.props.sameExecutionPath[1]}
+
 
                         />
 

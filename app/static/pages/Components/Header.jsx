@@ -31,6 +31,9 @@ export default class Header extends Component {
         this.handleSubmit=this.handleSubmit.bind(this);
         this.handleTechniqueChange = this.handleTechniqueChange.bind(this)
         this.setUpSameExecutionPaths = this.setUpSameExecutionPaths.bind(this)
+        this.setUpFunctionSearch=this.setUpFunctionSearch.bind(this);
+        this.handleSameExecutionPathChange = this.handleSameExecutionPathChange.bind(this);
+        this.handleFucntionSearchChange=this.handleFucntionSearchChange.bind(this);
     }
 
 
@@ -86,18 +89,30 @@ export default class Header extends Component {
         })
     }
 
+    handleSameExecutionPathChange(e){
+        if(e.target.value!=="None")
+        this.props.setSameExecutionPath(e.target.value)
+    }
+
+    handleUniqueC
+    handleFucntionSearchChange(e){
+        if(e.target.value!=="None")
+        this.props.setHighlightFunction(e.target.value)
+    }
+
     setUpSameExecutionPaths(){
         //if no file is selected yet
-        if(this.props.stringExecutionPaths[0]===undefined || this.props.stringExecutionPaths[1]===undefined){
+        if(this.props.stringExecutionPathNames[0]===undefined || this.props.stringExecutionPathNames[1]===undefined){
             return ""
         }
 
         let same = [];
+        same.push(<option key={0} value={"None"}>Select execution Path</option>)
         for (let j = 0; j < 2; j++) {
             let unique = [];
-            const execution_paths = this.props.stringExecutionPaths[j];
+            const execution_paths = this.props.stringExecutionPathNames[j];
             for (let i = 0; i < execution_paths.length; i++) {
-                const index = (this.props.stringExecutionPaths[(j + 1) % 2].indexOf(execution_paths[i]));
+                const index = (this.props.stringExecutionPathNames[(j + 1) % 2].indexOf(execution_paths[i]));
                 if (j === 0 && this.state.renderMode===1) {
                     same.push(<option key={String(j)+":"+i} value={"["+i+","+index+"]"}>{execution_paths[i]}</option>);
                 }
@@ -111,12 +126,34 @@ export default class Header extends Component {
         return same
     }
 
+
+    /*
+    recieves the list of search functions
+    sets list values into select component
+     */
+    setUpFunctionSearch(){
+
+        if(this.props.functionSearchData.length===0) return""
+
+        let functions = []
+        functions.push(<option key={0} value={"None"}>Select highlight function</option>)
+        for(let i=0;i<this.props.functionSearchData.length;i++){
+            const functionData = this.props.functionSearchData[i];
+            functions.push(<option key={"["+functionData.key[0]+","+functionData.key[1]+"]"+functionData} value={"["+functionData.key[0]+","+functionData.key[1]+"]"}>{functionData.value}</option>)
+        }
+
+
+
+        return  functions;
+    }
+
+
     render() {
         const sameExecutionPaths = this.setUpSameExecutionPaths();
 
         return (
             <Row className={"nav justify-content-end"} id="navBar">
-                <Col className={"nabBarCollapse"}>
+                <Col className={"nabBarCollapse collapse"} id={"collapseNavHeader"}>
                     <Container fluid className={"d-flex justify-content-center"} id="view">
                         <ToggleButtonGroup type="radio" name="options" defaultValue={2} onChange={this.renderModeChange}>
 
@@ -202,7 +239,7 @@ export default class Header extends Component {
 
                         <div >
                             <b> Show Same Execution Path </b> <br/>
-                            <select title="Same Execution Path" className={"form-control"} name="same_paths" id="same_execution_paths">
+                            <select  onChange={this.handleSameExecutionPathChange} title="Same Execution Path" className={"form-select"} name="same_paths" id="same_execution_paths">
                                 {sameExecutionPaths===""? <option value="None">None</option>:sameExecutionPaths}
                             </select>
                         </div>
@@ -215,8 +252,10 @@ export default class Header extends Component {
                         <div >
                             <b> Highlight Functions</b> <br/>
                             <div className={"d-flex"}>
-                                <select title="Highlight Functions" id='function_file' name='select_elem' className={"form-control"}> </select>
-                                <button type="submit" className={"btn btn-secondary"} id="search_button"> Search</button>
+                                <select onChange={this.handleFucntionSearchChange} title="Highlight Functions" id='function_file' name='select_elem' className={"form-control"}>
+                                    {this.setUpFunctionSearch()}
+                                </select>
+
                             </div>
                         </div>
 

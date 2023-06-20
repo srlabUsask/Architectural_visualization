@@ -31,6 +31,9 @@ export default class Diagram extends Component {
         this.setupDiagram = this.setupDiagram.bind(this);
         this.updateNodeText = this.updateNodeText.bind(this);
         this.handleChange=this.handleChange.bind(this);
+        this.resetNodeColor = this.resetNodeColor.bind(this);
+        this.functionHighlightNode=this.functionHighlightNode.bind(this);
+        this.highlightSameNodes=this.highlightSameNodes.bind(this);
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
@@ -40,6 +43,13 @@ export default class Diagram extends Component {
         const cluster = this.props.cluster;
         const prevCluster = prevProps.cluster;
 
+        if(JSON.stringify(prevProps.searchedExecutionPaths)!==JSON.stringify(this.props.searchedExecutionPaths)){
+            this.resetNodeColor();
+            this.functionHighlightNode();
+        }
+        if(this.props.sameExecutionPath!==prevProps.sameExecutionPath){
+            this.highlightSameNodes(true);
+        }
         //reinitialize diagram if a different draw mode is selected
         if(prevProps.drawMode!== this.props.drawMode){
             this.initialize();
@@ -351,8 +361,10 @@ export default class Diagram extends Component {
     }
 
 
+    //function if diagram model changes
+    //currently not used
     handleChange(change){
-
+        return;
     }
 
 // Updates the label for a node based on the labeling technique choice
@@ -396,6 +408,84 @@ export default class Diagram extends Component {
 
         }, "update node text");
     }
+
+    // Resets color of text in the nodes to the color black
+    resetNodeColor() {
+        let diagram = this.props.diagram.current.getDiagram();
+
+        diagram.nodes.each(function (n) {
+            diagram.model.commit(function (m) {
+                m.set(n.data, "color", "black");
+            }, 'change node color');
+        });
+    }
+
+
+    /* This method is for highlighting nodes that have a certain execution path. 'same' is used to choose which color do
+    you want to change the text to when highlighting the node with True being green and False being red. The intended
+    purpose of 'same' is to show whether the node we are highlighting is for a unique node or a node that exists in both
+    cluster trees. 'identifier' is used to track which of the two trees we are searching in.
+     */
+    executionPathHighlightNode(execution_path, identifier, same) {
+        let diagram = this.props.diagram.current.getDiagram();
+
+        diagram.nodes.each(function (n) {
+            if (execution_path in n.data.execution_paths){
+                diagram.model.commit(function (m) {
+                    if (same) {
+                        m.set(n.data, "color", "green");
+                    }
+                    else {
+                        m.set(n.data, "color", "red");
+                    }
+                }, 'change node color');
+            }
+        });
+
+
+    }
+
+    // Every node that has an execution path in that's also in execution_paths_for_func gets highlighted by its text being
+// turned to red
+     functionHighlightNode() {
+
+        let execution_paths_for_func=this.props.searchedExecutionPaths[this.props.identifier-1];
+
+         let diagram = this.props.diagram.current.getDiagram();
+         diagram.nodes.each(function (n) {
+            if (execution_paths_for_func.some(item => Object.keys(n.data.execution_paths).includes(item.toString()))) {
+
+                diagram.model.commit(function (m) {
+                    m.set(n.data, "color", "red");
+                }, 'change node color');
+            }
+        });
+    }
+
+
+    /* This method is for highlighting nodes that have a certain execution path. 'same' is used to choose which color do
+    you want to change the text to when highlighting the node with True being green and False being red. The intended
+    purpose of 'same' is to show whether the node we are highlighting is for a unique node or a node that exists in both
+    cluster trees. 'identifier' is used to track which of the two trees we are searching in.
+     */
+    highlightSameNodes(same) {
+        let execution_path=this.props.sameExecutionPath;
+        let diagram = this.props.diagram.current.getDiagram();
+        diagram.nodes.each(function (n) {
+            if (execution_path in n.data.execution_paths){
+                diagram.model.commit(function (m) {
+                    if (same) {
+                        m.set(n.data, "color", "green");
+                    }
+                    else {
+                        m.set(n.data, "color", "red");
+                    }
+                }, 'change node color');
+            }
+        });
+
+    }
+
 
     render() {
         return (

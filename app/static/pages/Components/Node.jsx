@@ -93,7 +93,18 @@ export default class Node extends Component {
                         currentFileName=filePath;
                     }
 
-                    EPblock.push(<p key={"EPp2"+key+String(i)+":"+String(items[i])+String(j)+":"+this.props.nodeID}className='functionName'>{functionName}</p>)
+
+                    //Check if <b> tag exists in name
+                    if(functionName.substring(0,3)==="<b>"){//add the b tag and substing it from name
+                        EPblock.push(<p
+                            key={"EPp2" + key + String(i) + ":" + String(items[i]) + String(j) + ":" + this.props.nodeID}
+                            className='functionName'><b>{functionName.substring(3,functionName.length-4)}</b></p>)
+                    }
+                    else {
+                        EPblock.push(<p
+                            key={"EPp2" + key + String(i) + ":" + String(items[i]) + String(j) + ":" + this.props.nodeID}
+                            className='functionName'>{functionName}</p>)
+                    }
                     firstItem = false
                 }
 

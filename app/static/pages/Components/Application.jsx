@@ -20,15 +20,6 @@ subjectSystemRenderMode: radio buttons in header, rendereing first(0), both(1) o
  */
 
 
-
-
-
-
-
-
-
-
-
 export default class Application extends Component {
 
     constructor(props) {
@@ -66,6 +57,10 @@ export default class Application extends Component {
             //Chosen files for subject systems
             selectedSubjectSystems:[],
             selectedTechnique:null, //node labeling technique
+            selectedSameExecutionPath:"",
+            selectedHighlightFunction:"",
+            selectedUniqueExecutionPath1:"",
+            selectedUniqueExecutionPath2:"",
 
             //all data from reading the file
             //cluster, execution_path,function_id_to_filename/file/name,
@@ -75,6 +70,8 @@ export default class Application extends Component {
             //Data for the side panels
             nodeData1:{},
             nodeData2:{},
+            functionSearchData:[],
+            searchedExecutionPaths:[],
             subjectSystemRenderMode:1, //0 renders only subject system 1, 1 renders both, 2 renders system 2
             diagramDrawMode:0,//0 renders as dictionary, 1 renders as tree
         }
@@ -86,9 +83,12 @@ export default class Application extends Component {
         this.getCluster = this.getCluster.bind(this)
         this.get_similarity = this.get_similarity.bind(this);
         this.showNodeDetails = this.showNodeDetails.bind(this)
-        this.getEecutionPaths=this.getEecutionPaths.bind(this);
+        this.getExecutionPaths=this.getExecutionPaths.bind(this);
         this.setUpStringExecutionPaths=this.setUpStringExecutionPaths.bind(this);
-
+        this.setupSearchForFunction = this.setupSearchForFunction.bind(this)
+        this.setSameExecutionPath=this.setSameExecutionPath.bind(this);
+        this.setHighlightFunction=this.setHighlightFunction.bind(this);
+        this.findExecutionPathsForFunction=this.findExecutionPathsForFunction.bind(this);
     }
 
 
@@ -121,8 +121,6 @@ export default class Application extends Component {
 
 
 
-
-       // setupSearchForFunction(cluster_jsons[0]["function_id_to_name_file"], cluster_jsons[1]["function_id_to_name_file"]);
 
 
 
@@ -163,9 +161,12 @@ export default class Application extends Component {
         ).then(response => response.json())
 
         const string_Data =  this.setUpStringExecutionPaths([diagramData1,diagramData2])
+        const functionSearchData = this.setupSearchForFunction(diagramData1["function_id_to_name_file"], diagramData2["function_id_to_name_file"])
         //Save the string version of data with the rest of it
-        diagramData1['string_execution_paths'] = string_Data[0]
-        diagramData2['string_execution_paths'] = string_Data[1]
+        diagramData1['string_execution_paths'] = string_Data[0][0]
+        diagramData2['string_execution_paths'] = string_Data[0][1]
+        diagramData1['string_execution_path_names'] = string_Data[1][0]
+        diagramData2['string_execution_path_names'] = string_Data[1][1]
 
 
         this.setState({
@@ -174,6 +175,7 @@ export default class Application extends Component {
             diagramDrawMode:systemData.diagramDrawMode,
             diagramData1:diagramData1,
             diagramData2:diagramData2,
+            functionSearchData:functionSearchData,
         })
 
     }
@@ -215,6 +217,37 @@ export default class Application extends Component {
         })
     }
 
+    setSameExecutionPath(value){
+
+        this.setState({
+            selectedSameExecutionPath:JSON.parse(value)
+        })
+    }
+
+    setHighlightFunction(value){
+
+        const function_ids = JSON.parse(value);
+        const key1 = String(function_ids[0]);
+        const key2 = String(function_ids[1]);
+
+        //2 items in array
+        //1 is the indices of nodes for highlighting the diagram nodes
+        //2 is array of two each are string execution paths for node executionPath
+        const execution_paths=this.findExecutionPathsForFunction(key1,key2)
+
+        let nodeData1={...this.state.nodeData1}
+        let nodeData2={...this.state.nodeData2}
+        nodeData1.executionPaths=execution_paths[1][0]
+        nodeData2.executionPaths=execution_paths[1][1]
+
+
+        this.setState({
+            selectedHighlightFunction:value,
+            searchedExecutionPaths:execution_paths[0],
+            nodeData1:nodeData1,
+            nodeData2:nodeData2,
+        })
+    }
 
 
 
@@ -242,7 +275,7 @@ export default class Application extends Component {
         const executionPathCount= part.data.execution_path_count;
         const executionPatterns=part.data.spm_method
         const nodeData = "nodeData"+identifier;
-        const executionPaths=this.getEecutionPaths(part.data.execution_paths, identifier);
+        const executionPaths=this.getExecutionPaths(part.data.execution_paths, identifier);
         this.setState({
             [nodeData]:{key:key, textSummary:textSummary, items:items,numberOfFiles:numberOfFiles, executionPathCount:executionPathCount,executionPaths:executionPaths,executionPatterns:executionPatterns},
         })
@@ -253,7 +286,9 @@ export default class Application extends Component {
 
 
     }
-    getEecutionPaths(eps, index){
+
+    // Returns a maximum of 15 execution paths in a more visually appealing block of text.
+    getExecutionPaths(eps, index){
 
         let data = this.state["diagramData"+index]
 
@@ -286,49 +321,158 @@ export default class Application extends Component {
      setUpStringExecutionPaths(clusters) {
          let cluster;
          let string_execution_paths=[];
+         let string_execution_Paths_names=[]
         for (let j = 0; j < 2; j++) {
              cluster = clusters[j]
 
              string_execution_paths[j] = [];
+            string_execution_Paths_names[j]=[]
             const execution_paths = cluster['execution_paths'];
             for (let i = 0; i < execution_paths.length; i++) {
                 let execution_path_string = '';
+                let execution_path_string_name = '';
                 execution_path_string += '';
                 for (let f = 0; f < execution_paths[i].length; f++) {
+                    execution_path_string_name+=cluster['function_id_to_name'][execution_paths[i][f]]
+                    execution_path_string_name+=" ( "+cluster['function_id_to_file_name'][execution_paths[i][f]].split("/").pop()+")"
                     execution_path_string += cluster['function_id_to_name'][execution_paths[i][f]];
                     execution_path_string += '(' + cluster['function_id_to_file_name'][execution_paths[i][f]] + ')';
 
                     execution_path_string += ' -> ';
+                    if(f!==execution_paths[i].length-1)
+                        execution_path_string_name+=' -> '
                 }
                 execution_path_string += '.';
                 string_execution_paths[j].push(execution_path_string);
+                string_execution_Paths_names[j].push(execution_path_string_name)
             }
         }
 
 
-        return string_execution_paths;
+        return [string_execution_paths,string_execution_Paths_names];
 
 
     }
+    // Sets up the data structures used for searching for a given function existence in a node
+     setupSearchForFunction(function_id_to_name_file1, function_id_to_name_file2){
+        let data = [];
+        let tracker = []
+        for (const key1 in function_id_to_name_file1) {
+            let key2 = Object.keys(function_id_to_name_file2).find(k => function_id_to_name_file2[k] === function_id_to_name_file1[key1]);
+            if (key2 === undefined) {
+                key2 = -1;
+            }
+            data.push( {value:function_id_to_name_file2[key1],key:[key1,key2]});
+            tracker.push(function_id_to_name_file1[key1]);
+        }
+
+        for (const key2 in function_id_to_name_file2) {
+            if (tracker.includes(function_id_to_name_file2[key2])) {
+                continue;
+            }
+            let key1 = Object.keys(function_id_to_name_file1).find(k => function_id_to_name_file1[k] === function_id_to_name_file2[key2]);
+            if (key1 === undefined) {
+                key1 = -1;
+            }
+            data.push( {value:function_id_to_name_file2[key2],key:[key1,key2]});
+        }
+
+        return data
+    }
+// Find all execution paths that have a given function. As the ids for a function may be different depending on the
+// subject system, there are two keys inputted in the function for each of the two systems.
+ findExecutionPathsForFunction(key1, key2){
+        const indexes = [String(key1), String(key2)];
+        let eps_list=[[],[]];
+        let all_eps = [];
+        for (let j = 0; j < 2; j++) {
+            let eps = []
+            let cluster = this.state["diagramData"+(j+1)]
+
+
+            for (let i = 0; i < cluster['execution_paths'].length; i++) {
+
+
+
+                if (cluster['execution_paths'][i].includes(indexes[j])) {
+
+                    eps.push(i)
+                }
+                if (eps.length >= 3) {
+                    break;
+                }
+            }
+
+
+            all_eps[j] = eps;
+
+            let eps_preety = ''
+
+            for(let ep = 0; ep < eps.length; ep++){
+                for(let f = 0; f < cluster['execution_paths'][eps[ep]].length; f++){
+                    if(cluster['execution_paths'][eps[ep]][f] === indexes[j]){
+
+                        eps_preety += '<b>' + cluster['function_id_to_name'][cluster['execution_paths'][eps[ep]][f]] + '</b>';
+                        eps_preety += '(' + cluster['function_id_to_file_name'][cluster['execution_paths'][eps[ep]][f]] + ')';
+                    }else{
+                        eps_preety += cluster['function_id_to_name'][cluster['execution_paths'][eps[ep]][f]];
+                        eps_preety += '(' + cluster['function_id_to_file_name'][cluster['execution_paths'][eps[ep]][f]] + ')';
+
+                    }
+
+
+                    eps_preety += '->'
+                }
+
+                eps_list[j].push(eps_preety)
+            }
+        }
+
+        return [all_eps,eps_list];
+    }
+
+
+
+
     render() {
         return (
             <div>
                 <Header setSystemRenderMode={this.setSystemRenderMode} initializeGraph={this.initializeGraph}
                         subject_systems={this.state.subjectSystems} technique_choices={this.state.techniqueChoices}
                         stringExecutionPaths={[this.state.diagramData1['string_execution_paths'], this.state.diagramData2['string_execution_paths']]}
-
+                        stringExecutionPathNames={[this.state.diagramData1['string_execution_path_names'], this.state.diagramData2['string_execution_path_names']]}
+                        functionSearchData={this.state.functionSearchData}
+                        setSameExecutionPath={this.setSameExecutionPath} setHighlightFunction={this.setHighlightFunction}
                 />
+
+                <h5 className="text-focus-in" style={{textAlign: 'center'}}>HCPC: Human Centric Program Comprehension By
+                    Grouping
+                    Dynamic Execution Scenarios
+                </h5>
 
 
                 <NodePanel nodeData1={this.state.nodeData1} nodeData2={this.state.nodeData2}
                            renderMode={this.state.subjectSystemRenderMode}
                            drawMode={this.state.diagramDrawMode}
                            technique={this.state.selectedTechnique}
+                           sameExecutionPath = {this.state.selectedSameExecutionPath}
+                           highlightFunction = {this.state.selectedHighlightFunction}
                            getSimilarity={this.get_similarity}
                            diagramData1={this.state.diagramData1} diagramData2={this.state.diagramData2}
                            showNodeDetails={this.showNodeDetails}
+                           searchedExecutionPaths={this.state.searchedExecutionPaths}
+
 
                 />
+                <footer className="page-footer font-small blue">
+
+
+                    <div className="footer-copyright text-center py-3">© 2021 Copyright:
+                        <a href="https://ise.usask.ca/avijit/"> Avijit Bhattacharjee (iSE Lab) </a>
+                    </div>
+
+
+                </footer>
             </div>
 
         )

@@ -3,6 +3,7 @@ const string_execution_paths = [];
 let node_unique_execution_paths = [];
 let two_subject_system = true;
 
+//Done
 // Gets the two requested subject systems and sets up the NodeJS diagram and searching for the tool
 async function get_cluster() {
     Url = '/get_cluster';
@@ -200,6 +201,7 @@ function showNodeDetails(part, identifier) {
     document.getElementById('searched_execution_paths' + identifier).innerHTML = get_some_execution_patterns(part.data.execution_paths, identifier - 1);
 }
 
+//DONE
 // Updates the node details panels with the unique execution paths for each of the two nodes being compared
 function updateUniqueNodePaths(key1, key2) {
     const unique_paths1 = node_unique_execution_paths[0][key1][key2];
@@ -291,6 +293,7 @@ function listNodePatterns(paths){
     return listExecutionPaths(paths,"&rarr;")
 }
 
+//Done
 // Resets color of text in the nodes to the color black
 function reset_node_color() {
     myDiagram1.nodes.each(function (n) {
@@ -305,6 +308,7 @@ function reset_node_color() {
     });
 }
 
+//Done
 // Every node that has an execution path in that's also in execution_paths_for_func gets highlighted by its text being
 // turned to red
 function function_highlight_node(execution_paths_for_func) {
@@ -325,6 +329,7 @@ function function_highlight_node(execution_paths_for_func) {
     });
 }
 
+//Done
 /* This method is for highlighting nodes that have a certain execution path. 'same' is used to choose which color do
 you want to change the text to when highlighting the node with True being green and False being red. The intended
 purpose of 'same' is to show whether the node we are highlighting is for a unique node or a node that exists in both
@@ -361,6 +366,7 @@ function execution_path_highlight_node(execution_path, identifier, same) {
     }
 }
 
+//DONE
 // Find all execution paths that have a given function. As the ids for a function may be different depending on the
 // subject system, there are two keys inputted in the function for each of the two systems.
 function find_execution_paths_for_function(key1, key2){
@@ -403,6 +409,7 @@ function find_execution_paths_for_function(key1, key2){
     return all_eps;
 }
 
+//DONE
 // Returns a maximum of 15 execution paths in a more visually appealing block of text.
 function get_some_execution_patterns(eps, index){
     eps_preety = ''
@@ -425,6 +432,7 @@ function get_some_execution_patterns(eps, index){
     return listExecutionPaths(eps_list)
 }
 
+//Done
 // Adds the functionality for the search button that finds execution paths with a specific function in it
 jQuery(document).ready(function() {
     jQuery("#search_button").click(function () {
@@ -453,6 +461,7 @@ jQuery(document).ready(function () {
     }
 });
 
+//Done
 // Adds the functionality to highlight nodes that have an execution path that exists in both subject systems
 jQuery(document).ready(function () {
     jQuery("#same_execution_paths").change(function () {
@@ -483,6 +492,7 @@ jQuery(document).ready(function() {
 
 
 
+//not needed
 // Adds the functionality to be able to choose how you want to visualise the cluster trees: directory or tree view
 jQuery(document).ready(function () {
     jQuery('#graph_model_id').change(function() {
@@ -543,6 +553,7 @@ function toggleSubjectSystems(first=false, second=false) {
 }
 
 
+//DONE
 // Sets up the data structures used for searching for a given function existence in a node
 function setupSearchForFunction(function_id_to_name_file1, function_id_to_name_file2){
     let data = [];

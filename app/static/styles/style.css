@@ -15,6 +15,7 @@ navigation bar
 #navBar {
   background-color: #d0dae8;
   padding-left: 10px;
+  margin-bottom: 20px;
   transition: opacity 0.2s ease;
   box-shadow: rgba(6, 24, 44, 0.4) 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset;
 
@@ -200,6 +201,12 @@ Execution Path
 .executionPathContainer .functionName{
   text-align: center;
   font-weight: bold;
+}
+
+
+
+.executionPathContainer .functionName b{
+  font-size: 17px;
 }
 /* 
 textarea{
