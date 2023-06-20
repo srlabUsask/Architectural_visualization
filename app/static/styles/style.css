@@ -168,14 +168,14 @@ html {
 
 
 
-div[id^='files'] ol{
+.accordion-body ol{
   padding-left: 1.5rem;
 
 }
-div[id^='files'] ol li{
+.accordion-body ol li{
   margin-bottom: 13px;
 }
-div[id^='files'] ol li::marker{
+.accordion-body ol li::marker{
   font-weight: bold;
 }
 

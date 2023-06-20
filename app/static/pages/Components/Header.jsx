@@ -153,7 +153,7 @@ export default class Header extends Component {
 
         return (
             <Row className={"nav justify-content-end"} id="navBar">
-                <Col className={"nabBarCollapse collapse"} id={"collapseNavHeader"}>
+                <Col className={"nabBarCollapse"} id={"collapseNavHeader"}>
                     <Container fluid className={"d-flex justify-content-center"} id="view">
                         <ToggleButtonGroup type="radio" name="options" defaultValue={2} onChange={this.renderModeChange}>
 
