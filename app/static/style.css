@@ -9,9 +9,97 @@
   grid-gap: 10px;
 }
 
+/*
+navigation bar
+ */
+
+#navBar {
+  background-color: #d0dae8;
+  padding-left: 10px;
+  transition: opacity 0.2s ease;
+
+}
+#view{
+  margin-top: 10px;
+}
+#navBar .nabBarCollapse{
+
+  transition: none;
+  padding-top: 10px;
+  padding-bottom: 13px;
+  overflow: hidden;
+}
+#navBar .nabBarCollapse .container-fluid{
+  margin-bottom: 20px;
+}
+
+#navBar .navCollapseButton{
+  text-align: right;
+
+}
+#navBar .nabBarCollapse ul{
+  margin-top: 40px;
+}
+
+#navBar .navBarLoadButton button{
+  padding:10px 15px;
+  font-size: 15px !important;
+}
+
+#navBar #view label{
+  font-size: 15px;
+}
+/*
+Nav bar arrow icon
+ */
+#navBar .navCollapseButton i{
+  font-size: 5rem !important;
+  transition: all 0.5s ease;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: right;
+}
+#navBar .navCollapseButton i.navToggled{
+
+  font-size: 2rem !important;
+  margin-top: 0px;
+}
+/*
+Changing the scrollbar of the accordion
+*/
+
 .vertical-scrollbar{
-  height: 100px;
   overflow-y: auto;
+  max-height: 300px;
+  padding-right: 7px;
+}
+#diagram1Accordion,#diagram2Accordion{
+  margin-top: 10px;
+}
+
+#diagram1Accordion .accordion-body, #diagram2Accordion .accordion-body{
+  padding-right: 2px;
+  padding-left: 2px;
+}
+
+.vertical-scrollbar::-webkit-scrollbar-track
+{
+  border-radius: 11px;
+  background-color: #f3f0f0;
+  -webkit-box-shadow: inset 0 0 7px rgba(0,0,0,0.28);
+}
+
+.vertical-scrollbar::-webkit-scrollbar
+{
+  width: 12px;
+  background-color: #f3f0f0;
+}
+
+.vertical-scrollbar::-webkit-scrollbar-thumb
+{
+  -webkit-box-shadow: inset 0 0 7px rgba(0,0,0,.28);
+  border-radius: 11px;
+  background-color: #9f9f9f;
 }
 
 html {
@@ -19,7 +107,44 @@ html {
 }
 
 
+/*
+accordion files section list
+ */
 
+div[id^='files'] ol{
+  padding-left: 1.5rem;
+
+}
+div[id^='files'] ol li{
+  margin-bottom: 13px;
+}
+div[id^='files'] ol li::marker{
+  font-weight: bold;
+}
+
+/*
+Execution Path
+ */
+.executionPathContainer div{
+  border: 2px solid #3d3d3d;
+  border-radius: 8px;
+  margin-bottom: 11px;
+  padding: 8px;
+}
+.executionPathArrowDown{
+  text-align: center;
+  font-weight: bold;
+  font-size: 28px;
+  margin-bottom: 0px!important;
+}
+.executionPathContainer span{
+  display: block;
+  margin-bottom: 10px;
+}
+.executionPathContainer .functionName{
+  text-align: center;
+  font-weight: bold;
+}
 /* 
 textarea{
   white-space: nowrap;

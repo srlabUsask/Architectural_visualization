@@ -25,7 +25,8 @@ async function get_cluster() {
     setupSearchForUniqueAndSameExecutionPaths();
     setupUniqueNodeExecutionPaths();
 
-    clearDiagram();
+    //the method is causing error, temporarily disabled
+    //clearDiagram();
 
 }
 
@@ -172,8 +173,20 @@ function showNodeDetails(part, identifier) {
 
     document.getElementById('node_key' + identifier).innerHTML = 'Node Key: ' + part.data.key;
     document.getElementById('node_summary' + identifier).innerHTML = part.data.text_summary;
-    document.getElementById('node_patterns' + identifier).innerHTML = part.data.spm_method;
-    document.getElementById('files' + identifier).innerHTML = clickable_text;
+    document.getElementById('node_patterns' + identifier).innerHTML = listNodePatterns(part.data.spm_method);
+
+
+    //Change the file text into a numbered list
+
+    let files = document.getElementById('files' + identifier)
+    let items = clickable_text.trim().split(',');
+
+   files.innerHTML="<ol></ol>";
+    for (var i = 0; i < items.length; i++) {
+        if(items[i].length >0) $( '#files' + identifier+ " ol").append('<li value="'+i+'">' + items[i] + '</li>');
+    }
+
+
     document.getElementById('number_of_files' + identifier).innerHTML = "Number of Files: " + part.data.files_count;
     document.getElementById('number_of_execution_paths' + identifier).innerHTML = "Number of Execution paths: " + part.data.execution_path_count;
     document.getElementById('searched_execution_paths' + identifier).innerHTML = get_some_execution_patterns(part.data.execution_paths, identifier - 1);
@@ -183,16 +196,88 @@ function showNodeDetails(part, identifier) {
 function updateUniqueNodePaths(key1, key2) {
     const unique_paths1 = node_unique_execution_paths[0][key1][key2];
     const unique_paths2 = node_unique_execution_paths[1][key2][key1];
-    let string_version1 = "";
-    let string_version2 = "";
+    let list_version1 = [];
+    let list_version2 = [];
     for (const path of unique_paths1) {
-        string_version1 += " &#187; " + path + "<br>";
+        list_version1.push(path);
     }
     for (const path of unique_paths2) {
-        string_version2 += " &#187; " + path + "<br>";
+        list_version2.push(path);
     }
-    document.getElementById('unique_node_execution_paths1').innerHTML = string_version1.replaceAll("->", "&rarr;");
-    document.getElementById('unique_node_execution_paths2').innerHTML = string_version2.replaceAll("->", "&rarr;");
+
+    document.getElementById('unique_node_execution_paths1').innerHTML = listExecutionPaths(list_version1)
+    document.getElementById('unique_node_execution_paths2').innerHTML = listExecutionPaths(list_version2)
+}
+
+/*
+Takes a list of execution paths, replaces arrows into a list structure
+split is the string that will be used to split the text( either -> or &rarr(HTML code for -> symbol)
+ */
+function listExecutionPaths(paths,split='->'){
+
+    const newFileNameSeparator="&#8681;" //double downwards arrow
+    const defaultSeparator="&#8595;" //downwards arrow
+
+    //if no path is to be found
+    if(paths.length===0) return "";
+    //creates list of all items separated by downward arrow
+    result = "<div class='executionPathContainer'>"
+    for(let i=0;i<paths.length;i++) {
+        let items = paths[i].trim().split(split);
+        if(items==="") continue
+        result+="<div>"
+        let firstItem = true;//Track if this is the first item of list that is not empty string
+
+
+
+
+        let currentFileName="";//function name(the path to the file)
+        for (let j = 0; j < items.length; j++) {
+            items[j] = items[j].trim()//remove white space
+            if (items[j] === "" || items[j]===".") continue//exclude empty or dot
+
+            //separate function name from path
+            let filePath = items[j].split("(")
+            let functionName = filePath[0]
+            filePath=filePath[1]
+
+            filePath = filePath.substring(0,filePath.length-1)//exclude last closing parenthesis symbol
+
+
+            if (!firstItem) {
+                result += "<p class='executionPathArrowDown'>";
+
+                //Setting the separator symbol for when new file is selected or new function in same file
+                if (filePath !== currentFileName) result += newFileNameSeparator;
+                else result += defaultSeparator;
+
+                result += "</p>"
+            }
+
+            //if different file is selected add the file path to top
+            if(filePath!==currentFileName) {
+                result+="<span>"+filePath+"</span>"
+                currentFileName=filePath;
+            }
+            result +="<p class='functionName'>"+functionName+"</p>"
+            firstItem = false
+        }
+
+        result+="</div>"
+    }
+    result += "</div>"
+    return result
+}
+
+/*
+Takes a string node patterns, replaces arrows into a list structure
+string uses  &rarr as separation string
+ */
+function listNodePatterns(paths){
+
+    paths= paths.replaceAll(". <br>","")//remove page breaks
+    paths=paths.trim().split("&#187;").filter(i=>i)//split by >> symbol, filter out empty strings
+    return listExecutionPaths(paths,"&rarr;")
 }
 
 // Resets color of text in the nodes to the color black
@@ -284,9 +369,8 @@ function find_execution_paths_for_function(key1, key2){
         all_eps[j] = eps;
 
         eps_preety = ''
-
+        eps_list=[]
         for(ep = 0; ep < eps.length; ep++){
-            eps_preety += ' &#187; '
             for(f = 0; f < cluster_jsons[j]['execution_paths'][eps[ep]].length; f++){
                 if(cluster_jsons[j]['execution_paths'][eps[ep]][f] === indexes[j]){
 
@@ -299,12 +383,11 @@ function find_execution_paths_for_function(key1, key2){
                 }
 
 
-                eps_preety += ' &rarr; '
+                eps_preety += '->'
             }
-            eps_preety += '. <br> '
+            eps_list.push(eps_preety)
         }
-
-        document.getElementById('searched_execution_paths' + (j + 1)).innerHTML = eps_preety;
+        document.getElementById('searched_execution_paths' + (j + 1)).innerHTML = listExecutionPaths(eps_list);
     }
     return all_eps;
 }
@@ -313,22 +396,22 @@ function find_execution_paths_for_function(key1, key2){
 function get_some_execution_patterns(eps, index){
     eps_preety = ''
     count = 0
+    eps_list=[]
     for(const [key, value] of Object.entries(eps)){
         count += 1
         if(count === 15){
             break
         }
-        eps_preety += ' &#187; ' // Double arrow (use Google to see the visual of this)
         for(f = 0; f < cluster_jsons[index]['execution_paths'][key].length; f++){
             eps_preety += cluster_jsons[index]['function_id_to_name'][cluster_jsons[index]['execution_paths'][key][f]]
             eps_preety += '(' + cluster_jsons[index]['function_id_to_file_name'][cluster_jsons[index]['execution_paths'][key][f]] + ')'
 
-            eps_preety += ' &rarr; ' // Arrow (use Google to see the visual of this)
+            eps_preety += '->' // Arrow (use Google to see the visual of this)
         }
-        eps_preety += '. <br> '
+        eps_list.push(eps_preety)
     }
 
-    return eps_preety
+    return listExecutionPaths(eps_list)
 }
 
 // Adds the functionality for the search button that finds execution paths with a specific function in it
@@ -405,23 +488,43 @@ jQuery(document).ready(function () {
 // gets carried over and back when switching between seeing one and two subject systems.
 jQuery(document).ready(function () {
     jQuery('#view :input').change(function() {
-        jQuery("#fullDiagram2").toggle();
-        jQuery("#subjectSystem2Info").toggle();
-        jQuery("#same_execution_paths_block").toggle();
-        if (this.id === "option1") {
+
+        if (this.id === "systemBoth") {
+            toggleSubjectSystems(true,true)
             jQuery("#fullDiagram1").height(400);
+            jQuery("#fullDiagram2").height(400);
             jQuery("#diagrams").addClass("col-6").removeClass("col-8");
             two_subject_system = true;
+            myDiagram1.layout.invalidateLayout();
+            myDiagram2.layout.invalidateLayout();
+        }
+        else if(this.id==="system2"){
+            toggleSubjectSystems(false,true)
+            jQuery("#fullDiagram2").height(800);
+            jQuery("#diagrams").addClass("col-8").removeClass("col-6");
+            two_subject_system = false;
+            myDiagram2.layout.invalidateLayout();
         }
         else {
+            toggleSubjectSystems(true,false)
             jQuery("#fullDiagram1").height(800);
             jQuery("#diagrams").addClass("col-8").removeClass("col-6");
-            myDiagram2.layout.invalidateLayout();
             two_subject_system = false;
+            myDiagram1.layout.invalidateLayout();
         }
-        myDiagram1.layout.invalidateLayout();
+
     });
 });
+
+
+function toggleSubjectSystems(first=false, second=false) {
+    jQuery("#fullDiagram2").toggle(second);
+    jQuery("#subjectSystem2Info").toggle(second);
+    jQuery("#fullDiagram1").toggle(first);
+    jQuery("#subjectSystem1Info").toggle(first);
+    jQuery("#same_execution_paths_block").toggle(first && second);
+}
+
 
 // Sets up the data structures used for searching for a given function existence in a node
 function setupSearchForFunction(function_id_to_name_file1, function_id_to_name_file2){
