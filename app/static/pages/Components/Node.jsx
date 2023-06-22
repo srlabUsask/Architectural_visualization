@@ -17,6 +17,7 @@ export default class Node extends Component {
     this.formatFiles = this.formatFiles.bind(this);
     this.formatExecutionPath=this.formatExecutionPath.bind(this);
     this.formatNodePatterns = this.formatNodePatterns.bind(this);
+    this.handleUniqueExecutionPathChange=this.handleUniqueExecutionPathChange.bind(this);
     }
 
     /*
@@ -121,7 +122,9 @@ export default class Node extends Component {
         return this.formatExecutionPath(paths,"&rarr;","Node Pattern")
     }
 
-
+    handleUniqueExecutionPathChange(e){
+        this.props.setUniqueExecutionPath(e.target.value, this.props.identifier)
+    }
 
     render() {
         return (
@@ -206,8 +209,8 @@ export default class Node extends Component {
 
                 <div className="row unique_paths">
                     <div className="col">
-                        <b> Show Unique Execution Path For Subject System 1 </b>
-                        <select className="form-control" title="unique_paths" name="unique_paths">
+                        <b> Show Unique Execution Path For Subject System {this.props.identifier} </b>
+                        <select onChange={this.handleUniqueExecutionPathChange} className="form-control" title="unique_paths" name="unique_paths">
                         {this.props.uniqueExecutionPath.length===0? <option value="None">None</option>:this.props.uniqueExecutionPath }
                         </select>
                     </div>

@@ -1,7 +1,7 @@
-import React, {Component} from "react";
+import React, {Component, createRef} from "react";
 
-
-import {Col, Row, ToggleButtonGroup,ToggleButton, Container} from "react-bootstrap";
+import $ from 'jquery';
+import {Col, Row, ToggleButtonGroup, ToggleButton, Container} from "react-bootstrap";
 
 
 /*
@@ -15,6 +15,7 @@ export default class Header extends Component {
     constructor(props) {
         super(props);
 
+        this.collapseHeader=createRef();
 
 
         this.state = {
@@ -24,6 +25,7 @@ export default class Header extends Component {
             diagramDrawMode:0,
             selectedSameExecutionPath:null,
             selectedHighlightFunction:null,
+            collapsed:false,
         }
         this.renderModeChange= this.renderModeChange.bind(this);
         this.diagramModeChange=this.diagramModeChange.bind(this);
@@ -34,6 +36,7 @@ export default class Header extends Component {
         this.setUpFunctionSearch=this.setUpFunctionSearch.bind(this);
         this.handleSameExecutionPathChange = this.handleSameExecutionPathChange.bind(this);
         this.handleFucntionSearchChange=this.handleFucntionSearchChange.bind(this);
+        this.handleCollapseClick=this.handleCollapseClick.bind(this);
     }
 
 
@@ -147,13 +150,22 @@ export default class Header extends Component {
         return  functions;
     }
 
+    handleCollapseClick(e){
 
+        this.setState({
+            collapsed:!this.state.collapsed
+        })
+        $(this.collapseHeader.current).slideToggle();
+    }
     render() {
         const sameExecutionPaths = this.setUpSameExecutionPaths();
+        const collapseStyle = this.state.collapsed ?  "navBarOpaque":"";
+        const collapseIcon = !this.state.collapsed ? "fa-angle-up":"fa-angle-down navToggled"
+
 
         return (
-            <Row className={"nav justify-content-end"} id="navBar">
-                <Col className={"nabBarCollapse"} id={"collapseNavHeader"}>
+            <Row className={`nav justify-content-end ${collapseStyle}`} id="navBar">
+                <Col className={"navBarCollapse"} id={"collapseNavHeader"} ref={this.collapseHeader}>
                     <Container fluid className={"d-flex justify-content-center"} id="view">
                         <ToggleButtonGroup type="radio" name="options" defaultValue={2} onChange={this.renderModeChange}>
 
@@ -271,7 +283,7 @@ export default class Header extends Component {
                     </div>
                 </Col>
                 <div className={"navCollapseButton d-flex align-items-end justify-content-center"}>
-                    <i className={"fa fa-angle-up"}>
+                    <i onClick={this.handleCollapseClick} className={`fa ${collapseIcon}`}>
                     </i>
 
                 </div>

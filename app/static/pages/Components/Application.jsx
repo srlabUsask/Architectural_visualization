@@ -24,7 +24,6 @@ export default class Application extends Component {
 
     constructor(props) {
         super(props);
-        console.log("App constructor")
 
 
         //Initialize goJS data
@@ -59,8 +58,7 @@ export default class Application extends Component {
             selectedTechnique:null, //node labeling technique
             selectedSameExecutionPath:"",
             selectedHighlightFunction:"",
-            selectedUniqueExecutionPath1:"",
-            selectedUniqueExecutionPath2:"",
+
 
             //all data from reading the file
             //cluster, execution_path,function_id_to_filename/file/name,
@@ -362,7 +360,7 @@ export default class Application extends Component {
             if (key2 === undefined) {
                 key2 = -1;
             }
-            data.push( {value:function_id_to_name_file2[key1],key:[key1,key2]});
+            data.push( {value:function_id_to_name_file1[key1],key:[key1,key2]});
             tracker.push(function_id_to_name_file1[key1]);
         }
 

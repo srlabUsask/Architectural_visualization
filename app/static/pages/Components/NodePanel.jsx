@@ -31,7 +31,11 @@ export default class NodePanel extends Component {
             uniqueExecutionPathList2:[],
             //status of the data in each diagram
             diagramReadyStatus1:false,
-            diagramReadyStatus2:false
+            diagramReadyStatus2:false,
+
+            //Unqiue execution Path selected from option box
+            selectedUniqueExecutionPath1:"",
+            selectedUniqueExecutionPath2:"",
         }
 
         this.diagram1=createRef();
@@ -43,6 +47,7 @@ export default class NodePanel extends Component {
         this.setupUniqueNodeExecutionPaths = this.setupUniqueNodeExecutionPaths.bind(this);
         this.setDiagramReadyStatus = this.setDiagramReadyStatus.bind(this)
         this.updateUniqueNodePaths = this.updateUniqueNodePaths.bind(this);
+        this.setUnqiueExecutionPathOfSystem=this.setUnqiueExecutionPathOfSystem.bind(this);
     }
 
 
@@ -144,8 +149,8 @@ componentDidUpdate(prevProps, prevState, snapshot) {
 
 
         this.setState({
-            nodeUniqueExecutionPath1:uniques[0],
-            nodeUniqueExecutionPath2:uniques[1]
+            nodeUniqueExecutionPath2:uniques[0],
+            nodeUniqueExecutionPath1:uniques[1]
         })
 
     }
@@ -231,6 +236,18 @@ componentDidUpdate(prevProps, prevState, snapshot) {
 
     }
 
+    //Selecting the unique execution Path
+    setUnqiueExecutionPathOfSystem(path, identifier){
+
+
+        this.setState({
+            ["selectedUniqueExecutionPath"+identifier]:JSON.parse(path)[0],
+        })
+    }
+
+
+
+
     render() {
 
         //hiding instead of unrendering to keep the graph
@@ -248,6 +265,8 @@ componentDidUpdate(prevProps, prevState, snapshot) {
                     <Node uniqueExecutionPath={this.state.nodeUniqueExecutionPath2}
                           uniqueExecutionPathList={this.state.uniqueExecutionPathList1}
                           data={this.props.nodeData1}  nodeID={"diagram1"}
+                          identifier={1}
+                          setUniqueExecutionPath={this.setUnqiueExecutionPathOfSystem}
                           />
                 </Col>
 
@@ -265,6 +284,7 @@ componentDidUpdate(prevProps, prevState, snapshot) {
                          drawMode={this.props.drawMode}
                          searchedExecutionPaths = {this.props.searchedExecutionPaths}
                           sameExecutionPath={this.props.sameExecutionPath[0]}
+                          selectedUniqueExecutionPath={this.state.selectedUniqueExecutionPath1}
                          />
 
 
@@ -284,6 +304,7 @@ componentDidUpdate(prevProps, prevState, snapshot) {
                                   diagram={this.diagram2}
                                   searchedExecutionPaths = {this.props.searchedExecutionPaths}
                                   sameExecutionPath={this.props.sameExecutionPath[1]}
+                                  selectedUniqueExecutionPath={this.state.selectedUniqueExecutionPath2}
 
 
                         />
@@ -295,6 +316,7 @@ componentDidUpdate(prevProps, prevState, snapshot) {
                     <Node uniqueExecutionPath={this.state.nodeUniqueExecutionPath1}
                           uniqueExecutionPathList={this.state.uniqueExecutionPathList2}
                           data={this.props.nodeData2}    nodeID={"diagram2"}
+                          identifier={2} setUniqueExecutionPath={this.setUnqiueExecutionPathOfSystem}
 
                     />
                 </Col>

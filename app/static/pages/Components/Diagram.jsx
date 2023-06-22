@@ -48,11 +48,16 @@ export default class Diagram extends Component {
             this.functionHighlightNode();
         }
         if(this.props.sameExecutionPath!==prevProps.sameExecutionPath){
-            this.highlightSameNodes(true);
+            this.resetNodeColor();
+            this.highlightSameNodes(this.props.sameExecutionPath,true);
         }
         //reinitialize diagram if a different draw mode is selected
         if(prevProps.drawMode!== this.props.drawMode){
             this.initialize();
+        }
+        if(prevProps.selectedUniqueExecutionPath!==this.props.selectedUniqueExecutionPath){
+            this.resetNodeColor();
+            this.highlightSameNodes(this.props.selectedUniqueExecutionPath,false);
         }
 
         if(this.props.cluster===undefined || this.props.cluster.length!==0){
@@ -468,8 +473,7 @@ export default class Diagram extends Component {
     purpose of 'same' is to show whether the node we are highlighting is for a unique node or a node that exists in both
     cluster trees. 'identifier' is used to track which of the two trees we are searching in.
      */
-    highlightSameNodes(same) {
-        let execution_path=this.props.sameExecutionPath;
+    highlightSameNodes(execution_path,same) {
         let diagram = this.props.diagram.current.getDiagram();
         diagram.nodes.each(function (n) {
             if (execution_path in n.data.execution_paths){

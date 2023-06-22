@@ -23,14 +23,17 @@ navigation bar
 #view{
   margin-top: 10px;
 }
-#navBar .nabBarCollapse{
+#navBar .navBarCollapse{
 
   transition: none;
   padding-top: 10px;
   padding-bottom: 13px;
   overflow: hidden;
 }
-#navBar .nabBarCollapse .container-fluid{
+.navBarOpaque{
+  opacity: 40%;
+}
+#navBar .navBarCollapse .container-fluid{
   margin-bottom: 20px;
 }
 
@@ -38,7 +41,7 @@ navigation bar
   text-align: right;
 
 }
-#navBar .nabBarCollapse ul{
+#navBar .navBarCollapse ul{
   margin-top: 40px;
 }
 
