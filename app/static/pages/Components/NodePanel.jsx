@@ -36,6 +36,8 @@ export default class NodePanel extends Component {
             //Unqiue execution Path selected from option box
             selectedUniqueExecutionPath1:"",
             selectedUniqueExecutionPath2:"",
+            slide1:"open",
+            slide2:"open"
         }
 
         this.diagram1=createRef();
@@ -48,6 +50,8 @@ export default class NodePanel extends Component {
         this.setDiagramReadyStatus = this.setDiagramReadyStatus.bind(this)
         this.updateUniqueNodePaths = this.updateUniqueNodePaths.bind(this);
         this.setUnqiueExecutionPathOfSystem=this.setUnqiueExecutionPathOfSystem.bind(this);
+        this.slideToSide = this.slideToSide.bind(this);
+        this.getSlideStyle =this.getSlideStyle.bind(this);
     }
 
 
@@ -247,31 +251,99 @@ componentDidUpdate(prevProps, prevState, snapshot) {
 
 
 
+    /*
+    Sets the status of the node panel to slide
+
+    3 status
+
+     1: open-> when panel is opened
+     2:closing -> panel is getting closed (transition step)
+     3:closed-> finished closing
+
+
+     */
+    slideToSide(identifier, status){
+        const currentStatus = this.state["slide"+identifier];
+        if(currentStatus==="closing") return;
+
+        const timeOut=500;//300ms wait for transition
+
+        if(status==="open")
+        this.setState({
+            ["slide"+identifier]:"open"
+        })
+        else if(status==="closing"){
+            this.setState({
+                ["slide"+identifier]:"closing"
+            },()=>
+                setTimeout( () => {
+                    this.setState( prevState => ({
+                        ["slide"+identifier]:"closed"
+                    }));
+                }, timeOut)
+            )
+        }
+    }
+
+    getSlideStyle(identifier){
+
+        const slideStatus = this.state["slide"+identifier]
+        if(slideStatus==="open"){
+            return "col-md-3"
+        }
+        else if(slideStatus==="closing"){
+            return "col-md-1 collapsedPanel"
+        }
+
+        else if(slideStatus==="closed"){
+            return "collapsedPanel"
+        }
+
+
+    }
 
     render() {
 
-        //hiding instead of unrendering to keep the graph
-        const hide ={
-            display:"none"
-        }
-
+        const slideStyle1 = this.getSlideStyle(1)
+        const slideStyle2 =this.getSlideStyle(2);
+        const slideStatus1 = this.state.slide1==="open"?"closing":"open";
+        const slideStatus2 = this.state.slide2==="open"?"closing":"open"
         return (
 
 
         <Container fluid>
+            <Row className={"justify-content-between navPanelHeader"}>
+                <Col md={1} sm={1} xs={1} className={`d-flex justify-content-start`}>
+                    <div  className={` nodeSlideButton  ${this.props.renderMode===2 ? "hide":""}`} style={{marginLeft:"-15px"}} onClick={()=>this.slideToSide(1,slideStatus1)}>
+                        <i className={`fa ${slideStatus1==="open"? "fa-chevron-right":"fa-chevron-left"}`}></i>
+                        <i className={`fa ${slideStatus1==="open"? "fa-chevron-right":"fa-chevron-left"}`}></i>
+                        <i className={`fa ${slideStatus1==="open"? "fa-chevron-right":"fa-chevron-left"}`}></i>
+
+                    </div>
+                </Col>
+                <Col md={1}  sm={1} xs={1} className={`d-flex justify-content-end `}>
+                    <div onClick={()=>this.slideToSide(2,slideStatus2)} style={{marginRight:"-15px"}}className={` nodeSlideButton ${this.props.renderMode===0 ? "hide":""}`}>
+                        <i className={`fa ${slideStatus2==="open"? "fa-chevron-left":"fa-chevron-right"}`}></i>
+                        <i className={`fa ${slideStatus2==="open"? "fa-chevron-left":"fa-chevron-right"}`}></i>
+                        <i className={`fa ${slideStatus2==="open"? "fa-chevron-left":"fa-chevron-right"}`}></i>
+
+                    </div>
+                </Col>
+            </Row>
             <Row className={"justify-content-center"}>
 
-                <Col style = {this.props.renderMode===2 ? hide:{}} md={3}>
-                    <Node uniqueExecutionPath={this.state.nodeUniqueExecutionPath2}
+                <div  className= {`${this.props.renderMode===2 ? "hide":""} ${slideStyle1}`} >
+                    <Node style = {this.state.slide1==="closing"?{marginRight:"150%"}:{}}
+                            uniqueExecutionPath={this.state.nodeUniqueExecutionPath2}
                           uniqueExecutionPathList={this.state.uniqueExecutionPathList1}
                           data={this.props.nodeData1}  nodeID={"diagram1"}
                           identifier={1}
                           setUniqueExecutionPath={this.setUnqiueExecutionPathOfSystem}
                           />
-                </Col>
+                </div>
 
                 <Col  id="diagrams">
-                <div style = {this.props.renderMode===2 ? hide:{}} >
+                <div className={this.props.renderMode===2 ? "hide":""}  >
 
 
                 <Diagram  showNodeDetails={this.props.showNodeDetails}
@@ -290,7 +362,7 @@ componentDidUpdate(prevProps, prevState, snapshot) {
 
                 </div>
 
-                    <div style = {this.props.renderMode===0 ? hide:{}} >
+                    <div className = {this.props.renderMode===0 ? "hide":""} >
 
 
                         <Diagram  showNodeDetails={this.props.showNodeDetails}
@@ -312,14 +384,18 @@ componentDidUpdate(prevProps, prevState, snapshot) {
                     </div>
                 </Col>
 
-                <Col style = {this.props.renderMode===0 ? hide:{}}  md={3}>
-                    <Node uniqueExecutionPath={this.state.nodeUniqueExecutionPath1}
+                <div   className={ `${this.props.renderMode===0 ? "hide":""} ${slideStyle2}`} >
+                    <div className={"d-flex justify-content-end"}>
+
+                    </div>
+                    <Node style = {this.state.slide2==="closing"?{marginLeft:"150%"}:{}}
+                          uniqueExecutionPath={this.state.nodeUniqueExecutionPath1}
                           uniqueExecutionPathList={this.state.uniqueExecutionPathList2}
                           data={this.props.nodeData2}    nodeID={"diagram2"}
                           identifier={2} setUniqueExecutionPath={this.setUnqiueExecutionPathOfSystem}
 
                     />
-                </Col>
+                </div>
 
             </Row>
         </Container>
