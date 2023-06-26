@@ -163,6 +163,11 @@ export default class Application extends Component {
         //Save the string version of data with the rest of it
         diagramData1['string_execution_paths'] = string_Data[0][0]
         diagramData2['string_execution_paths'] = string_Data[0][1]
+
+        /*Execution Path Names has same data as string_execution_paths but in different format
+        String_execution_paths format: functionName(full absolute path to file of function)->nextFunctionName...
+        String_execution_path_names format: functionName(name of the file of function only)->nextFunctionName...
+         */
         diagramData1['string_execution_path_names'] = string_Data[1][0]
         diagramData2['string_execution_path_names'] = string_Data[1][1]
 

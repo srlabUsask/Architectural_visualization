@@ -123,7 +123,8 @@ export default class Node extends Component {
     }
 
     handleUniqueExecutionPathChange(e){
-        this.props.setUniqueExecutionPath(e.target.value, this.props.identifier)
+        if(e.target.value!=="None")
+            this.props.setUniqueExecutionPath(e.target.value, this.props.identifier)
     }
 
     render() {

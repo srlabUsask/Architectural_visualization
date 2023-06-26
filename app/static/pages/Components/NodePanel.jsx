@@ -136,9 +136,10 @@ componentDidUpdate(prevProps, prevState, snapshot) {
         if(this.props.diagramData1===undefined || this.props.diagramData2===undefined) return
         for (let j = 0; j < 2; j++) {
             let unique = [];
-            const execution_paths = this.props["diagramData"+(j+1)]["string_execution_paths"];
+            unique.push(<option key={"None"} value={"None"}>Select Unique Execution Path</option>)
+            const execution_paths = this.props["diagramData"+(j+1)]["string_execution_path_names"];
             for (let i = 0; i < execution_paths.length; i++) {
-                const index = (this.props["diagramData"+(((j+1)%2)+1)]["string_execution_paths"].indexOf(execution_paths[i]));
+                const index = (this.props["diagramData"+(((j+1)%2)+1)]["string_execution_path_names"].indexOf(execution_paths[i]));
 
 
                 if (index === -1) {
