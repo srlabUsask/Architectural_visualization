@@ -1,5 +1,6 @@
 import React, {Component, useEffect} from 'react';
 import {Accordion} from "react-bootstrap";
+import Select from "react-select";
 
 
 
@@ -123,11 +124,31 @@ export default class Node extends Component {
     }
 
     handleUniqueExecutionPathChange(e){
-        if(e.target.value!=="None")
-            this.props.setUniqueExecutionPath(e.target.value, this.props.identifier)
+        if(e.value!=="None")
+            this.props.setUniqueExecutionPath(e.value, this.props.identifier)
     }
 
     render() {
+
+        //Select styles
+        const colourStyles = {
+            menuList: styles => ({
+                ...styles,
+            }),
+            option: (styles, {isFocused, isSelected}) => ({
+                ...styles,
+                background: isSelected
+                        ? 'hsl(0deg 0% 30.16%)'
+                        : undefined,
+                fontSize:isSelected?
+                            "13px" : "12px",
+                transition:isFocused? "all 0.1s ease" :"transition: all 0.25s ease"
+            }),
+
+        }
+
+
+
         return (
 
             <div className={"nodePanel"} style={this.props.style}>
@@ -211,9 +232,13 @@ export default class Node extends Component {
                 <div className="row unique_paths">
                     <div className="col">
                         <b> Show Unique Execution Path For Subject System {this.props.identifier} </b>
-                        <select onChange={this.handleUniqueExecutionPathChange} className="form-control" title="unique_paths" name="unique_paths">
-                        {this.props.uniqueExecutionPath.length===0? <option value="None">None</option>:this.props.uniqueExecutionPath }
-                        </select>
+
+
+                        <Select styles={colourStyles} defaultValue={"None"} options={ this.props.uniqueExecutionPath} onChange={this.handleUniqueExecutionPathChange}
+
+                                getOptionLabel={option => option.label}
+                                getOptionValue={option => option.value}
+                        />
                     </div>
                 </div>
 

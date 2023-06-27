@@ -71,13 +71,18 @@ Nav bar arrow icon
 .hide{
   display:none !important;
 }
+
+*{
+  overflow: visible;
+}
 /*
 Changing the scrollbar of the accordion
 */
 .nodePanel{
-  overflow: hidden;
+
   transition: all 0.5s ease;
 }
+
 
 .nodePanel .vertical-scrollbar{
   max-height: 300px;
@@ -93,11 +98,76 @@ Changing the scrollbar of the accordion
   font-size: 13px;
   display: block;
 }
-.vertical-scrollbar{
+
+/*
+React Select styles
+ */
+.nodePanel .unique_paths div[class$="control"]{
+  cursor: pointer;
+}
+.nodePanel .unique_paths div[class$="menu"]{
+  overflow: visible !important;
+  cursor: pointer;
+}
+.nodePanel .unique_paths div[class$="menu"] *{
+  cursor: pointer;
+}
+.nodePanel .unique_paths div[class$="MenuList"] div[class$="option"]{
+  border:1px grey solid;
+  border-left: none;
+  border-right: none;
+  padding: 13px 8px;
+}
+
+.nodePanel .unique_paths div[class$="MenuList"] div[class$="option"]:hover{
+  transition: all 0.25s ease;
+  color:white;
+  background-color: black;
+  font-weight: bold;
+  font-size: 12.5px;
+}
+
+.nodePanel .unique_paths div[class$="MenuList"] div[class$="option"]:active{
+  transition: all 0.1s ease;
+  color:white;
+  background-color: #2f2f2f;
+  font-size: 12.5px;
+
+}
+.nodePanel .unique_paths div[class$="MenuList"] div[class$="option"]:checked{
+  transition: all 0.1s ease;
+  color:white;
+  background-color: #2f2f2f;
+  font-size: 12px;
+}
+.nodePanel .unique_paths div[class$="MenuList"]::-webkit-scrollbar-track
+{
+  border-radius: 6px;
+  background-color: #f3f0f0;
+  -webkit-box-shadow: inset 0 0 7px rgba(0,0,0,0.28);
+}
+
+.nodePanel .unique_paths div[class$="MenuList"]::-webkit-scrollbar
+{
+  width: 5px;
+  height: 5px;
+  background-color: #f3f0f0;
+}
+
+.nodePanel .unique_paths div[class$="MenuList"]::-webkit-scrollbar-thumb
+{
+  -webkit-box-shadow: inset 0 0 7px rgba(0,0,0,.28);
+  border-radius: 8px;
+  background-color: #575757;
+}
+
+.vertical-scrollbar,.nodePanel .unique_paths div[class$="MenuList"]{
   overflow-y: auto;
   word-wrap: break-word;
   padding-right: 7px;
 }
+
+
 select.form-control{
   cursor: pointer;
 }
@@ -125,7 +195,6 @@ accordion files section list
   font-size: 15px;
 
 }
-
 
 .vertical-scrollbar::-webkit-scrollbar-track
 {
@@ -245,9 +314,13 @@ Diagrams
 }
  .collapsedPanel{
   width:0% !important;
-   overflow: hidden;
+   overflow: hidden !important;
    word-break: keep-all;
+
 }
+ .collapsedPanel *{
+   overflow: hidden !important;
+ }
  .navPanelHeader{
    margin-left: -20px;
    margin-right: -20px;
