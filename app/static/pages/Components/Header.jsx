@@ -2,7 +2,7 @@ import React, {Component, createRef} from "react";
 
 import $ from 'jquery';
 import {Col, Row, ToggleButtonGroup, ToggleButton, Container} from "react-bootstrap";
-
+import Select from "react-select/base";
 
 /*
 Creates the header(navbar) of the website\
@@ -194,7 +194,7 @@ export default class Header extends Component {
                             <b> Technique to label nodes</b> <br/>
 
 
-                                <select onChange={this.handleTechniqueChange} title={"technique_choice"} name="technique_choice" id="technique_choice_id" className={"form-control"}>
+                                <select style={{overflow:"visible"}} onChange={this.handleTechniqueChange} title={"technique_choice"} name="technique_choice" id="technique_choice_id" className={"form-control"}>
                                     {this.props.technique_choices.map(function(object, i){
 
 
