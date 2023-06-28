@@ -18,9 +18,7 @@ CORS(app)
 
 ROOT = config.ROOT + '/output/'
 SUBJECT_SYSTEMS = glob.glob1(ROOT, 'TREE_DICT*')
-print(SUBJECT_SYSTEMS)
 NUMBER_OF_SUBJECT_SYSTEMS = len(SUBJECT_SYSTEMS)
-print(NUMBER_OF_SUBJECT_SYSTEMS)
 similarity = {}
 unique_execution_paths = {}
 
@@ -34,19 +32,19 @@ def root():
                          'lda_method', 'lda_word', 'lda_method_and_docstring', 'lda_word_and_docstring', 'lsi_method',
                          'lsi_word', 'lsi_method_and_docstring', 'lsi_word_and_docstring', 'text_rank',
                          'tree_context_based_label']
-    return render_template('home.html', subject_systems=SUBJECT_SYSTEMS, technique_choices=TECHNIQUE_CHOICES)
+    return render_template('visualization_app/App.html', subject_systems=SUBJECT_SYSTEMS, technique_choices=TECHNIQUE_CHOICES)
 
 
-@app.route('/get_cluster/', methods=['GET'])
+@app.route('/get_cluster', methods=['POST'])
 def get_cluster():
     """
     Returns the clusters trees of the two subject systems but first calculates the similarity values of each node in one
     cluster tree with every node in the other cluster tree
     """
-    subject_system = request.args.get('subject_system')
-    other_subject_system = request.args.get('other_subject_system')
+    form = request.form
+    subject_system = form.get('subject_system')
+    other_subject_system = form.get('other_subject_system')
     with open(ROOT + subject_system, 'r') as f:
-        print(subject_system)
         content = f.read()
         clusters = eval(content)
 
@@ -80,13 +78,14 @@ def get_cluster():
     similarity[other_subject_system] = other_cluster_similarity
     return jsonify(clusters)
 
-@app.route('/get_similarity/', methods=['GET'])
+@app.route('/get_similarity/', methods=['POST'])
 def get_similarity():
     """
     Returns similarity values array based on a given node
     """
-    subject_system = request.args.get('subject_system')
-    key = request.args.get('key')
+    subject_system = request.form.get('subject_system')
+    key = request.form.get('key')
+
     return similarity[subject_system][key]
 
 
