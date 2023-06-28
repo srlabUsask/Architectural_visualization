@@ -129,7 +129,7 @@ export default class Node extends Component {
     render() {
         return (
 
-            <div className={"nodePanel"}>
+            <div className={"nodePanel"} style={this.props.style}>
                 <div className={"nodeCountInfo"}>
                 <p>Node Key:<b>   {this.props.data.key}</b></p>
                 <p> Number of Files:<b>   {this.props.data.numberOfFiles} </b></p>
