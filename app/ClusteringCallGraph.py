@@ -39,6 +39,7 @@ SUBJECT_SYSTEM_NAME = config.SUBJECT_SYSTEM_NAME
 OUTPUT_DIRECTORY = ROOT + '/output/'
 DATASET = ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".txt"
 EXECUTION_PATTERNS = config.EXECUTION_PATTERNS
+IS_PYTHON=config.IS_PYTHON
 DOC2VEC = config.DOC2VEC
 document_nodes = DocumentNodes(OUTPUT_DIRECTORY, SUBJECT_SYSTEM_NAME, EXECUTION_PATTERNS)
 
@@ -87,7 +88,10 @@ class ClusteringCallGraph:
         # plt.show()
         # self.extracting_source_and_exit_node()
         start = timer()
-        self.pythonbuildgraph(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
+        if(IS_PYTHON):
+            self.pythonbuildgraph(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
+        else:
+            self.buildgraph(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
 
         # See what are the entry nodes
         # for i in self.entry_point:
@@ -381,6 +385,7 @@ class ClusteringCallGraph:
                     stack.pop()
                 except Exception as e:
                     pass
+
 
     def process_docstring(self, doc):
         """
