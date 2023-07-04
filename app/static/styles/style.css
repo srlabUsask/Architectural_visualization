@@ -124,14 +124,14 @@ React Select styles
   color:white;
   background-color: black;
   font-weight: bold;
-  font-size: 12.5px;
+
 }
 
 .nodePanel .unique_paths div[class$="menu"] div[class$="option"]:active{
   transition: all 0.1s ease;
   color:white;
   background-color: #2f2f2f;
-  font-size: 12.5px;
+
 
 }
 .nodePanel .unique_paths div[class$="menu"] div[class$="option"]:checked{
@@ -342,7 +342,6 @@ Diagrams
 
 
 .diagram {
-  height: 400px;
   border: 1px solid black;
   margin: 2px
 }
