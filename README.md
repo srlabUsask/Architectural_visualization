@@ -31,10 +31,11 @@ all files in app/output that will be rendered in website will cause error, becau
 2) setup config.py in /app
 
    2.1) set root to the absolute path of the app folder(same as in the terminal)
-   should look like "path"/Architectural_visualization/app
-   2.2) set SUBJECT_SYSTEM_NAME to name of the call log created in step 1(without extension)
-   2.3) set EXECUTION_PATTERNS if necessary to display the patterns in website
-   2.4) set DOC2VEC to True if necessary to use DOC2Vec instead of Jaccard Similarity
+   should look like "path"/Architectural_visualization/app \
+   2.2) set SUBJECT_SYSTEM_NAME to name of the call log created in step 1(without extension)\
+   2.3) set EXECUTION_PATTERNS if necessary to display the patterns in website\
+   2.4) set DOC2VEC to True if necessary to use DOC2Vec instead of Jaccard Similarity\
+   2.5) set IS_PYTHON to False if using CRHMcode InstrumentLogger created log file. True if using python_logger.py created log file.
 
 3) create execution file output by running ClusteringCallGraph.py
    python3 ClusteringCallGraph.py

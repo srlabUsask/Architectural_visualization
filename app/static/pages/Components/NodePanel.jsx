@@ -347,10 +347,13 @@ componentDidUpdate(prevProps, prevState, snapshot) {
                 <div className={this.props.renderMode===2 ? "hide":""}  >
 
 
-                <Diagram  showNodeDetails={this.props.showNodeDetails}
+                <Diagram
+                    height={ this.props.renderMode===1?{height:"400px"}:{height:"800px"}}
+                    key={"fullDiagram1"+this.props.drawMode}
+                    showNodeDetails={this.props.showNodeDetails}
                          cluster={this.props.diagramData1['cluster']} technique={this.props.technique}
                          nodeKeys={[this.props.nodeData1.key,this.props.nodeData2.key]}//used for finding unique keys
-                         diagramID={"fullDiagram1"} identifier={1} key={"directory1"}
+                         diagramID={"fullDiagram1"} identifier={1}
                          diagram={this.diagram1} updateSimilarity={this.updateSimilarity}
                          setReadyStatus={this.setDiagramReadyStatus}
                          updateUniqueNodePaths={this.updateUniqueNodePaths}
@@ -363,17 +366,20 @@ componentDidUpdate(prevProps, prevState, snapshot) {
 
                 </div>
 
-                    <div className = {this.props.renderMode===0 ? "hide":""} >
+                    <div className = {this.props.renderMode===0 ? "hide":""}>
 
 
-                        <Diagram  showNodeDetails={this.props.showNodeDetails}
+                        <Diagram
+                            height={ this.props.renderMode===1?{height:"400px"}:{height:"800px"}}
+                            key={"fullDiagram2"+this.props.drawMode}
+                            showNodeDetails={this.props.showNodeDetails}
                                   cluster={this.props.diagramData2['cluster']} technique={this.props.technique}
                                   nodeKeys={[this.props.nodeData1.key,this.props.nodeData2.key]}//used for finding unique keys
                                   diagramID={"fullDiagram2"} identifier={2}
                                   updateSimilarity={this.updateSimilarity}
                                   updateUniqueNodePaths={this.updateUniqueNodePaths}
                                   setReadyStatus={this.setDiagramReadyStatus}
-                                  drawMode={this.props.drawMode} key={"tree2"}
+                                  drawMode={this.props.drawMode}
                                   diagram={this.diagram2}
                                   searchedExecutionPaths = {this.props.searchedExecutionPaths}
                                   sameExecutionPath={this.props.sameExecutionPath[1]}
