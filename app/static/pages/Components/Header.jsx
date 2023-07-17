@@ -2,7 +2,7 @@ import React, {Component, createRef} from "react";
 
 import $ from 'jquery';
 import {Col, Row, ToggleButtonGroup, ToggleButton, Container} from "react-bootstrap";
-import Select from "react-select/base";
+import Select from "react-select";
 
 /*
 Creates the header(navbar) of the website\
@@ -93,8 +93,8 @@ export default class Header extends Component {
     }
 
     handleSameExecutionPathChange(e){
-        if(e.target.value!=="None")
-        this.props.setSameExecutionPath(e.target.value)
+        if(e.value!=="None")
+        this.props.setSameExecutionPath(e.value)
     }
 
     handleUniqueC
@@ -104,25 +104,24 @@ export default class Header extends Component {
     }
 
     setUpSameExecutionPaths(){
-        //if no file is selected yet
-        if(this.props.stringExecutionPathNames[0]===undefined || this.props.stringExecutionPathNames[1]===undefined){
-            return ""
-        }
+
 
         let same = [];
-        same.push(<option key={0} value={"None"}>Select execution Path</option>)
+        same.push({ value:"None", label:"Select execution path"})
+
+        //if no file is selected yet
+        if(this.props.stringExecutionPathNames[0]===undefined || this.props.stringExecutionPathNames[1]===undefined){
+            return same
+        }
         for (let j = 0; j < 2; j++) {
-            let unique = [];
             const execution_paths = this.props.stringExecutionPathNames[j];
             for (let i = 0; i < execution_paths.length; i++) {
                 const index = (this.props.stringExecutionPathNames[(j + 1) % 2].indexOf(execution_paths[i]));
-                if (j === 0 && this.state.renderMode===1) {
-                    same.push(<option key={String(j)+":"+i} value={"["+i+","+index+"]"}>{execution_paths[i]}</option>);
+                if (j === 0 && this.state.renderMode===1 && index !==-1) {
+                    same.push({ value:"["+i+","+index+"]", label:execution_paths[i]})
+
                 }
             }
-
-
-
 
         }
 
@@ -158,6 +157,22 @@ export default class Header extends Component {
         $(this.collapseHeader.current).slideToggle();
     }
     render() {
+        //Select styles
+        const colourStyles = {
+            menuList: styles => ({
+                ...styles,
+            }),
+            option: (styles, {isFocused, isSelected}) => ({
+                ...styles,
+                background: isSelected
+                    ? 'hsl(0deg 0% 30.16%)'
+                    : undefined,
+                fontSize:isSelected?
+                    "13px" : "12px",
+                transition:isFocused? "all 0.1s ease" :"transition: all 0.25s ease"
+            }),
+
+        }
         const sameExecutionPaths = this.setUpSameExecutionPaths();
         const collapseStyle = this.state.collapsed ?  "navBarOpaque":"";
         const collapseIcon = !this.state.collapsed ? "fa-angle-up":"fa-angle-down navToggled"
@@ -249,11 +264,14 @@ export default class Header extends Component {
                     {this.state.renderMode===1 &&
                     <Container fluid id="same_execution_paths_block">
 
-                        <div >
+                        <div className={"reactSelect"}>
                             <b> Show Same Execution Path </b> <br/>
-                            <select  onChange={this.handleSameExecutionPathChange} title="Same Execution Path" className={"form-select"} name="same_paths" id="same_execution_paths">
-                                {sameExecutionPaths===""? <option value="None">None</option>:sameExecutionPaths}
-                            </select>
+
+                            <Select styles={colourStyles} defaultValue={"None"} options={ sameExecutionPaths} onChange={this.handleSameExecutionPathChange}
+
+                                    getOptionLabel={option => option.label}
+                                    getOptionValue={option => option.value}
+                            />
                         </div>
 
                     </Container>

@@ -61,9 +61,9 @@ export default class Diagram extends Component {
             if(JSON.stringify(cluster)!==JSON.stringify(prevCluster) || prevProps.technique!== this.props.technique){
 
 
-                    this.props.setReadyStatus(this.props.identifier, false)//disable readiness untill its updated
+                    this.props.setReadyStatus(this.props.identifier, false,this.setupDiagram)//disable readiness untill its updated
 
-                    this.setupDiagram();
+              
 
             }
 
@@ -189,10 +189,13 @@ export default class Diagram extends Component {
                 //on graph model only dropdown button has array value of Dh instead of null
                 if (!(subject.part instanceof go.Link) && subject.Dh===null) {
                     component.props.showNodeDetails(subject.part, component.props.identifier);
+                    
 
+                    const key1 = component.props.identifier===1?subject.part.key:component.props.nodeKeys[0];
+                    const key2 = component.props.identifier===2?subject.part.key:component.props.nodeKeys[1];
+                    
 
-                    const key1 = component.props.nodeKeys[0];
-                    const key2 = component.props.nodeKeys[1];
+            
                     if(key1!==undefined && key2!==undefined) {
                         component.props.updateUniqueNodePaths(key1,key2);
                     }
@@ -203,6 +206,20 @@ export default class Diagram extends Component {
 
         return diagram;
     }
+
+
+
+
+
+
+    //Updates the unique paths of the given nodes
+    //Isolated
+    updateUniqueNodePaths(){
+
+    }
+
+
+
 
 
 
@@ -287,8 +304,13 @@ export default class Diagram extends Component {
                 if (!(subject.part instanceof go.Link)) {
                     // showUserStudyPanel(subject.part);
                     component.props.showNodeDetails(subject.part, component.props.identifier);
-                    const key1 = component.props.nodeKeys[0];
-                    const key2 = component.props.nodeKeys[1];
+                    
+
+                    
+                    const key1 = component.props.identifier===1?subject.part.key:component.props.nodeKeys[0];
+                    const key2 = component.props.identifier===2?subject.part.key:component.props.nodeKeys[1];
+                    
+
                     if(key1!==undefined && key2!==undefined) {
 
                         component.props.updateUniqueNodePaths(key1, key2);
@@ -326,6 +348,8 @@ export default class Diagram extends Component {
         if(cluster===undefined || cluster.length===0) return;
         const myDiagram = this.props.diagram.current.getDiagram();
         for (let x in cluster) {
+
+
             nodeDataArray.push({
                 key: cluster[x].key,
                 parent: cluster[x].parent,

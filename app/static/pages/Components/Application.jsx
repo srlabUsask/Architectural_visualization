@@ -1,8 +1,10 @@
-import React, { Component } from 'react';
+import React, { Component, createRef } from 'react';
 import Header from "./Header";
 import NodePanel from "./NodePanel"
+import NodeInformationPanel from "./NodeInformationPanel"
 import * as go from 'gojs';
 import  "../../styles/style.css"
+import {Button} from "react-bootstrap";
 
 
 /*
@@ -72,6 +74,11 @@ export default class Application extends Component {
             searchedExecutionPaths:[],
             subjectSystemRenderMode:1, //0 renders only subject system 1, 1 renders both, 2 renders system 2
             diagramDrawMode:0,//0 renders as dictionary, 1 renders as tree
+
+
+            //Node informations
+            nodeInformationOpen:false,
+            nodeInformationData:{}
         }
 
 
@@ -87,6 +94,7 @@ export default class Application extends Component {
         this.setSameExecutionPath=this.setSameExecutionPath.bind(this);
         this.setHighlightFunction=this.setHighlightFunction.bind(this);
         this.findExecutionPathsForFunction=this.findExecutionPathsForFunction.bind(this);
+        this.setNodeInformationState = this.setNodeInformationState.bind(this);
     }
 
 
@@ -170,7 +178,7 @@ export default class Application extends Component {
          */
         diagramData1['string_execution_path_names'] = string_Data[1][0]
         diagramData2['string_execution_path_names'] = string_Data[1][1]
-
+       
 
         this.setState({
             selectedSubjectSystems:[systemData.selectedSubjectSystems[0],systemData.selectedSubjectSystems[1]],
@@ -179,6 +187,8 @@ export default class Application extends Component {
             diagramData1:diagramData1,
             diagramData2:diagramData2,
             functionSearchData:functionSearchData,
+            nodeData1:{},
+            nodeData2:{}
         })
 
     }
@@ -436,10 +446,34 @@ export default class Application extends Component {
 
 
 
+    /*
+    Node information control
+     */
+
+
+    setNodeInformationState(state,nodeData={}){
+
+
+
+        this.setState({
+            nodeInformationOpen: state,
+            nodeInformationData:nodeData
+        })
+
+    }
+
+
+
+
+
+
+
 
     render() {
         return (
             <div>
+            <div>
+
                 <Header setSystemRenderMode={this.setSystemRenderMode} initializeGraph={this.initializeGraph}
                         subject_systems={this.state.subjectSystems} technique_choices={this.state.techniqueChoices}
                         stringExecutionPaths={[this.state.diagramData1['string_execution_paths'], this.state.diagramData2['string_execution_paths']]}
@@ -464,6 +498,7 @@ export default class Application extends Component {
                            diagramData1={this.state.diagramData1} diagramData2={this.state.diagramData2}
                            showNodeDetails={this.showNodeDetails}
                            searchedExecutionPaths={this.state.searchedExecutionPaths}
+                           setNodeInformationState={this.setNodeInformationState}
 
 
                 />
@@ -476,6 +511,24 @@ export default class Application extends Component {
 
 
                 </footer>
+            </div>
+
+            {/*
+                {this.state.nodeInformationOpen &&
+                <div >
+
+                    <Button onClick={()=>this.setNodeInformationState(false)}>RETURN</Button>
+
+
+                    <NodeInformationPanel key={this.state.nodeInformationOpen.key} data={this.state.nodeInformationData}/>
+
+
+
+                </div>
+
+                }
+            */}
+
             </div>
 
         )
