@@ -204,8 +204,14 @@ componentDidUpdate(prevProps, prevState, snapshot) {
 
     // Updates the node details panels with the unique execution paths for each of the two nodes being compared
      updateUniqueNodePaths(key1, key2,identifier) {
+
+
+
          const unique_paths1 = this.state.diagramUniqueExecutionPaths.diagram1[key1][key2];
-         const unique_paths2 = this.state.diagramUniqueExecutionPaths.diagram2[key1][key2];
+         const unique_paths2 = this.state.diagramUniqueExecutionPaths.diagram2[key2][key1];
+        
+ 
+
 
          if(unique_paths1===undefined || unique_paths2===undefined) return;
 
