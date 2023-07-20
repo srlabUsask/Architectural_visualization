@@ -28,6 +28,7 @@ from numpy import mean
 from numpy import any
 import nltk
 
+import DocstringExtractor
 import config
 import util
 import ast
@@ -67,6 +68,9 @@ class ClusteringCallGraph:
     function_id_to_line_num = {}
     function_to_docstring = {}
     function_id_to_name_file = {}
+    function_name_to_id={}
+    function_full_text={}
+    function_id_to_full_name={}
     w2v_model = None
     d2v_model = None
 
@@ -215,7 +219,7 @@ class ClusteringCallGraph:
         # Initialises the documents and data structures that will be used to save the cluster tree
         document_nodes.initialize_graph_related_data_structures(self.execution_paths, self.function_id_to_name,
                                                                 self.function_id_to_file_name, self.id_to_sentence,
-                                                                self.function_to_docstring)
+                                                                self.function_to_docstring,self.function_id_to_full_name)
 
         # Creates a cluster tree and then labels each node in the tree
         start = timer()
@@ -246,6 +250,7 @@ class ClusteringCallGraph:
             if not "::" in line:
                 continue
             funname = ''
+            functionFullName=''
             if ':' in line:
                 funname = line.strip()[
                           line.find(':') + 2:line.find('(') - 0]  # ::OnHint
@@ -254,19 +259,33 @@ class ClusteringCallGraph:
                 funname = line.strip()[
                           1:line.find('(') - 0]  # void__fastcallTMain::OnHint
                 # print funname
-
+            functionIndex = int(line.strip()[line.rfind(">")+1:])
             filename = line.strip()[
-                       line.find('@@@') + 3: -1]  # CRHMmain.cpp_nocom
+                       line.find('@@@') + 3: line.rfind(">")]  # CRHMmain.cpp_nocom
+
+
             # --adding the root node--
 
             # Note usage of nearly all the line info was to make functions with
             # the same name be identified as unique functions
             if '</' not in line and line[1:-2] not in func_tracker:
+
+
+                functionFullName=line.strip()[1:line.find('@@@')] +"("+filename+")"
                 self.function_id_to_name[str(index)] = funname
                 self.function_id_to_file_name[str(index)] = filename
                 self.function_id_to_name_file[str(index)] = funname + '(' + filename + ')'
+                self.function_id_to_full_name[str(index)] = functionFullName
+                self.function_name_to_id[functionFullName] = str(index)
                 func_tracker[line[1:-2]] = str(index)
-                self.function_to_docstring[str(index)] = ''
+
+                #gets array with docstrings and function text
+                comments_and_function= DocstringExtractor.getDocString(filename,funname,functionIndex)
+                self.function_to_docstring[str(index)] =comments_and_function[0]
+
+
+                self.function_full_text[str(index)]=[comments_and_function[1]]
+
                 index += 1
 
             # root opening
@@ -451,7 +470,11 @@ class ClusteringCallGraph:
                      'function_id_to_name': self.function_id_to_name,
                      'function_id_to_file_name': self.function_id_to_file_name,
                      'execution_paths': self.execution_paths,
-                     'function_id_to_name_file': self.function_id_to_name_file}
+                     'function_id_to_name_file': self.function_id_to_name_file,
+                     'function_full_text':self.function_full_text,
+                     'function_name_to_id':self.function_name_to_id,
+                     'function_id_to_full_name': self.function_id_to_full_name
+                     }
 
         print(json_data, file=open(OUTPUT_DIRECTORY + 'TREE_DICT_' + self.subject_system, 'w'))
 

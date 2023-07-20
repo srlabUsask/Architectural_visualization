@@ -78,7 +78,8 @@ export default class Application extends Component {
 
             //Node informations
             nodeInformationOpen:false,
-            nodeInformationData:{}
+            nodeInformationData:{},
+            nodeInformationIdentifier:0
         }
 
 
@@ -169,6 +170,7 @@ export default class Application extends Component {
         const string_Data =  this.setUpStringExecutionPaths([diagramData1,diagramData2])
         const functionSearchData = this.setupSearchForFunction(diagramData1["function_id_to_name_file"], diagramData2["function_id_to_name_file"])
         //Save the string version of data with the rest of it
+
         diagramData1['string_execution_paths'] = string_Data[0][0]
         diagramData2['string_execution_paths'] = string_Data[0][1]
 
@@ -178,7 +180,8 @@ export default class Application extends Component {
          */
         diagramData1['string_execution_path_names'] = string_Data[1][0]
         diagramData2['string_execution_path_names'] = string_Data[1][1]
-       
+
+
 
         this.setState({
             selectedSubjectSystems:[systemData.selectedSubjectSystems[0],systemData.selectedSubjectSystems[1]],
@@ -314,8 +317,7 @@ export default class Application extends Component {
                 break
             }
             for(let f = 0; f < data['execution_paths'][key].length; f++){
-                eps_preety += data['function_id_to_name'][data['execution_paths'][key][f]]
-                eps_preety += '(' + data['function_id_to_file_name'][data['execution_paths'][key][f]] + ')'
+                eps_preety += data['function_id_to_full_name'][data['execution_paths'][key][f]]
 
                 eps_preety += '->' // Arrow (use Google to see the visual of this)
             }
@@ -337,7 +339,6 @@ export default class Application extends Component {
          let string_execution_Paths_names=[]
         for (let j = 0; j < 2; j++) {
              cluster = clusters[j]
-
              string_execution_paths[j] = [];
             string_execution_Paths_names[j]=[]
             const execution_paths = cluster['execution_paths'];
@@ -348,8 +349,7 @@ export default class Application extends Component {
                 for (let f = 0; f < execution_paths[i].length; f++) {
                     execution_path_string_name+=cluster['function_id_to_name'][execution_paths[i][f]]
                     execution_path_string_name+=" ( "+cluster['function_id_to_file_name'][execution_paths[i][f]].split("/").pop()+")"
-                    execution_path_string += cluster['function_id_to_name'][execution_paths[i][f]];
-                    execution_path_string += '(' + cluster['function_id_to_file_name'][execution_paths[i][f]] + ')';
+                    execution_path_string += cluster['function_id_to_full_name'][execution_paths[i][f]];
 
                     execution_path_string += ' -> ';
                     if(f!==execution_paths[i].length-1)
@@ -451,13 +451,14 @@ export default class Application extends Component {
      */
 
 
-    setNodeInformationState(state,nodeData={}){
+    setNodeInformationState(state,nodeData={},identifier){
 
 
 
         this.setState({
             nodeInformationOpen: state,
-            nodeInformationData:nodeData
+            nodeInformationData:nodeData,
+            nodeInformationIdentifier:identifier
         })
 
     }
@@ -472,7 +473,7 @@ export default class Application extends Component {
     render() {
         return (
             <div>
-            <div>
+            <div className={this.state.nodeInformationOpen?"hide":""}>
 
                 <Header setSystemRenderMode={this.setSystemRenderMode} initializeGraph={this.initializeGraph}
                         subject_systems={this.state.subjectSystems} technique_choices={this.state.techniqueChoices}
@@ -513,21 +514,23 @@ export default class Application extends Component {
                 </footer>
             </div>
 
-            {/*
                 {this.state.nodeInformationOpen &&
                 <div >
 
-                    <Button onClick={()=>this.setNodeInformationState(false)}>RETURN</Button>
 
 
-                    <NodeInformationPanel key={this.state.nodeInformationOpen.key} data={this.state.nodeInformationData}/>
+
+                    <NodeInformationPanel identifier={this.state.nodeInformationIdentifier}
+                                          diagramData1={this.state.diagramData1} diagramData2={this.state.diagramData2}
+                                          setNodeInformationState={this.setNodeInformationState} key={this.state.nodeInformationOpen.key}
+                                          data={this.state.nodeInformationData}/>
 
 
 
                 </div>
 
                 }
-            */}
+
 
             </div>
 

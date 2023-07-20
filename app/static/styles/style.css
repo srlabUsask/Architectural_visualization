@@ -113,6 +113,47 @@ Node information button
 
 .nodeInformationDiagram{
   height: 800px;
+
+  overflow: hidden;
+}
+
+.informationPanelHeader{
+
+  background-color: #d2e3ef;
+  padding-top:30px;
+  padding-bottom: 25px;
+}
+
+.informationPanelHeader button{
+  font-size: 20px;
+  margin-right: 5px;
+}
+.informationPanelHeader button i{
+
+  font-weight: normal;
+}
+.nodeInformationBody{
+  margin-top:20px;
+  transition: none;
+}
+.nodeInformationBody>div{
+  transition: none !important;
+}
+.nodeInformationFunction{
+  border: 1px solid black;
+  padding-right: 0;
+  margin-top:2px;
+}
+.nodeInformationDiagram{
+  padding-left: 0;
+}
+.functionText {
+  height:798px;
+  font-size:15px;
+}
+.nodeInformationBody pre {
+  margin-bottom: 0px;
+
 }
 /*
 React Select styles

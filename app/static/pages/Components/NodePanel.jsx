@@ -138,9 +138,9 @@ componentDidUpdate(prevProps, prevState, snapshot) {
         for (let j = 0; j < 2; j++) {
             let unique = [];
             unique.push({   label:"Select Unique Execution Path", value:"None"})
-            const execution_paths = this.props["diagramData"+(j+1)]["string_execution_path_names"];
+            const execution_paths = this.props["diagramData"+(j+1)]["string_execution_paths"];
             for (let i = 0; i < execution_paths.length; i++) {
-                const index = (this.props["diagramData"+(((j+1)%2)+1)]["string_execution_path_names"].indexOf(execution_paths[i]));
+                const index = (this.props["diagramData"+(((j+1)%2)+1)]["string_execution_paths"].indexOf(execution_paths[i]));
 
 
                 if (index === -1) {

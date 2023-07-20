@@ -66,8 +66,9 @@ export default class Node extends Component {
 
                     //separate function name from path
                     let filePath = items[j].split("(")
-                    let functionName = filePath[0]
-                    filePath=filePath[1]
+                    let functionName = items[j].substring(items[j].indexOf("::")+2,items[j].indexOf("("))
+                    filePath=filePath[filePath.length-1];
+
 
                     filePath = filePath.substring(0,filePath.length-1)//exclude last closing parenthesis symbol
 
@@ -140,7 +141,6 @@ export default class Node extends Component {
     }
 
     render() {
-
         //Select styles
         const colourStyles = {
             menuList: styles => ({
@@ -166,7 +166,7 @@ export default class Node extends Component {
             patternsList=patterns[1]
             patterns = patterns[0]
         }
-        let nodeData={...this.props.data,executionPatternsList:patternsList}
+        let nodeData={...this.props.data,executionPatternsList:patternsList,uniqueExecutionPaths:this.props.uniqueExecutionPathList}
 
         return (
 
@@ -178,14 +178,14 @@ export default class Node extends Component {
                         <p> Number of Execution paths:<b>   {this.props.data.executionPathCount} </b></p>
                     </div>
 
-                    {/* this.props.data.key!==undefined &&
+                    { this.props.data.key!==undefined &&
                     <div className="col d-flex justify-content-end align-items-center">
 
-                            <Button variant={"outline-dark"} className={"nodeInformationButton"} onClick={()=>this.props.setNodeInformationState(true, nodeData)}>See more</Button>
+                            <Button variant={"outline-dark"} className={"nodeInformationButton"} onClick={()=>this.props.setNodeInformationState(true, nodeData,this.props.identifier)}>See more</Button>
 
                     </div>
 
-        */}
+                     }
                 </div>
                 <Accordion  alwaysOpen>
                     <Accordion.Item eventKey={1}>

@@ -1,7 +1,8 @@
 import React, {Component, createRef, useEffect} from 'react';
-import {Accordion, Button, Container} from "react-bootstrap";
+import {Accordion, Button, Col, Container, Row} from "react-bootstrap";
 import Select from "react-select";
 import {ReactDiagram} from "gojs-react";
+
 import * as go from "gojs";
 
 
@@ -12,14 +13,32 @@ export default class NodeInformationPanel extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            patterns:[]
+            patterns:[],
+            executionPaths:[],
+            functionText:"",
+            slide1:"open",
+            slide2:"open",
+
+
+            /*
+            Body render mode
+
+            function: renders function only
+            diagram: renders diagram only
+            both: renders both
+
+             */
+            renderMode:"both",
+
         }
 
         this.diagram = createRef();
 
         this.executionPathExtract = this.executionPathExtract.bind(this);
-        this.executionPatternsExtract=this.executionPatternsExtract.bind(this)
+        this.executionPathListextract=this.executionPathListextract.bind(this)
         this.initDiagram=this.initDiagram.bind(this);
+        this.specificExecutionPathExtract=this.specificExecutionPathExtract.bind(this);
+        this.setRenderMode=this.setRenderMode.bind(this);
     }
 
 
@@ -57,7 +76,8 @@ export default class NodeInformationPanel extends Component {
                     cursor:"pointer"
                 }),
                 $(go.TextBlock,{ font: '9pt Verdana, sans-serif',cursor:"pointer"},
-                    new go.Binding("text", "key"))
+
+                    new go.Binding("text", "nodeText"))
             );
 
         diagram.linkTemplate =
@@ -82,14 +102,42 @@ export default class NodeInformationPanel extends Component {
                 ) // end arrow Shape
             ); // end Link
 
+        const component=this;
+
+        diagram.addDiagramListener("ObjectSingleClicked",
+            function (e) {
+                const subject = e.subject;
+                //used subject.Dh to check if it is dropdown button
+                //on graph model only dropdown button has array value of Dh instead of null
+                if (!(subject.part instanceof go.Link) && subject.Dh===null) {
+                    let data = component.props["diagramData"+component.props.identifier];
+                    let currentID = data["function_name_to_id"][subject.part.key]
+
+
+                    //in case whitespace causes key to be non-recognizable
+                    if(currentID===undefined) currentID=data["function_name_to_id"][subject.part.key.trim()]
+
+                    component.setState({
+                        functionText: data["function_full_text"][currentID]
+                    })
+                }
+
+            });
         return diagram
     }
 
     componentDidMount() {
-        this.executionPathExtract()
+        this.executionPathExtract(this.props.data.executionPaths)
+
     }
 
-    executionPatternsExtract(){
+
+
+    /*
+    Takes execution Paths/patterns as array of arrays of strings
+   creates a diagram with "functionname(relative path)" format nodes
+     */
+    executionPathListextract(paths){
 
         let diagram=this.diagram.current;
         if(diagram===null) return
@@ -101,21 +149,25 @@ export default class NodeInformationPanel extends Component {
         let diagramElements=[];
         let diagramParents=[]
 
-        if(this.props.data.executionPatternsList===undefined) return //No execution pattern was mined for this file
+        if(paths===undefined) return //No execution pattern was mined for this file
 
-        for(let i=0;i<this.props.data.executionPatternsList.length;i++){
+        for(let i=0;i<paths.length;i++){
 
-            let functions = this.props.data.executionPatternsList[i]
+            let functions = paths[i]
 
             for(let j=0;j<functions.length;j++){
+
+
                 let index =functions[j].indexOf("(");
-                let functionName=functions[j].substring(0, index);
-                let functionPath=functions[j].substring(index+1, functions[j].length)
+                let splited=functions[j].split("(")
+                let start = functions[j].indexOf("::")>0? functions[j].indexOf("::")+2:0
+                let functionName=functions[j].substring(start, index);
+                functionName+="("+splited[splited.length-1].substring(0, splited[splited.length-1].length)
                 if(itemsInDiagram[functions[j]]===undefined){
                     itemsInDiagram[functions[j]]=1;//to keep track of items
 
 
-                    diagramElements.push({key:functions[j], data:functionName,functionPath:functionPath})
+                    diagramElements.push({key:functions[j],nodeText:functionName, description:functionName})
                 }
 
                 if(j!==0 && diagramPaths[functions[j-1]+"->"+functions[j]]===undefined){
@@ -140,67 +192,57 @@ export default class NodeInformationPanel extends Component {
 
 
 
+
+
     }
 
-    executionPathExtract(){
-
+    specificExecutionPathExtract(){
         let diagram=this.diagram.current;
 
         if(diagram===null) return
 
-        diagram=diagram.getDiagram();
-
-        let itemsInDiagram= {}//already in diagram
-        let diagramPaths={}
-        let diagramElements=[];
-        let diagramParents=[]
+    }
 
 
-        for(let i=0;i<this.props.data.executionPaths.length;i++){
+    /*
+    Takes array of string execution paths, coverts it into array of arrays of strings
+    callst executionPathListextract with the array
 
-            let functions = this.props.data.executionPaths[i].split("->")
-
-            for(let j=0;j<functions.length;j++){
-
-                if(functions[j]==="") continue
-
-                let index =functions[j].indexOf("(");
-                let functionName=functions[j].substring(0, index);
-                let functionPath=functions[j].substring(index+1, functions[j].length)
-
-
-                if(itemsInDiagram[functions[j]]===undefined){
-                    itemsInDiagram[functions[j]]=1;//to keep track of items
-
-
-                    diagramElements.push({key:functions[j],data:functionName, functionPath:functionPath})
-                }
-
-                if(j!==0 && diagramPaths[functions[j-1]+"->"+functions[j]]===undefined){
-                    diagramPaths[functions[j-1]+"->"+functions[j]]=1;
-
-                    diagramParents.push({from: functions[j-1], to: functions[j]})
-                }
+     */
+    executionPathExtract(paths){
 
 
 
-            }
+        if(paths===undefined ) return
+
+        let executionPathList=[]
 
 
+        for(let i=0;i<paths.length;i++){
+
+            let functions = paths[i].split("->").filter(e=>{return e.trim()!=="" && e.trim()!=="."});//split by arrow and filter out empty items and dots
+            executionPathList.push(functions)
 
 
         }
 
 
 
-
-        diagram.model = new go.GraphLinksModel(diagramElements,diagramParents);
-
+        this.executionPathListextract(executionPathList);
 
 
     }
 
+
+
+    setRenderMode(mode){
+        this.setState({
+            renderMode:mode
+        })
+    }
     render() {
+
+
 
 
         return (
@@ -209,15 +251,54 @@ export default class NodeInformationPanel extends Component {
 
             <div >
 
-                <Container>
-                    
-                    <Button onClick={this.executionPathExtract}>Execution Paths</Button>
-                    {this.props.data.executionPatternsList!==undefined && <Button onClick={this.executionPatternsExtract}>Execution Patterns</Button>}
-                </Container>
+
+                <div className="row justify-content-start informationPanelHeader">
+
+                    <div className="col d-flex justify-content-between">
+
+                        <div>
+                        <Button variant={"outline-dark"} onClick={()=>this.props.setNodeInformationState(false)}><i className="fa fa-arrow-left"></i>     Return</Button>
+
+                        <Button variant={"outline-dark"} onClick={()=>this.executionPathExtract(this.props.data.executionPaths)}>Execution Paths</Button>
+                        {this.props.data.executionPatternsList!==undefined && <Button variant={"outline-dark"} onClick={()=>this.executionPathListextract(this.props.data.executionPatternsList)}>Execution Patterns</Button>}
+                        {(this.props.data.uniqueExecutionPaths!==undefined && this.props.data.uniqueExecutionPaths.length>0)  && <Button variant={"outline-dark"} onClick={()=>this.executionPathExtract(this.props.data.uniqueExecutionPaths)}>Unique Execution Paths</Button>}
+                        </div>
+
+                        <div style={{marginRight:"15px"}}>
+                            <Button variant={"outline-dark"} onClick={()=>this.setRenderMode("function")}>Function only</Button>
+                            <Button variant={"outline-dark"} onClick={()=>this.setRenderMode("both")}>Both</Button>
+                            <Button variant={"outline-dark"} onClick={()=>this.setRenderMode("diagram")}>Diagram only</Button>
+
+
+                        </div>
+                    </div>
+                </div>
 
 
 
-                <ReactDiagram initDiagram={this.initDiagram} ref={this.diagram} divClassName={"nodeInformationDiagram"} />
+
+                <Row className={"nodeInformationBody"}>
+                    <div className={`${this.state.renderMode==="diagram"?"hide":""}  ${this.state.renderMode==="function"?"col-md-12":"col-md-6"} nodeInformationFunction`}>
+
+                        <div >
+                        <pre className={"vertical-scrollbar functionText"}>
+                            {this.state.functionText}
+                        </pre>
+                        </div>
+
+                    </div>
+
+
+
+
+                    <div className={`${this.state.renderMode==="function"?"hide":""} ${this.state.renderMode==="diagram"?"col-md-12":"col-md-6"} nodeInformationDiagram`}>
+
+                        <div >
+                             <ReactDiagram initDiagram={this.initDiagram} ref={this.diagram} divClassName={"nodeInformationDiagram diagram"} />
+                        </div>
+                    </div>
+
+                </Row>
             </div>
         );
     }
