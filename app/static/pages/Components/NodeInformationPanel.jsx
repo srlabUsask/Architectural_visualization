@@ -163,17 +163,34 @@ export default class NodeInformationPanel extends Component {
                 let start = functions[j].indexOf("::")>0? functions[j].indexOf("::")+2:0
                 let functionName=functions[j].substring(start, index);
                 functionName+="("+splited[splited.length-1].substring(0, splited[splited.length-1].length)
-                if(itemsInDiagram[functions[j]]===undefined){
-                    itemsInDiagram[functions[j]]=1;//to keep track of items
 
 
-                    diagramElements.push({key:functions[j],nodeText:functionName, description:functionName})
+                let key=functions[j]
+                let prevKey=j!==0? functions[j-1]:null;
+
+
+                //Remove <b> from key and prevKey
+                if(key.trim().substring(0,3)==="<b>"){
+                    key = key.substring(3,key.length-4)
                 }
 
-                if(j!==0 && diagramPaths[functions[j-1]+"->"+functions[j]]===undefined){
+                if(j!==0 && prevKey.trim().substring(0,3)==="<b>"){
+                    prevKey = prevKey.substring(3,prevKey.length-4)
+                }
 
-                    diagramPaths[functions[j-1]+"->"+functions[j]]=1;
-                    diagramParents.push({from: functions[j-1], to: functions[j]})
+
+
+                if(itemsInDiagram[key]===undefined){
+                    itemsInDiagram[key]=1;//to keep track of items
+
+
+                    diagramElements.push({key:key,nodeText:functionName, description:functionName})
+                }
+
+                if(j!==0 && diagramPaths[prevKey+"->"+key]===undefined){
+
+                    diagramPaths[prevKey+"->"+key]=1;
+                    diagramParents.push({from: prevKey, to: key})
                 }
 
 

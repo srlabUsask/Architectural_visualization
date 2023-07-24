@@ -425,11 +425,11 @@ export default class Application extends Component {
                 for(let f = 0; f < cluster['execution_paths'][eps[ep]].length; f++){
                     if(cluster['execution_paths'][eps[ep]][f] === indexes[j]){
 
-                        eps_preety += '<b>' + cluster['function_id_to_name'][cluster['execution_paths'][eps[ep]][f]] + '</b>';
-                        eps_preety += '(' + cluster['function_id_to_file_name'][cluster['execution_paths'][eps[ep]][f]] + ')';
+                        eps_preety += '<b>' + cluster['function_id_to_full_name'][cluster['execution_paths'][eps[ep]][f]] + '</b>';
+
                     }else{
-                        eps_preety += cluster['function_id_to_name'][cluster['execution_paths'][eps[ep]][f]];
-                        eps_preety += '(' + cluster['function_id_to_file_name'][cluster['execution_paths'][eps[ep]][f]] + ')';
+                        eps_preety += cluster['function_id_to_full_name'][cluster['execution_paths'][eps[ep]][f]];
+
 
                     }
 

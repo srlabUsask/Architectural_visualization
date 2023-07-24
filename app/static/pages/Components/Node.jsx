@@ -70,9 +70,12 @@ export default class Node extends Component {
                     filePath=filePath[filePath.length-1];
 
 
-                    filePath = filePath.substring(0,filePath.length-1)//exclude last closing parenthesis symbol
-
-
+                    if(filePath.substring(filePath.length-4,filePath.length)==="</b>"){
+                        filePath = filePath.substring(0, filePath.length - 5)//exclude last closing parenthesis and </br>
+                    }
+                    else {
+                        filePath = filePath.substring(0, filePath.length - 1)//exclude last closing parenthesis symbol
+                    }
                     if (!firstItem) {
 
                         //Setting the separator symbol for when new file is selected or new function in same file
@@ -99,10 +102,10 @@ export default class Node extends Component {
 
 
                     //Check if <b> tag exists in name
-                    if(functionName.substring(0,3)==="<b>"){//add the b tag and substing it from name
+                    if(items[j].trim().substring(0,3)==="<b>"){//add the b tag and substing it from name
                         EPblock.push(<p
                             key={"EPp2" + key + String(i) + ":" + String(items[i]) + String(j) + ":" + this.props.nodeID}
-                            className='functionName'><b>{functionName.substring(3,functionName.length-4)}</b></p>)
+                            className='functionName'><b>{functionName}</b></p>)
 
                     }
                     else {
