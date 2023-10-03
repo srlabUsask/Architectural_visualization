@@ -42,13 +42,14 @@ class DocumentNodes:
         self.function_id_to_name = {}
         self.function_id_to_file_name = {}
         self.function_to_docstring = {}
+
         self.id_to_sentence = {}
         self.execution_path_words = {}
         self.initalize_sheet()
         self.execution_patterns = execution_patterns
 
     def initialize_graph_related_data_structures(self, execution_paths, function_id_to_name, function_id_to_file_name,
-                                                 id_to_sentence, function_to_docstring):
+                                                 id_to_sentence, function_to_docstring,function_id_to_full_name):
         """
         Sets the data structures that will be used to label the nodes and create the document used in HCPC tool
         """
@@ -57,6 +58,7 @@ class DocumentNodes:
         self.function_id_to_file_name = function_id_to_file_name
         self.id_to_sentence = id_to_sentence
         self.function_to_docstring = function_to_docstring
+        self.function_id_to_full_name=function_id_to_full_name
         self.execution_path_words = self.extract_words_in_execution_paths(execution_paths, function_to_docstring,
                                                                           function_id_to_name)
         return
@@ -596,12 +598,11 @@ class DocumentNodes:
         for pattern in top_patterns:
             sentence += ' &#187; '
             for method in pattern:
-                sentence += self.function_id_to_name[method] + \
-                            '(' + self.function_id_to_file_name[method] + ')'
+                sentence += self.function_id_to_full_name[method]
+
                 if method != pattern[len(pattern) - 1]:
                     sentence += ' &rarr; '
 
-            sentence += ' . <br>'
 
         return sentence
 

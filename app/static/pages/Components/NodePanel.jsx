@@ -1,4 +1,4 @@
-import React, {Component, createRef} from 'react';
+import React, {Component,createRef} from 'react';
 
 import Diagram from "./Diagram";
 import Node from "./Node";
@@ -56,6 +56,7 @@ export default class NodePanel extends Component {
 
 
 componentDidUpdate(prevProps, prevState, snapshot) {
+
         if(this.props.diagramData2['cluster']!==undefined && this.props.diagramData1['cluster']!==undefined){
             //if any of the files was changed
              if(JSON.stringify(prevProps.diagramData1)!== JSON.stringify(this.props.diagramData1) || JSON.stringify(prevProps.diagramData2)!== JSON.stringify(this.props.diagramData2)){
@@ -137,9 +138,9 @@ componentDidUpdate(prevProps, prevState, snapshot) {
         for (let j = 0; j < 2; j++) {
             let unique = [];
             unique.push({   label:"Select Unique Execution Path", value:"None"})
-            const execution_paths = this.props["diagramData"+(j+1)]["string_execution_path_names"];
+            const execution_paths = this.props["diagramData"+(j+1)]["string_execution_paths"];
             for (let i = 0; i < execution_paths.length; i++) {
-                const index = (this.props["diagramData"+(((j+1)%2)+1)]["string_execution_path_names"].indexOf(execution_paths[i]));
+                const index = (this.props["diagramData"+(((j+1)%2)+1)]["string_execution_paths"].indexOf(execution_paths[i]));
 
 
                 if (index === -1) {
@@ -203,8 +204,14 @@ componentDidUpdate(prevProps, prevState, snapshot) {
 
     // Updates the node details panels with the unique execution paths for each of the two nodes being compared
      updateUniqueNodePaths(key1, key2,identifier) {
+
+
+
          const unique_paths1 = this.state.diagramUniqueExecutionPaths.diagram1[key1][key2];
-         const unique_paths2 = this.state.diagramUniqueExecutionPaths.diagram2[key1][key2];
+         const unique_paths2 = this.state.diagramUniqueExecutionPaths.diagram2[key2][key1];
+        
+ 
+
 
          if(unique_paths1===undefined || unique_paths2===undefined) return;
 
@@ -230,14 +237,15 @@ componentDidUpdate(prevProps, prevState, snapshot) {
     Sets the status of diagram(identifier as id of diagram) to the given status(true or false)
     when both become true -> calls setupUniqueNodeExecutionPaths
      */
-    setDiagramReadyStatus(identifier, status){
+    setDiagramReadyStatus(identifier, status,callback=()=>{}){
 
+      
 
 
 
         this.setState({
             ['diagramReadyStatus'+identifier]:status
-        })
+        },callback)
 
     }
 
@@ -335,11 +343,12 @@ componentDidUpdate(prevProps, prevState, snapshot) {
 
                 <div  className= {`${this.props.renderMode===2 ? "hide":""} ${slideStyle1}`} >
                     <Node style = {this.state.slide1==="closing"?{marginRight:"150%"}:{}}
-                            uniqueExecutionPath={this.state.nodeUniqueExecutionPath2}
-                          uniqueExecutionPathList={this.state.uniqueExecutionPathList1}
-                          data={this.props.nodeData1}  nodeID={"diagram1"}
-                          identifier={1}
-                          setUniqueExecutionPath={this.setUnqiueExecutionPathOfSystem}
+                        setNodeInformationState={this.props.setNodeInformationState}
+                        uniqueExecutionPath={this.state.nodeUniqueExecutionPath2}
+                        uniqueExecutionPathList={this.state.uniqueExecutionPathList1}
+                        data={this.props.nodeData1}  nodeID={"diagram1"}
+                        identifier={1}
+                        setUniqueExecutionPath={this.setUnqiueExecutionPathOfSystem}
                           />
                 </div>
 
@@ -347,37 +356,43 @@ componentDidUpdate(prevProps, prevState, snapshot) {
                 <div className={this.props.renderMode===2 ? "hide":""}  >
 
 
-                <Diagram  showNodeDetails={this.props.showNodeDetails}
-                         cluster={this.props.diagramData1['cluster']} technique={this.props.technique}
-                         nodeKeys={[this.props.nodeData1.key,this.props.nodeData2.key]}//used for finding unique keys
-                         diagramID={"fullDiagram1"} identifier={1} key={"directory1"}
-                         diagram={this.diagram1} updateSimilarity={this.updateSimilarity}
-                         setReadyStatus={this.setDiagramReadyStatus}
-                         updateUniqueNodePaths={this.updateUniqueNodePaths}
-                         drawMode={this.props.drawMode}
-                         searchedExecutionPaths = {this.props.searchedExecutionPaths}
-                          sameExecutionPath={this.props.sameExecutionPath[0]}
-                          selectedUniqueExecutionPath={this.state.selectedUniqueExecutionPath1}
+                <Diagram
+                    height={ this.props.renderMode===1?{height:"400px"}:{height:"800px"}}
+                    key={"fullDiagram1"+this.props.drawMode}
+                    showNodeDetails={this.props.showNodeDetails}
+                    cluster={this.props.diagramData1['cluster']} technique={this.props.technique}
+                    nodeKeys={[this.props.nodeData1.key,this.props.nodeData2.key]}//used for finding unique keys
+                    diagramID={"fullDiagram1"} identifier={1}
+                    diagram={this.diagram1} updateSimilarity={this.updateSimilarity}
+                    setReadyStatus={this.setDiagramReadyStatus}
+                    updateUniqueNodePaths={this.updateUniqueNodePaths}
+                    drawMode={this.props.drawMode}
+                    searchedExecutionPaths = {this.props.searchedExecutionPaths}
+                    sameExecutionPath={this.props.sameExecutionPath[0]}
+                    selectedUniqueExecutionPath={this.state.selectedUniqueExecutionPath1}
                          />
 
 
                 </div>
 
-                    <div className = {this.props.renderMode===0 ? "hide":""} >
+                    <div className = {this.props.renderMode===0 ? "hide":""}>
 
 
-                        <Diagram  showNodeDetails={this.props.showNodeDetails}
-                                  cluster={this.props.diagramData2['cluster']} technique={this.props.technique}
-                                  nodeKeys={[this.props.nodeData1.key,this.props.nodeData2.key]}//used for finding unique keys
-                                  diagramID={"fullDiagram2"} identifier={2}
-                                  updateSimilarity={this.updateSimilarity}
-                                  updateUniqueNodePaths={this.updateUniqueNodePaths}
-                                  setReadyStatus={this.setDiagramReadyStatus}
-                                  drawMode={this.props.drawMode} key={"tree2"}
-                                  diagram={this.diagram2}
-                                  searchedExecutionPaths = {this.props.searchedExecutionPaths}
-                                  sameExecutionPath={this.props.sameExecutionPath[1]}
-                                  selectedUniqueExecutionPath={this.state.selectedUniqueExecutionPath2}
+                        <Diagram
+                            height={ this.props.renderMode===1?{height:"400px"}:{height:"800px"}}
+                            key={"fullDiagram2"+this.props.drawMode}
+                            showNodeDetails={this.props.showNodeDetails}
+                            cluster={this.props.diagramData2['cluster']} technique={this.props.technique}
+                            nodeKeys={[this.props.nodeData1.key,this.props.nodeData2.key]}//used for finding unique keys
+                            diagramID={"fullDiagram2"} identifier={2}
+                            updateSimilarity={this.updateSimilarity}
+                            updateUniqueNodePaths={this.updateUniqueNodePaths}
+                            setReadyStatus={this.setDiagramReadyStatus}
+                            drawMode={this.props.drawMode}
+                            diagram={this.diagram2}
+                            searchedExecutionPaths = {this.props.searchedExecutionPaths}
+                            sameExecutionPath={this.props.sameExecutionPath[1]}
+                            selectedUniqueExecutionPath={this.state.selectedUniqueExecutionPath2}
 
 
                         />
@@ -389,11 +404,13 @@ componentDidUpdate(prevProps, prevState, snapshot) {
                     <div className={"d-flex justify-content-end"}>
 
                     </div>
-                    <Node style = {this.state.slide2==="closing"?{marginLeft:"150%"}:{}}
-                          uniqueExecutionPath={this.state.nodeUniqueExecutionPath1}
-                          uniqueExecutionPathList={this.state.uniqueExecutionPathList2}
-                          data={this.props.nodeData2}    nodeID={"diagram2"}
-                          identifier={2} setUniqueExecutionPath={this.setUnqiueExecutionPathOfSystem}
+                    <Node
+                        setNodeInformationState={this.props.setNodeInformationState}
+                        style = {this.state.slide2==="closing"?{marginLeft:"150%"}:{}}
+                        uniqueExecutionPath={this.state.nodeUniqueExecutionPath1}
+                        uniqueExecutionPathList={this.state.uniqueExecutionPathList2}
+                        data={this.props.nodeData2}    nodeID={"diagram2"}
+                        identifier={2} setUniqueExecutionPath={this.setUnqiueExecutionPathOfSystem}
 
                     />
                 </div>

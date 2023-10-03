@@ -28,7 +28,6 @@ navigation bar
   transition: none;
   padding-top: 10px;
   padding-bottom: 13px;
-  overflow: hidden;
 }
 .navBarOpaque{
   opacity: 40%;
@@ -99,69 +98,126 @@ Changing the scrollbar of the accordion
   display: block;
 }
 
+
+
+/*
+Node information button
+ */
+
+.nodeInformationButton{
+  padding: 10px 7px;
+  font-size: 14px;
+  font-weight: bold;
+  margin-right: 20px;
+}
+
+.nodeInformationDiagram{
+  height: 800px;
+
+  overflow: hidden;
+}
+
+.informationPanelHeader{
+
+  background-color: #d2e3ef;
+  padding-top:30px;
+  padding-bottom: 25px;
+}
+
+.informationPanelHeader button{
+  font-size: 20px;
+  margin-right: 5px;
+}
+.informationPanelHeader button i{
+
+  font-weight: normal;
+}
+.nodeInformationBody{
+  margin-top:20px;
+  transition: none;
+}
+.nodeInformationBody>div{
+  transition: none !important;
+}
+.nodeInformationFunction{
+  border: 1px solid black;
+  padding-right: 0;
+  margin-top:2px;
+}
+.nodeInformationDiagram{
+  padding-left: 0;
+}
+.functionText {
+  height:798px;
+  font-size:15px;
+}
+.nodeInformationBody pre {
+  margin-bottom: 0px;
+
+}
 /*
 React Select styles
  */
-.nodePanel .unique_paths div[class$="control"]{
+.reactSelect div[class$="control"]{
   cursor: pointer;
 }
-.nodePanel .unique_paths div[class$="menu"]{
+.reactSelect div[class$="menu"]{
   overflow: visible !important;
   cursor: pointer;
 }
-.nodePanel .unique_paths div[class$="menu"] *{
+.reactSelect div[class$="menu"] *{
   cursor: pointer;
 }
-.nodePanel .unique_paths div[class$="menu"] div[class$="option"]{
+.reactSelect div[class$="menu"] div[class$="option"]{
   border:1px grey solid;
   border-left: none;
   border-right: none;
   padding: 13px 8px;
 }
 
-.nodePanel .unique_paths div[class$="menu"] div[class$="option"]:hover{
+.reactSelect div[class$="menu"] div[class$="option"]:hover{
   transition: all 0.25s ease;
   color:white;
   background-color: black;
   font-weight: bold;
-  font-size: 12.5px;
+
 }
 
-.nodePanel .unique_paths div[class$="menu"] div[class$="option"]:active{
+.reactSelect div[class$="menu"] div[class$="option"]:active{
   transition: all 0.1s ease;
   color:white;
   background-color: #2f2f2f;
-  font-size: 12.5px;
+
 
 }
-.nodePanel .unique_paths div[class$="menu"] div[class$="option"]:checked{
+.reactSelect div[class$="menu"] div[class$="option"]:checked{
   transition: all 0.1s ease;
   color:white;
   background-color: #2f2f2f;
   font-size: 12px;
 }
-.nodePanel .unique_paths div[class$="menu"]>div::-webkit-scrollbar-track
+.reactSelect div[class$="menu"]>div::-webkit-scrollbar-track
 {
   border-radius: 6px;
   background-color: #f3f0f0;
   -webkit-box-shadow: inset 0 0 7px rgba(0,0,0,0.28);
 }
 
-.nodePanel .unique_paths div[class$="menu"]>div::-webkit-scrollbar
+.reactSelect div[class$="menu"]>div::-webkit-scrollbar
 {
   width: 5px;
   height: 5px;
   background-color: #f3f0f0;
 }
 
-.nodePanel .unique_paths div[class$="menu"]>div::-webkit-scrollbar-thumb
+.reactSelect div[class$="menu"]>div::-webkit-scrollbar-thumb
 {
   -webkit-box-shadow: inset 0 0 7px rgba(0,0,0,.28);
   border-radius: 8px;
   background-color: #575757;
 }
 
-.vertical-scrollbar,.nodePanel .unique_paths div[class$="menu"]>div{
+.vertical-scrollbar,.reactSelect div[class$="menu"]>div{
   overflow-y: auto;
   word-wrap: break-word;
   padding-right: 7px;
@@ -342,7 +398,6 @@ Diagrams
 
 
 .diagram {
-  height: 400px;
   border: 1px solid black;
   margin: 2px
 }

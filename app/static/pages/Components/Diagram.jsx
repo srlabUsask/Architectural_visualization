@@ -51,38 +51,42 @@ export default class Diagram extends Component {
             this.resetNodeColor();
             this.highlightSameNodes(this.props.sameExecutionPath,true);
         }
-        //reinitialize diagram if a different draw mode is selected
-        if(prevProps.drawMode!== this.props.drawMode){
-            this.initialize();
-        }
+
         if(prevProps.selectedUniqueExecutionPath!==this.props.selectedUniqueExecutionPath){
             this.resetNodeColor();
             this.highlightSameNodes(this.props.selectedUniqueExecutionPath,false);
         }
 
         if(this.props.cluster===undefined || this.props.cluster.length!==0){
-            if(this.props.drawMode!==prevProps.drawMode || JSON.stringify(cluster)!==JSON.stringify(prevCluster) || prevProps.technique!== this.props.technique){
-                this.props.setReadyStatus(this.props.identifier,false)//disable readiness untill its updated
-                this.setupDiagram();
+            if(JSON.stringify(cluster)!==JSON.stringify(prevCluster) || prevProps.technique!== this.props.technique){
+
+
+                    this.props.setReadyStatus(this.props.identifier, false,this.setupDiagram)//disable readiness untill its updated
+
+              
+
             }
 
         }
 
     }
+    componentDidMount() {
+       this.setupDiagram();
+    }
 
     initialize(){
         if(this.props.drawMode===0) return this.initGraph();
         else return this.initTree();
+
+
+
     }
     initGraph(){
         const component=this;
         let $ = go.GraphObject.make;  // for conciseness in defining templates
         let diagram;
-        let graph;
 
 
-        //for the first/second initialization call
-        if(this.props.diagram.current===null || this.props.diagram.current.getDiagram()===null) {
             diagram = $(go.Diagram,
                 {
                     allowMove: false,
@@ -103,31 +107,8 @@ export default class Diagram extends Component {
                                 setsChildPortSpot: false
                             })
                 });
-            graph=diagram;
-        }
-        else {
 
-            diagram=this.props.diagram.current;
-
-
-            graph=diagram.getDiagram();
-
-            graph.layout=  $(go.TreeLayout,
-                {
-                    alignment: go.TreeLayout.AlignmentStart,
-                    angle: 0,
-                    compaction: go.TreeLayout.CompactionNone,
-                    layerSpacing: 16,
-                    layerSpacingParentOverlap: 1,
-                    nodeIndentPastParent: 1.0,
-                    nodeSpacing: 0,
-                    setsPortSpot: false,
-                    setsChildPortSpot: false
-                })
-        }
-
-
-        graph.nodeTemplate =
+        diagram.nodeTemplate =
             $(go.Node,
                 { // no Adornment: instead change panel background color by binding to Node.isSelected
                     selectionAdorned: false,
@@ -169,14 +150,15 @@ export default class Diagram extends Component {
                         {
                             width: 18, height: 18,
                             margin: new go.Margin(0, 4, 0, 0),
-                            imageStretch: go.GraphObject.Uniform
+                            imageStretch: go.GraphObject.Uniform,
+                            cursor:"pointer"
                         },
                         // bind the picture source on two properties of the Node
                         // to display open folder, closed folder, or document
                         new go.Binding("source", "isTreeExpanded", this.imageConverter).ofObject(),
                         new go.Binding("source", "isTreeLeaf", this.imageConverter).ofObject()),
                     $(go.TextBlock,
-                        { font: '9pt Verdana, sans-serif'},
+                        { font: '9pt Verdana, sans-serif',cursor:"pointer"},
                         new go.Binding("text", "node_text", function(s) { return " " + s; }),
                         new go.Binding('stroke', 'color')
                     )
@@ -186,36 +168,58 @@ export default class Diagram extends Component {
                         width: 20,
                         height: 20,
                         stroke: "black",
-                        fill: "white"},
+                        fill: "white",
+                        cursor:"pointer"
+
+
+                    },
                     new go.Binding("fill", "similarity")
                 ) // end Shape
             );  // end Node
 
         // without lines
-        graph.linkTemplate = $(go.Link);
+        diagram.linkTemplate = $(go.Link);
 
 
 
-        graph.addDiagramListener("ObjectContextClicked",
+        diagram.addDiagramListener("ObjectSingleClicked",
             function (e) {
                 const subject = e.subject;
-                if (!(subject.part instanceof go.Link)) {
+                //used subject.Dh to check if it is dropdown button
+                //on graph model only dropdown button has array value of Dh instead of null
+                if (!(subject.part instanceof go.Link) && subject.Dh===null) {
                     component.props.showNodeDetails(subject.part, component.props.identifier);
+                    
 
+                    const key1 = component.props.identifier===1?subject.part.key:component.props.nodeKeys[0];
+                    const key2 = component.props.identifier===2?subject.part.key:component.props.nodeKeys[1];
+                    
 
-                    const key1 = component.props.nodeKeys[0];
-                    const key2 = component.props.nodeKeys[1];
-                    if(key1!==undefined && key1!==undefined) {
+            
+                    if(key1!==undefined && key2!==undefined) {
                         component.props.updateUniqueNodePaths(key1,key2);
                     }
+                    component.props.updateSimilarity(subject.part,  component.props.identifier);
                 }
-                if (subject.figure === 'RoundedRectangle'){
-                   component.props.updateSimilarity(subject.part,  component.props.identifier);
-                }
+
             });
 
         return diagram;
     }
+
+
+
+
+
+
+    //Updates the unique paths of the given nodes
+    //Isolated
+    updateUniqueNodePaths(){
+
+    }
+
+
+
 
 
 
@@ -224,8 +228,20 @@ export default class Diagram extends Component {
 
         const component=this;
         let $ = go.GraphObject.make;  // for conciseness in defining templates
-        let diagram= this.props.diagram.current.getDiagram();
 
+        let diagram =$(go.Diagram,
+                {
+                    allowMove: true,
+                    allowCopy: false,
+                    allowDelete: false,
+                    allowHorizontalScroll: true,
+                    layout:
+                        $(go.TreeLayout,
+                            {
+                                angle: 90,
+                                layerSpacing: 35
+                            })
+                });
         diagram.layout=  $(go.TreeLayout,
                             {
                                 angle: 90,
@@ -243,7 +259,7 @@ export default class Diagram extends Component {
                     { position: new go.Point(18, 0) },
                     new go.Binding("background", "isSelected", function(s) { return (s ? "lightblue" : "white"); }).ofObject(),
                     $(go.TextBlock,
-                        { font: '9pt Verdana, sans-serif', width: 100},
+                        { font: '9pt Verdana, sans-serif', width: 100,cursor:"pointer"},
                         new go.Binding("text", "node_text", function(s) { return " " + s; }),
                         new go.Binding('stroke', 'color')
                     )
@@ -253,7 +269,9 @@ export default class Diagram extends Component {
                         width: 20,
                         height: 20,
                         stroke: "black",
-                        fill: "white"},
+                        fill: "white",
+                        cursor:"pointer"
+                    },
                     new go.Binding("fill", "similarity")
                 ) // end Shape
                 );  // end Node
@@ -280,22 +298,29 @@ export default class Diagram extends Component {
             ); // end Link
 
 
-        diagram.addDiagramListener("ObjectContextClicked",
+        diagram.addDiagramListener("ObjectSingleClicked",
             function (e) {
                 var subject = e.subject;
                 if (!(subject.part instanceof go.Link)) {
                     // showUserStudyPanel(subject.part);
                     component.props.showNodeDetails(subject.part, component.props.identifier);
+                    
 
-                    if(component.props.nodeKeys[0]!==undefined && component.props.nodeKeys[1]!==undefined) {
-                        //component.props.updateUniqueNodePaths(parseInt(key1.split(" ")[2]), parseInt(key2.split(" ")[2]));
+                    
+                    const key1 = component.props.identifier===1?subject.part.key:component.props.nodeKeys[0];
+                    const key2 = component.props.identifier===2?subject.part.key:component.props.nodeKeys[1];
+                    
+
+                    if(key1!==undefined && key2!==undefined) {
+
+                        component.props.updateUniqueNodePaths(key1, key2);
                     }
-                }
-                if (subject.figure === 'RoundedRectangle'){
                     component.props.updateSimilarity(subject.part, component.props.identifier);
                 }
 
+
             });
+        return diagram;
     }
 
     imageConverter(prop, picture) {
@@ -318,8 +343,13 @@ export default class Diagram extends Component {
 
         let nodeDataArray = [];
         const cluster = this.props.cluster;
+
+        //If the tree is empty
+        if(cluster===undefined || cluster.length===0) return;
         const myDiagram = this.props.diagram.current.getDiagram();
         for (let x in cluster) {
+
+
             nodeDataArray.push({
                 key: cluster[x].key,
                 parent: cluster[x].parent,
@@ -496,15 +526,18 @@ export default class Diagram extends Component {
 
 
 
-                <Row  >
+                <Row style={this.props.height} >
 
 
-                    <ReactDiagram key={this.props.diagramID}  className={" col diagram"}
-                                  initDiagram={this.initGraph}
+                    <ReactDiagram key={this.props.diagramID}
+                                  initDiagram={this.initialize}
                             ref={this.props.diagram}
                             divClassName='diagram'
                             onModelChange={this.handleChange}
-                                  className={"vertical-scrollbar"}
+                                  className={" col diagram vertical-scrollbar"}
+
+
+
 
                     />
 

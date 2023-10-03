@@ -1,5 +1,5 @@
 import React, {Component, useEffect} from 'react';
-import {Accordion} from "react-bootstrap";
+import {Accordion, Button} from "react-bootstrap";
 import Select from "react-select";
 
 
@@ -10,7 +10,6 @@ export default class Node extends Component {
     constructor(props) {
         super(props);
         this.state = {
-
 
         }
 
@@ -41,12 +40,14 @@ export default class Node extends Component {
     }
 
 
-    formatExecutionPath(paths,split='->',key=""){
+    formatExecutionPath(paths,split='->',key="", temporalState=0){
 
 
             const newFileNameSeparator=String.fromCharCode(8681) //double downwards arrow
             const defaultSeparator=String.fromCharCode(8595) //downwards arrow
             let result = []
+
+            let listForm=[];//list format of all items
             //if no path is to be found
             if(paths===undefined || paths.length===0) return "";
             //creates list of all items separated by downward arrow
@@ -56,7 +57,7 @@ export default class Node extends Component {
                 let firstItem = true;//Track if this is the first item of list that is not empty string
 
                 let EPblock=[];
-
+                listForm[i]=[];
 
                 let currentFileName="";//function name(the path to the file)
                 for (let j = 0; j < items.length; j++) {
@@ -65,12 +66,16 @@ export default class Node extends Component {
 
                     //separate function name from path
                     let filePath = items[j].split("(")
-                    let functionName = filePath[0]
-                    filePath=filePath[1]
-
-                    filePath = filePath.substring(0,filePath.length-1)//exclude last closing parenthesis symbol
+                    let functionName = items[j].substring(items[j].indexOf("::")+2,items[j].indexOf("("))
+                    filePath=filePath[filePath.length-1];
 
 
+                    if(filePath.substring(filePath.length-4,filePath.length)==="</b>"){
+                        filePath = filePath.substring(0, filePath.length - 5)//exclude last closing parenthesis and </br>
+                    }
+                    else {
+                        filePath = filePath.substring(0, filePath.length - 1)//exclude last closing parenthesis symbol
+                    }
                     if (!firstItem) {
 
                         //Setting the separator symbol for when new file is selected or new function in same file
@@ -97,20 +102,26 @@ export default class Node extends Component {
 
 
                     //Check if <b> tag exists in name
-                    if(functionName.substring(0,3)==="<b>"){//add the b tag and substing it from name
+                    if(items[j].trim().substring(0,3)==="<b>"){//add the b tag and substing it from name
                         EPblock.push(<p
                             key={"EPp2" + key + String(i) + ":" + String(items[i]) + String(j) + ":" + this.props.nodeID}
-                            className='functionName'><b>{functionName.substring(3,functionName.length-4)}</b></p>)
+                            className='functionName'><b>{functionName}</b></p>)
+
                     }
                     else {
                         EPblock.push(<p
                             key={"EPp2" + key + String(i) + ":" + String(items[i]) + String(j) + ":" + this.props.nodeID}
                             className='functionName'>{functionName}</p>)
                     }
+                    listForm[i].push(items[j])
                     firstItem = false
                 }
 
                 result.push(<div key={"EPdiv"+key+String(i)+":"+String(items[i])+":"+this.props.nodeID}>{EPblock}</div>)
+            }
+
+            if(temporalState===1){
+                return [result, listForm]
             }
             return result
         }
@@ -120,7 +131,11 @@ export default class Node extends Component {
         if(paths===undefined) return
         paths= paths.replaceAll(". <br>","")//remove page breaks
         paths=paths.trim().split("&#187;").filter(i=>i)//split by >> symbol, filter out empty strings
-        return this.formatExecutionPath(paths,"&rarr;","Node Pattern")
+        let patterns = this.formatExecutionPath(paths,"&rarr;","Node Pattern",1)
+
+
+
+        return patterns;
     }
 
     handleUniqueExecutionPathChange(e){
@@ -129,7 +144,6 @@ export default class Node extends Component {
     }
 
     render() {
-
         //Select styles
         const colourStyles = {
             menuList: styles => ({
@@ -146,16 +160,35 @@ export default class Node extends Component {
             }),
 
         }
+        let patterns=this.formatNodePatterns(this.props.data.executionPatterns);
+
+        let patternsList=undefined;
 
 
+        if(patterns!==undefined) {
+            patternsList=patterns[1]
+            patterns = patterns[0]
+        }
+        let nodeData={...this.props.data,executionPatternsList:patternsList,uniqueExecutionPaths:this.props.uniqueExecutionPathList}
 
         return (
 
             <div className={"nodePanel"} style={this.props.style}>
-                <div className={"nodeCountInfo"}>
-                <p>Node Key:<b>   {this.props.data.key}</b></p>
-                <p> Number of Files:<b>   {this.props.data.numberOfFiles} </b></p>
-                <p> Number of Execution paths:<b>   {this.props.data.executionPathCount} </b></p>
+                <div className="row justify-content-around">
+                    <div className={"nodeCountInfo col"}>
+                        <p>Node Key:<b>   {this.props.data.key}</b></p>
+                        <p> Number of Files:<b>   {this.props.data.numberOfFiles} </b></p>
+                        <p> Number of Execution paths:<b>   {this.props.data.executionPathCount} </b></p>
+                    </div>
+
+                    { this.props.data.key!==undefined &&
+                    <div className="col d-flex justify-content-end align-items-center">
+
+                            <Button variant={"outline-dark"} className={"nodeInformationButton"} onClick={()=>this.props.setNodeInformationState(true, nodeData,this.props.identifier)}>See more</Button>
+
+                    </div>
+
+                     }
                 </div>
                 <Accordion  alwaysOpen>
                     <Accordion.Item eventKey={1}>
@@ -192,7 +225,7 @@ export default class Node extends Component {
                         <Accordion.Body>
                                 <div className="vertical-scrollbar" >
                                     <div className="executionPathContainer card-text vertical-scrollbar">
-                                    {this.formatNodePatterns(this.props.data.executionPatterns)}
+                                    {patterns}
                                     </div>
                                 </div>
                         </Accordion.Body>
@@ -229,7 +262,7 @@ export default class Node extends Component {
                 </Accordion>
 
 
-                <div className="row unique_paths">
+                <div className="row unique_paths reactSelect">
                     <div className="col">
                         <b> Show Unique Execution Path For Subject System {this.props.identifier} </b>
 

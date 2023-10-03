@@ -1,8 +1,10 @@
-import React, { Component } from 'react';
+import React, { Component, createRef } from 'react';
 import Header from "./Header";
 import NodePanel from "./NodePanel"
+import NodeInformationPanel from "./NodeInformationPanel"
 import * as go from 'gojs';
 import  "../../styles/style.css"
+import {Button} from "react-bootstrap";
 
 
 /*
@@ -72,6 +74,12 @@ export default class Application extends Component {
             searchedExecutionPaths:[],
             subjectSystemRenderMode:1, //0 renders only subject system 1, 1 renders both, 2 renders system 2
             diagramDrawMode:0,//0 renders as dictionary, 1 renders as tree
+
+
+            //Node informations
+            nodeInformationOpen:false,
+            nodeInformationData:{},
+            nodeInformationIdentifier:0
         }
 
 
@@ -87,6 +95,7 @@ export default class Application extends Component {
         this.setSameExecutionPath=this.setSameExecutionPath.bind(this);
         this.setHighlightFunction=this.setHighlightFunction.bind(this);
         this.findExecutionPathsForFunction=this.findExecutionPathsForFunction.bind(this);
+        this.setNodeInformationState = this.setNodeInformationState.bind(this);
     }
 
 
@@ -161,6 +170,7 @@ export default class Application extends Component {
         const string_Data =  this.setUpStringExecutionPaths([diagramData1,diagramData2])
         const functionSearchData = this.setupSearchForFunction(diagramData1["function_id_to_name_file"], diagramData2["function_id_to_name_file"])
         //Save the string version of data with the rest of it
+
         diagramData1['string_execution_paths'] = string_Data[0][0]
         diagramData2['string_execution_paths'] = string_Data[0][1]
 
@@ -172,6 +182,7 @@ export default class Application extends Component {
         diagramData2['string_execution_path_names'] = string_Data[1][1]
 
 
+
         this.setState({
             selectedSubjectSystems:[systemData.selectedSubjectSystems[0],systemData.selectedSubjectSystems[1]],
             selectedTechnique:systemData.selectedTechnique,
@@ -179,6 +190,8 @@ export default class Application extends Component {
             diagramData1:diagramData1,
             diagramData2:diagramData2,
             functionSearchData:functionSearchData,
+            nodeData1:{},
+            nodeData2:{}
         })
 
     }
@@ -304,8 +317,7 @@ export default class Application extends Component {
                 break
             }
             for(let f = 0; f < data['execution_paths'][key].length; f++){
-                eps_preety += data['function_id_to_name'][data['execution_paths'][key][f]]
-                eps_preety += '(' + data['function_id_to_file_name'][data['execution_paths'][key][f]] + ')'
+                eps_preety += data['function_id_to_full_name'][data['execution_paths'][key][f]]
 
                 eps_preety += '->' // Arrow (use Google to see the visual of this)
             }
@@ -327,7 +339,6 @@ export default class Application extends Component {
          let string_execution_Paths_names=[]
         for (let j = 0; j < 2; j++) {
              cluster = clusters[j]
-
              string_execution_paths[j] = [];
             string_execution_Paths_names[j]=[]
             const execution_paths = cluster['execution_paths'];
@@ -338,8 +349,7 @@ export default class Application extends Component {
                 for (let f = 0; f < execution_paths[i].length; f++) {
                     execution_path_string_name+=cluster['function_id_to_name'][execution_paths[i][f]]
                     execution_path_string_name+=" ( "+cluster['function_id_to_file_name'][execution_paths[i][f]].split("/").pop()+")"
-                    execution_path_string += cluster['function_id_to_name'][execution_paths[i][f]];
-                    execution_path_string += '(' + cluster['function_id_to_file_name'][execution_paths[i][f]] + ')';
+                    execution_path_string += cluster['function_id_to_full_name'][execution_paths[i][f]];
 
                     execution_path_string += ' -> ';
                     if(f!==execution_paths[i].length-1)
@@ -415,11 +425,11 @@ export default class Application extends Component {
                 for(let f = 0; f < cluster['execution_paths'][eps[ep]].length; f++){
                     if(cluster['execution_paths'][eps[ep]][f] === indexes[j]){
 
-                        eps_preety += '<b>' + cluster['function_id_to_name'][cluster['execution_paths'][eps[ep]][f]] + '</b>';
-                        eps_preety += '(' + cluster['function_id_to_file_name'][cluster['execution_paths'][eps[ep]][f]] + ')';
+                        eps_preety += '<b>' + cluster['function_id_to_full_name'][cluster['execution_paths'][eps[ep]][f]] + '</b>';
+
                     }else{
-                        eps_preety += cluster['function_id_to_name'][cluster['execution_paths'][eps[ep]][f]];
-                        eps_preety += '(' + cluster['function_id_to_file_name'][cluster['execution_paths'][eps[ep]][f]] + ')';
+                        eps_preety += cluster['function_id_to_full_name'][cluster['execution_paths'][eps[ep]][f]];
+
 
                     }
 
@@ -436,10 +446,35 @@ export default class Application extends Component {
 
 
 
+    /*
+    Node information control
+     */
+
+
+    setNodeInformationState(state,nodeData={},identifier){
+
+
+
+        this.setState({
+            nodeInformationOpen: state,
+            nodeInformationData:nodeData,
+            nodeInformationIdentifier:identifier
+        })
+
+    }
+
+
+
+
+
+
+
 
     render() {
         return (
             <div>
+            <div className={this.state.nodeInformationOpen?"hide":""}>
+
                 <Header setSystemRenderMode={this.setSystemRenderMode} initializeGraph={this.initializeGraph}
                         subject_systems={this.state.subjectSystems} technique_choices={this.state.techniqueChoices}
                         stringExecutionPaths={[this.state.diagramData1['string_execution_paths'], this.state.diagramData2['string_execution_paths']]}
@@ -464,6 +499,7 @@ export default class Application extends Component {
                            diagramData1={this.state.diagramData1} diagramData2={this.state.diagramData2}
                            showNodeDetails={this.showNodeDetails}
                            searchedExecutionPaths={this.state.searchedExecutionPaths}
+                           setNodeInformationState={this.setNodeInformationState}
 
 
                 />
@@ -476,6 +512,26 @@ export default class Application extends Component {
 
 
                 </footer>
+            </div>
+
+                {this.state.nodeInformationOpen &&
+                <div >
+
+
+
+
+                    <NodeInformationPanel identifier={this.state.nodeInformationIdentifier}
+                                          diagramData1={this.state.diagramData1} diagramData2={this.state.diagramData2}
+                                          setNodeInformationState={this.setNodeInformationState} key={this.state.nodeInformationOpen.key}
+                                          data={this.state.nodeInformationData}/>
+
+
+
+                </div>
+
+                }
+
+
             </div>
 
         )
