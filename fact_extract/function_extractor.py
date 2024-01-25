@@ -3,22 +3,21 @@ import subprocess
 import re as regex
 
 
-def find_first_of(input_text, start_pos, *substrings):
+def find_first_of(input_text,  *substrings):
     """
     Returns the index of the first occurrence of any string in *substrings within the input_text
     if there are no occurrences then -1 is returned, also returns which substring was matched and the end of the match
 
     Args:
         input_text (str): Text to be searched for occurrences of any substring
-        start_pos (int): Position in input_text where the search starts
         *substrings: list of strings that define the substrings to search for
     """
     pattern = regex.compile('|'.join([regex.escape(s) for s in substrings]))
-    match = pattern.search(input_text[start_pos:])
+    match = pattern.search(input_text)
     if match is None:
         return -1, "", -1
     else:
-        return match.start(), match.string, match.end()
+        return match.start(), match.string[match.start():match.end()], match.end()
 
 
 def extract_function_tags(in_file, out_file):
@@ -65,122 +64,112 @@ def extract_function_text(line_number, file_name):
     current_line_text = linecache.getline(file_name, current_line_num)
     full_function += current_line_text
 
-    start_index, match, end_index = find_first_of(current_line_text, 0, key_tokens)
-    while match is not '{':
+    start_index, match, end_index = find_first_of(current_line_text, *key_tokens)
+
+    while match != '{':
         if match == "":
             current_line_num = current_line_num + 1
             current_line_text = linecache.getline(file_name, current_line_num)
             full_function += current_line_text
-            start_index, match, end_index = find_first_of(current_line_text, 0, key_tokens)
+            start_index, match, end_index = find_first_of(current_line_text, *key_tokens)
         elif match == '/**':
-            start_index, match, end_index = find_first_of(current_line_text, end_index + 1, ['**/'])
+            current_line_text = current_line_text[end_index + 1:]
+            start_index, match, end_index = find_first_of(current_line_text, '**/')
             while match != '**/':
                 current_line_num = current_line_num + 1
                 current_line_text = linecache.getline(file_name, current_line_num)
                 full_function += current_line_text
                 start_index, match, end_index = (current_line_text, 0, ['**/'])
-            start_index, match, end_index = find_first_of(current_line_text, end_index + 1, key_tokens)
+            current_line_text = current_line_text[end_index + 1:]
+            start_index, match, end_index = find_first_of(current_line_text, *key_tokens)
         elif match == '/*':
-            start_index, match, end_index = find_first_of(current_line_text, end_index + 1, ['*/'])
+            current_line_text = current_line_text[end_index + 1:]
+            start_index, match, end_index = find_first_of(current_line_text, '*/')
             while match != '*/':
                 current_line_num = current_line_num + 1
                 current_line_text = linecache.getline(file_name, current_line_num)
                 full_function += current_line_text
-                start_index, match, end_index = find_first_of(current_line_text, 0, ['*/'])
-            start_index, match, end_index = find_first_of(current_line_text, end_index + 1, key_tokens)
+                start_index, match, end_index = find_first_of(current_line_text, '*/')
+            current_line_text = current_line_text[end_index + 1:]
+            start_index, match, end_index = find_first_of(current_line_text, *key_tokens)
         else:
-            start_index, match, end_index = find_first_of(current_line_text, end_index + 1, key_tokens)
+            current_line_text = current_line_text[end_index + 1:]
+            start_index, match, end_index = find_first_of(current_line_text, *key_tokens)
 
     token_stack = []
     token_stack.insert(0, '{')
-    start_index, match, end_index = find_first_of(current_line_text, end_index + 1, key_tokens)
+    current_line_text = current_line_text[end_index + 1:]
+    start_index, match, end_index = find_first_of(current_line_text, *key_tokens)
 
     while len(token_stack) != 0:
         if match == '{':
             token_stack.insert(0, '{')
-            start_index, match, end_index = find_first_of(current_line_text, end_index + 1, key_tokens)
+            current_line_text = current_line_text[end_index + 1:]
+            start_index, match, end_index = find_first_of(current_line_text, *key_tokens)
         elif match == '}':
             token_stack.pop(0)
-            start_index, match, end_index = find_first_of(current_line_text, end_index + 1, key_tokens)
+            current_line_text = current_line_text[end_index + 1:]
+            start_index, match, end_index = find_first_of(current_line_text, *key_tokens)
         elif match == '//':
             current_line_num = current_line_num + 1
             current_line_text = linecache.getline(file_name, current_line_num)
             full_function += current_line_text
-            start_index, match, end_index = find_first_of(current_line_text, 0, ['*/'])
+            start_index, match, end_index = find_first_of(current_line_text, '*/')
         elif match == '/**':
-            start_index, match, end_index = find_first_of(current_line_text, end_index + 1, ['**/'])
+            current_line_text = current_line_text[end_index + 1:]
+            start_index, match, end_index = find_first_of(current_line_text, '**/')
             while match != '**/':
                 current_line_num = current_line_num + 1
                 current_line_text = linecache.getline(file_name, current_line_num)
                 full_function += current_line_text
-                start_index, match, end_index = find_first_of(current_line_text, 0, ['**/'])
-            start_index, match, end_index = find_first_of(current_line_text, end_index + 1, key_tokens)
+                start_index, match, end_index = find_first_of(current_line_text, '**/')
+            current_line_text = current_line_text[end_index + 1:]
+            start_index, match, end_index = find_first_of(current_line_text, *key_tokens)
         elif match == '/*':
-            start_index, match, end_index = find_first_of(current_line_text, end_index + 1, ['*/'])
+            current_line_text = current_line_text[end_index + 1:]
+            start_index, match, end_index = find_first_of(current_line_text, '*/')
             while match != '*/':
                 current_line_num = current_line_num + 1
                 current_line_text = linecache.getline(file_name, current_line_num)
                 full_function += current_line_text
-                start_index, match, end_index = find_first_of(current_line_text, 0, ['*/'])
-            start_index, match, end_index = find_first_of(current_line_text, end_index + 1, key_tokens)
+                start_index, match, end_index = find_first_of(current_line_text, '*/')
+            current_line_text = current_line_text[end_index + 1:]
+            start_index, match, end_index = find_first_of(current_line_text, *key_tokens)
         elif match == '\'':
-            start_index, match, end_index = find_first_of(current_line_text, end_index + 1, ['\'', '\\'])
+            current_line_text = current_line_text[end_index + 1:]
+            start_index, match, end_index = find_first_of(current_line_text, '\'', '\\')
             while match != '\'':
                 if match == '\\':
-                    start_index, match, end_index = find_first_of(current_line_text, end_index+1, ['\'', '\\'])
+                    current_line_text = current_line_text[end_index + 1:]
+                    start_index, match, end_index = find_first_of(current_line_text, '\'', '\\')
                 else:
                     current_line_num = current_line_num + 1
                     current_line_text = linecache.getline(file_name, current_line_num)
                     full_function += current_line_text
-                    start_index, match, end_index = find_first_of(current_line_text, 0, ['\'', '\\'])
-            start_index, match, end_index = find_first_of(current_line_text, end_index + 1, key_tokens)
+                    start_index, match, end_index = find_first_of(current_line_text, '\'', '\\')
+            current_line_text = current_line_text[end_index + 1:]
+            start_index, match, end_index = find_first_of(current_line_text, *key_tokens)
         elif match == '\"':
-            start_index, match, end_index = find_first_of(current_line_text, end_index + 1, ['\"', '\\'])
+            current_line_text = current_line_text[end_index + 1:]
+            start_index, match, end_index = find_first_of(current_line_text, '\"', '\\')
             while match != '\"':
                 if match == '\\':
-                    start_index, match, end_index = find_first_of(current_line_text, end_index+1, ['\"', '\\'])
+                    current_line_text = current_line_text[end_index + 1:]
+                    start_index, match, end_index = find_first_of(current_line_text, '\"', '\\')
                 else:
                     current_line_num = current_line_num + 1
                     current_line_text = linecache.getline(file_name, current_line_num)
                     full_function += current_line_text
-                    start_index, match, end_index = find_first_of(current_line_text, 0, ['\"', '\\'])
-            start_index, match, end_index = find_first_of(current_line_text, end_index + 1, key_tokens)
+                    start_index, match, end_index = find_first_of(current_line_text, '\"', '\\')
+            current_line_text = current_line_text[end_index + 1:]
+            start_index, match, end_index = find_first_of(current_line_text, *key_tokens)
         elif match == "":
             current_line_num = current_line_num + 1
             current_line_text = linecache.getline(file_name, current_line_num)
             full_function += current_line_text
-            start_index, match, end_index = find_first_of(current_line_text, 0, key_tokens)
+            start_index, match, end_index = find_first_of(current_line_text, *key_tokens)
 
-    # while start_index == -1:
-    #     current_line_num = current_line_num + 1
-    #     current_line_text = linecache.getline(file_name, current_line_num)
-    #     full_function += current_line_text
-    #     start_index = current_line_text.find('{')
-    #
-    # brace_count = 1
-    # start_index = start_index + 1
-    # while brace_count != 0:
-    #     next_open_brace_index = current_line_text.find('{', start_index)
-    #     next_close_brace_index = current_line_text.find('}', start_index)
-    #
-    #     if next_close_brace_index == -1 and next_open_brace_index == -1:
-    #         # Line does not contain any more braces
-    #         current_line_num = current_line_num + 1
-    #         current_line_text = linecache.getline(file_name, current_line_num)
-    #         full_function += current_line_text
-    #         start_index = 0
-    #     elif (next_close_brace_index < next_open_brace_index and next_close_brace_index != -1) \
-    #             or (next_close_brace_index != -1 and next_open_brace_index == -1):
-    #         # Close brace occurs before the next open brace
-    #         brace_count = brace_count - 1
-    #         start_index = next_close_brace_index + 1
-    #     elif (next_open_brace_index < next_close_brace_index and next_open_brace_index != -1) \
-    #             or (next_open_brace_index != -1 and next_close_brace_index == -1):
-    #         # Open brace occurs before the next close brace
-    #         brace_count = brace_count + 1
-    #         start_index = next_open_brace_index + 1
-
-    print(full_function)
+    return full_function
 
 
 def main():
