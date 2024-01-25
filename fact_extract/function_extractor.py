@@ -114,7 +114,7 @@ def extract_function_text(line_number, file_name):
             current_line_num = current_line_num + 1
             current_line_text = linecache.getline(file_name, current_line_num)
             full_function += current_line_text
-            start_index, match, end_index = find_first_of(current_line_text, '*/')
+            start_index, match, end_index = find_first_of(current_line_text, *key_tokens)
         elif match == '/**':
             current_line_text = current_line_text[end_index + 1:]
             start_index, match, end_index = find_first_of(current_line_text, '**/')
@@ -174,8 +174,8 @@ def extract_function_text(line_number, file_name):
 
 def main():
     # extract_function_tags("test_data/ClassCRHM.cpp", "func_extract.tags")
-    extract_function_text(66, "test_data/ClassCRHM.cpp")
-
+    function = extract_function_text(140, "test_data/ClassCRHM.cpp")
+    print(function)
 
 if __name__ == "__main__":
     main()
