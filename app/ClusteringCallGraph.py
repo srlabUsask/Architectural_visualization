@@ -95,7 +95,7 @@ class ClusteringCallGraph:
         if(IS_PYTHON):
             self.pythonbuildgraph(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
         else:
-            self.buildgraph(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
+            self.build_graph(open(ROOT[:-4] + "/instance/callLogs/" + SUBJECT_SYSTEM_NAME + ".log"))
 
         # See what are the entry nodes
         # for i in self.entry_point:
@@ -231,7 +231,7 @@ class ClusteringCallGraph:
         print('Total time required: ', total_end_time - total_start_time)
         return ret  # Doesn't do anything important
 
-    def buildgraph(self, f):
+    def build_graph(self, file):
         """
         Sets up all the data structures based on dynamic call logs from the CRHM project to use to create the
         cluster tree
@@ -242,25 +242,24 @@ class ClusteringCallGraph:
         stack = []
         prev_character = None
         index = 0
-        f.seek(0)
-        for line in f:
+        file.seek(0)
+        for line in file:
             # get func and file names without unnecessary texts
-            if not "(" in line:
+            if "(" not in line:
                 continue
-            if not "::" in line:
+            if "::" not in line:
                 continue
-            funname = ''
-            functionFullName=''
+            func_short_name = ''
+            func_full_name = ''
             if ':' in line:
-                funname = line.strip()[
-                          line.find(':') + 2:line.find('(') - 0]  # ::OnHint
-                # print funname
+                func_short_name = line.strip()[line.find(':') + 2:line.find('(') - 0]  # ::OnHint
+                # print func_short_name
             else:
-                funname = line.strip()[
+                func_short_name = line.strip()[
                           1:line.find('(') - 0]  # void__fastcallTMain::OnHint
-                # print funname
+                # print func_short_name
             functionIndex = int(line.strip()[line.rfind(">")+1:])
-            filename = line.strip()[
+            file = line.strip()[
                        line.find('@@@') + 3: line.rfind(">")]  # CRHMmain.cpp_nocom
 
 
@@ -271,16 +270,16 @@ class ClusteringCallGraph:
             if '</' not in line and line[1:-2] not in func_tracker:
 
 
-                functionFullName=line.strip()[1:line.find('@@@')] +"("+filename+")"
-                self.function_id_to_name[str(index)] = funname
-                self.function_id_to_file_name[str(index)] = filename
-                self.function_id_to_name_file[str(index)] = funname + '(' + filename + ')'
-                self.function_id_to_full_name[str(index)] = functionFullName
-                self.function_name_to_id[functionFullName] = str(index)
+                func_full_name= line.strip()[1:line.find('@@@')] + "(" + file + ")"
+                self.function_id_to_name[str(index)] = func_short_name
+                self.function_id_to_file_name[str(index)] = file
+                self.function_id_to_name_file[str(index)] = func_short_name + '(' + file + ')'
+                self.function_id_to_full_name[str(index)] = func_full_name
+                self.function_name_to_id[func_full_name] = str(index)
                 func_tracker[line[1:-2]] = str(index)
 
                 #gets array with docstrings and function text
-                comments_and_function= DocstringExtractor.getDocString(filename,funname,functionIndex)
+                comments_and_function= DocstringExtractor.getDocString(file, func_short_name, functionIndex)
                 self.function_to_docstring[str(index)] =comments_and_function[0]
 
 
@@ -324,7 +323,7 @@ class ClusteringCallGraph:
         # end of loop
 
         # print stack
-        print('unique scenario extracted for', f.name)
+        print('unique scenario extracted for', file.name)
 
     def pythonbuildgraph(self, f):
         """
