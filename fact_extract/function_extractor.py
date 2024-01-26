@@ -173,9 +173,10 @@ def extract_function_text(line_number, file_name):
 
 
 def main():
-    # extract_function_tags("test_data/ClassCRHM.cpp", "func_extract.tags")
-    function = extract_function_text(140, "test_data/ClassCRHM.cpp")
-    print(function)
+    #extract_function_tags("test_data/ClassCRHM.cpp", "func_extract.tags")
+    #function = extract_function_text(19, "test_data/ClassCRHM_instrument.cpp")
+    #print(function)
+    pass
 
 if __name__ == "__main__":
     main()
