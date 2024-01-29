@@ -1,3 +1,4 @@
+from data_structures.simple import Stack
 import linecache
 import subprocess
 import re as regex
@@ -96,18 +97,18 @@ def extract_function_text(line_number, file_name):
             current_line_text = current_line_text[end_index + 1:]
             start_index, match, end_index = find_first_of(current_line_text, *key_tokens)
 
-    token_stack = []
-    token_stack.insert(0, '{')
+    token_stack = Stack()
+    token_stack.push('{')
     current_line_text = current_line_text[end_index + 1:]
     start_index, match, end_index = find_first_of(current_line_text, *key_tokens)
 
     while len(token_stack) != 0:
         if match == '{':
-            token_stack.insert(0, '{')
+            token_stack.push('{')
             current_line_text = current_line_text[end_index + 1:]
             start_index, match, end_index = find_first_of(current_line_text, *key_tokens)
         elif match == '}':
-            token_stack.pop(0)
+            token_stack.pop()
             current_line_text = current_line_text[end_index + 1:]
             start_index, match, end_index = find_first_of(current_line_text, *key_tokens)
         elif match == '//':
