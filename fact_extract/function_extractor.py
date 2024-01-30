@@ -4,7 +4,7 @@ import subprocess
 import re as regex
 
 
-def find_first_of(input_text,  *substrings):
+def find_first_of(input_text, *substrings):
     """
     Returns the index of the first occurrence of any string in *substrings within the input_text
     if there are no occurrences then -1 is returned, also returns which substring was matched and the end of the match
@@ -174,10 +174,11 @@ def extract_function_text(line_number, file_name):
 
 
 def main():
-    #extract_function_tags("test_data/ClassCRHM.cpp", "func_extract.tags")
-    #function = extract_function_text(19, "test_data/ClassCRHM_instrument.cpp")
-    #print(function)
+    # extract_function_tags("test_data/ClassCRHM.cpp", "func_extract.tags")
+    # function = extract_function_text(19, "test_data/ClassCRHM_instrument.cpp")
+    # print(function)
     pass
+
 
 if __name__ == "__main__":
     main()
