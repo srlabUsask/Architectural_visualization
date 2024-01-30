@@ -50,31 +50,26 @@ def build_dynamic_call_graph(in_file):
     Args:
         in_file (str): Name of a file containing a dynamic execution log produced by executing instrumented code
     """
-    i = 0
 
     graph = Graph()
     stack = Stack()
 
-
     file = open(in_file, 'r')
     file.seek(0)
     for line in file:
-        if i % 100000 == 0 and i > 100000:
-            print("mark")
 
-        i = i + 1
-        # Identify the key components of the line
         line = line.strip()
 
+        # Line represents a call to another function
         if "/" not in line:
             class_name, short_name, full_name, file_name, line_number = get_call_line_info(line)
 
-            node_exists = False
             try:
                 node = graph.vs.find(name=full_name)
                 node_exists = True
-            except:
-                pass
+            except ValueError:
+                node = None
+                node_exists = False
 
             if not node_exists:
                 node = graph.add_vertex(
@@ -91,30 +86,11 @@ def build_dynamic_call_graph(in_file):
 
             stack.push(node)
 
-
-
-            # print("_____________________")
-            # print("Raw Line: " + line)
-            # print("Class Name: " + class_name)
-            # print("Short Function Name: " + short_name)
-            # print("Full Function Name: " + full_name)
-            # print("File Name: " + file_name)
-            # print("Line Number: " + str(line_number))
-            # print("_____________________")
+        # Line represents a return from a function call
         else:
             stack.pop()
 
-
     graph.simplify()
-    print(graph)
-
-        # short_name_start_pos = line.find(':') + 2
-            # short_name_end_pos = line.find('(')
-            # func_short_name = line[short_name_start_pos:short_name_end_pos]  # ::OnHint
-            # print(func_short_name)
-
-            # function_line_num = int(line[line.rfind(">") + 1:])
-            # print(function_line_num)
 
 
 def main():
