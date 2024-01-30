@@ -1,3 +1,4 @@
+from data_structures.simple import Stack
 from igraph import Graph
 
 
@@ -41,6 +42,7 @@ def get_call_line_info(line):
 
     return class_name, short_name, full_name, file_name, line_num
 
+
 def build_dynamic_call_graph(in_file):
     """
     Constructs and returns a Graph object representing the call graph of the execution log parsed from in_file
@@ -48,39 +50,71 @@ def build_dynamic_call_graph(in_file):
     Args:
         in_file (str): Name of a file containing a dynamic execution log produced by executing instrumented code
     """
-
     i = 0
+
+    graph = Graph()
+    stack = Stack()
+
 
     file = open(in_file, 'r')
     file.seek(0)
     for line in file:
+        if i % 100000 == 0 and i > 100000:
+            print("mark")
+
         i = i + 1
         # Identify the key components of the line
         line = line.strip()
 
-        if "/" in line:
-            continue
+        if "/" not in line:
+            class_name, short_name, full_name, file_name, line_number = get_call_line_info(line)
 
-        class_name, func_short_name, full_function_name, file_name, line_number  = get_call_line_info(line)
+            node_exists = False
+            try:
+                node = graph.vs.find(name=full_name)
+                node_exists = True
+            except:
+                pass
 
-        print("_____________________")
-        print("Raw Line: " + line)
-        print("Class Name: " + class_name)
-        print("Short Function Name: " + func_short_name)
-        print("Full Function Name: " + full_function_name)
-        print("File Name: " + file_name)
-        print("Line Number: " + str(line_number))
-        print("_____________________")
+            if not node_exists:
+                node = graph.add_vertex(
+                    name=full_name,
+                    class_name=class_name,
+                    short_name=short_name,
+                    full_name=full_name,
+                    line_number=line_number
+                )
 
-        if i > 10:
-            break
+            prev_node = stack.peek()
+            if prev_node:
+                graph.add_edge(prev_node, node)
+
+            stack.push(node)
+
+
+
+            # print("_____________________")
+            # print("Raw Line: " + line)
+            # print("Class Name: " + class_name)
+            # print("Short Function Name: " + short_name)
+            # print("Full Function Name: " + full_name)
+            # print("File Name: " + file_name)
+            # print("Line Number: " + str(line_number))
+            # print("_____________________")
+        else:
+            stack.pop()
+
+
+    graph.simplify()
+    print(graph)
+
         # short_name_start_pos = line.find(':') + 2
-        # short_name_end_pos = line.find('(')
-        # func_short_name = line[short_name_start_pos:short_name_end_pos]  # ::OnHint
-        # print(func_short_name)
+            # short_name_end_pos = line.find('(')
+            # func_short_name = line[short_name_start_pos:short_name_end_pos]  # ::OnHint
+            # print(func_short_name)
 
-        # function_line_num = int(line[line.rfind(">") + 1:])
-        # print(function_line_num)
+            # function_line_num = int(line[line.rfind(">") + 1:])
+            # print(function_line_num)
 
 
 def main():
