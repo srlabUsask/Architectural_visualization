@@ -1,6 +1,6 @@
 from data_structures.simple import Stack
-from igraph import Graph
-
+import igraph as ig
+import matplotlib.pyplot as plt
 
 def get_call_line_info(line):
     """
@@ -51,7 +51,7 @@ def build_dynamic_call_graph(in_file):
         in_file (str): Name of a file containing a dynamic execution log produced by executing instrumented code
     """
 
-    graph = Graph()
+    graph = ig.Graph(directed=True)
     stack = Stack()
 
     file = open(in_file, 'r')
@@ -89,11 +89,21 @@ def build_dynamic_call_graph(in_file):
         else:
             stack.pop()
 
-    graph.simplify()
+    return graph
 
 
 def main():
-    build_dynamic_call_graph("test_data/calculator.log")
+    graph = build_dynamic_call_graph("test_data/calculator.log")
+    layout = ig.Graph.layout_reingold_tilford(graph, root=[0])
+    fig, ax = plt.subplots(figsize=(10,10))
+    ig.plot(
+        graph,
+        target=ax,
+        layout=layout,
+        vertex_label=graph.vs['short_name']
+    )
+
+    fig.savefig("test.png")
 
 
 if __name__ == "__main__":
