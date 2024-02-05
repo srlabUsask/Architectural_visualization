@@ -13,7 +13,7 @@ def get_call_line_info(line):
          short_name (str): Short name of the function
          full_name  (str): Function name and signature
          file_name  (str): Name of the file where the function is contained
-         line_num   (int): Line number where the function was invoked in file_name
+         #line_num   (int): Line number where the function was invoked in file_name
     """
     if ':' in line:
         class_name_start = line.find('<') + 1
@@ -37,10 +37,10 @@ def get_call_line_info(line):
     file_name_end = line.rfind(">")
     file_name = line[file_name_start:file_name_end]
 
-    line_num_start = file_name_end + 1
-    line_num = int(line[line_num_start:])
+    # line_num_start = file_name_end + 1
+    # line_num = int(line[line_num_start:])
 
-    return class_name, short_name, full_name, file_name, line_num
+    return class_name, short_name, full_name, file_name
 
 
 def build_dynamic_call_graph(in_file):
@@ -62,7 +62,7 @@ def build_dynamic_call_graph(in_file):
 
         # Line represents a call to another function
         if "/" not in line:
-            class_name, short_name, full_name, file_name, line_number = get_call_line_info(line)
+            class_name, short_name, full_name, file_name = get_call_line_info(line)
 
             try:
                 node = graph.vs.find(name=full_name)
@@ -77,7 +77,6 @@ def build_dynamic_call_graph(in_file):
                     class_name=class_name,
                     short_name=short_name,
                     full_name=full_name,
-                    line_number=line_number
                 )
 
             prev_node = stack.peek()
@@ -94,7 +93,7 @@ def build_dynamic_call_graph(in_file):
 
 
 def main():
-    build_dynamic_call_graph("test_data/Open_Close Project (2018).log")
+    build_dynamic_call_graph("test_data/calculator.log")
 
 
 if __name__ == "__main__":
