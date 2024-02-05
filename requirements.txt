@@ -1,0 +1,5 @@
+flask~=3.0.2
+numpy~=1.24.4
+matplotlib~=3.7.4
+igraph~=0.11.3
+werkzeug~=3.0.1
