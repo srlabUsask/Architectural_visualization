@@ -9,7 +9,6 @@ import React from "react";
  */
 function initDiagram() {
   const $ = go.GraphObject.make;
-  // set your license key here before creating the diagram: go.Diagram.licenseKey = "...";
   const diagram =
     $(go.Diagram,
       {
