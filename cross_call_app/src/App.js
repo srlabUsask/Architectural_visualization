@@ -3,8 +3,6 @@ import React, { useState, useEffect } from 'react';
 import * as go from 'gojs';
 import { ReactDiagram } from 'gojs-react';
 
-import logo from './logo.svg';
-import './App.css';
 
 /**
  * Diagram initialization method, which is passed to the ReactDiagram component.
@@ -51,7 +49,7 @@ function handleModelChange(changes) {
 
 }
 
-function App() {
+export default function App() {
   const [currentTime, setCurrentTime] = useState(0);
 
   useEffect(() => {
@@ -63,7 +61,6 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
         <p>
           Edit <code>src/App.js</code> and save to reload.
         </p>
@@ -102,5 +99,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
