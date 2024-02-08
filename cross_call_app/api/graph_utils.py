@@ -1,6 +1,6 @@
-from data_structures.simple import Stack
 import igraph as ig
 import matplotlib.pyplot as plt
+from data_structures import Stack
 
 def get_call_line_info(line):
     """
