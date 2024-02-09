@@ -13,7 +13,7 @@ code {
 }
 
 .diagram-component {
-  width: 600px;
+  display: flex;
   height: 600px;
   border: solid 1px black;
   background-color: white;

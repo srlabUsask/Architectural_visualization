@@ -24,16 +24,24 @@ function initDiagram() {
   // define a simple Node template
   diagram.nodeTemplate =
     $(go.Node, 'Auto',  // the Shape will go around the TextBlock
-      new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
       $(go.Shape, 'RoundedRectangle',
-        { name: 'SHAPE', fill: 'white', strokeWidth: 0 },
+        { name: 'SHAPE', fill: 'lightblue', strokeWidth: 0 },
         // Shape.fill is bound to Node.data.color
-        new go.Binding('fill', 'color')),
+        new go.Binding('fill', 'color')
+      ),
       $(go.TextBlock,
-        { margin: 8, editable: true },  // some room around the text
+        { margin: 8, editable: false },  // some room around the text
         new go.Binding('text').makeTwoWay()
       )
     );
+
+  diagram.linkTemplate =
+      $(go.Link,
+          $(go.Shape),
+          $(go.Shape,
+              { toArrow: "OpenTriangle", fill: "black" }
+          )
+      );
 
   return diagram;
 }
@@ -58,8 +66,9 @@ export default function CallGraph() {
         fetch("/get_call_graph_data")
             .then(res => res.json())
             .then(data => {
-            setNodeData(data.node_data);
-            setLinkData(data.link_data);
+
+                setNodeData(data.node_data);
+                setLinkData(data.link_data);
 
         });
     }, []);
