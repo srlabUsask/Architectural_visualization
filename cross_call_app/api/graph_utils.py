@@ -91,20 +91,32 @@ def build_dynamic_call_graph(in_file):
 
     return graph
 
-def create_node_data_array(graph: ig.Graph):
+def create_node_data_array_str(graph: ig.Graph):
     data_array = "[\n"
     i = 0
     for node in graph.vs:
         node_data = "{ "
         node_data += "key: " + str(i) + ", "
-        node_data += "name:" + str(node["name"]) + " "
+        node_data += "text: \"" + str(node["name"]) + "\" "
         node_data += "},\n"
         data_array += node_data
         i = i + 1
     data_array += "]"
     return data_array
 
-def create_link_data_array(graph: ig.Graph):
+def create_node_data_array(graph: ig.Graph):
+    data_array = []
+    i = 0
+    for node in graph.vs:
+        data_array.append({
+            "key": i,
+            "text": str(node["name"])
+        })
+        i = i + 1
+
+    return data_array
+
+def create_link_data_array_str(graph: ig.Graph):
     edge_list = graph.get_edgelist()
     i = -1
     data_array = "[\n"
@@ -118,24 +130,34 @@ def create_link_data_array(graph: ig.Graph):
         i = i - 1
     data_array +="]"
     return data_array
+
+def create_link_data_array(graph: ig.Graph):
+    edge_list = graph.get_edgelist()
+    i = -1
+    link_array = []
+    for edge in edge_list:
+        link_array.append({
+            "key": i,
+            "from": str(edge[0]),
+            "to": str(edge[1])
+        })
+        i = i - 1
+
+    return link_array
 def main():
     graph = build_dynamic_call_graph("test_data/calculator.log")
-    layout = ig.Graph.layout_reingold_tilford(graph, root=[0])
-    fig, ax = plt.subplots(figsize=(10,10))
-    ig.plot(
-        graph,
-        target=ax,
-        layout=layout,
-        vertex_label=graph.vs['short_name']
-    )
 
-    create_node_data_array(graph)
+    # # Test graph generation
+    # layout = ig.Graph.layout_reingold_tilford(graph, root=[0])
+    # fig, ax = plt.subplots(figsize=(10,10))
+    # ig.plot(
+    #     graph,
+    #     target=ax,
+    #     layout=layout,
+    #     vertex_label=graph.vs['short_name']
+    # )
+    # fig.savefig("test.png")
 
-    create_link_data_array(graph)
-
-    print(create_link_data_array(graph))
-    #fig.savefig("test.png")
-    #graph.write_gml("test.gml")
 
 
 

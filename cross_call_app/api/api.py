@@ -7,7 +7,7 @@ app = Flask(__name__)
 @app.route('/get_call_graph_data')
 def get_call_graph_data():
 
-    graph = g_util.build_dynamic_call_graph("/graph_utils/test_data/calculator.log")
+    graph = g_util.build_dynamic_call_graph("test_data/calculator.log")
     node_data = g_util.create_node_data_array(graph)
     link_data = g_util.create_link_data_array(graph)
 

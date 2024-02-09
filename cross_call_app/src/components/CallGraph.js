@@ -1,6 +1,6 @@
 import * as go from 'gojs';
 import { ReactDiagram } from 'gojs-react';
-import React from "react";
+import React, {useState, useEffect} from "react";
 
 /**
  * Diagram initialization method, which is passed to the ReactDiagram component.
@@ -49,23 +49,27 @@ function handleModelChange(changes) {
 
 
 export default function CallGraph() {
+    //const [graphData, setGraphData] = useState({"nodeDataArray": "", "linkDataArray": ""});
+    const [nodeData, setNodeData] = useState([]);
+    const [linkData, setLinkData] = useState([]);
+
+
+    useEffect(() => {
+        fetch("/get_call_graph_data")
+            .then(res => res.json())
+            .then(data => {
+            setNodeData(data.node_data);
+            setLinkData(data.link_data);
+
+        });
+    }, []);
+
     return (
       <ReactDiagram
         initDiagram={initDiagram}
         divClassName='diagram-component'
-        nodeDataArray={[
-          { key: 0, text: 'Alpha', color: 'lightblue', loc: '0 0' },
-          { key: 1, text: 'Beta', color: 'orange', loc: '150 0' },
-          { key: 2, text: 'Gamma', color: 'lightgreen', loc: '0 150' },
-          { key: 3, text: 'Delta', color: 'pink', loc: '150 150' }
-        ]}
-        linkDataArray={[
-          { key: -1, from: 0, to: 1 },
-          { key: -2, from: 0, to: 2 },
-          { key: -3, from: 1, to: 1 },
-          { key: -4, from: 2, to: 3 },
-          { key: -5, from: 3, to: 0 }
-        ]}
+        nodeDataArray={nodeData}
+        linkDataArray={linkData}
         onModelChange={handleModelChange}
       />
     );
