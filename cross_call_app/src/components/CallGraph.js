@@ -8,9 +8,9 @@ import React, {useState, useEffect} from "react";
  * The model's data should not be set here, as the ReactDiagram component handles that via the other props.
  */
 function initDiagram() {
-  const $ = go.GraphObject.make;
+  const GOJS = go.GraphObject.make;
   const diagram =
-    $(go.Diagram,
+    GOJS(go.Diagram,
       {
         'undoManager.isEnabled': true,  // must be set to allow for model change listening
         // 'undoManager.maxHistoryLength': 0,  // uncomment disable undo/redo functionality
@@ -23,22 +23,22 @@ function initDiagram() {
 
   // define a simple Node template
   diagram.nodeTemplate =
-    $(go.Node, 'Auto',  // the Shape will go around the TextBlock
-      $(go.Shape, 'RoundedRectangle',
+    GOJS(go.Node, 'Auto',  // the Shape will go around the TextBlock
+      GOJS(go.Shape, 'RoundedRectangle',
         { name: 'SHAPE', fill: 'lightblue', strokeWidth: 0 },
         // Shape.fill is bound to Node.data.color
         new go.Binding('fill', 'color')
       ),
-      $(go.TextBlock,
+      GOJS(go.TextBlock,
         { margin: 8, editable: false },  // some room around the text
         new go.Binding('text').makeTwoWay()
       )
     );
 
   diagram.linkTemplate =
-      $(go.Link,
-          $(go.Shape),
-          $(go.Shape,
+      GOJS(go.Link,
+          GOJS(go.Shape),
+          GOJS(go.Shape,
               { toArrow: "OpenTriangle", fill: "black" }
           )
       );
