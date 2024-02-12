@@ -21,6 +21,11 @@ function initDiagram() {
           })
       });
 
+  diagram.layout =
+      GOJS(go.LayeredDigraphLayout, {
+         alignOption: go.LayeredDigraphLayout.AlignAll
+      })
+
   // define a simple Node template
   diagram.nodeTemplate =
     GOJS(go.Node, 'Auto',  // the Shape will go around the TextBlock
